@@ -6,6 +6,7 @@
 import streamlit as st
 import pandas as pd
 import functools as ft
+import app_two_factor
 
 import time
 
@@ -64,16 +65,8 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 
 menu = st.sidebar.radio(
     "Go to section:",
-    ['Liquidity Stress',
-     'Fed Balance Sheet',
-     'Repo Activity',
-     'Money Markets',
-     'Primary Dealers',
-     'Shadow Banks',
-     'Treasury Auctions',
-     'UST Positioning',
-     'STIR Positioning',
-     'TRACE Model']
+    ['Growth/Inflation Factor Model',
+     'Sector Overlay']
 )
 
 ### ---------------------------------------------------------------------------------------- ###
@@ -82,8 +75,6 @@ menu = st.sidebar.radio(
 
 if menu == 'Liquidity Stress':
     st.title("SOFR Spreads")
-    app_liquidity_stress.plot_sofr_iorb(start_date, end_date)
-    st.title("Repo Spreads")
-    app_liquidity_stress.plot_iorb_spreads(start_date, end_date)
+    app_two_factor.plot_growth_inflation(start_date, end_date)
 
 
