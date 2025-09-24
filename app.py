@@ -65,7 +65,7 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 
 menu = st.sidebar.radio(
     "Go to section:",
-    ['Growth/Inflation Factor Model',
+    ['2-Factor Model',
      'Sector Overlay']
 )
 
@@ -73,8 +73,8 @@ menu = st.sidebar.radio(
 ### -------------------------------------- RISK CHECKS ------------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-if menu == 'Liquidity Stress':
-    st.title("SOFR Spreads")
+if menu == '2-Factor Model':
+    st.title("Growth and Inflation")
     app_two_factor.plot_growth_inflation(start_date, end_date)
 
 
