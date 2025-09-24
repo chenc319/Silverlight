@@ -1,0 +1,14 @@
+streamlit
+numpy
+seaborn
+python-dateutil
+matplotlib
+requests
+plotly
+streamlit-calendar
+scipy
+html2text
+beautifulsoup4
+requests
+pandas-datareader
+fredapi
