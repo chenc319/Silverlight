@@ -60,7 +60,7 @@ st.markdown("""
 
 ### SIDEBAR ###
 st.sidebar.title("Multifactor Regime Models")
-start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime('2019-12-31'))
+start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime('1949-12-31'))
 end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 
 menu = st.sidebar.radio(
