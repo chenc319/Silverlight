@@ -12,6 +12,7 @@ from pathlib import Path
 import os
 import pickle
 from plotly.subplots import make_subplots
+import numpy as np
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 def merge_dfs(array_of_dfs):
@@ -96,6 +97,20 @@ def plot_growth_inflation(start, end, **kwargs):
         (growth_inflation_df['growth_roc'] < 0)
     ]
 
+    def regime_label(row):
+        if row['inflation_roc'] > 0 and row['growth_roc'] > 0:
+            return 0  # Reflation
+        elif row['inflation_roc'] > 0 and row['growth_roc'] < 0:
+            return 1  # Stagflation
+        elif row['inflation_roc'] < 0 and row['growth_roc'] > 0:
+            return 2  # Goldilocks
+        elif row['inflation_roc'] < 0 and row['growth_roc'] < 0:
+            return 3  # Deflation
+        else:
+            return np.nan
+
+    growth_inflation_df['regime_code'] = growth_inflation_df.apply(regime_label, axis=1)
+    
     reflation_averages = reflation_regime[['sp500_pct','bonds_pct']].mean(axis=0) * 100
     stagflation_averages = stagflation_regime[['sp500_pct','bonds_pct']].mean(axis=0)*  100
     goldilocks_averages = goldilocks_regime[['sp500_pct','bonds_pct']].mean(axis=0) * 100
@@ -145,6 +160,47 @@ def plot_growth_inflation(start, end, **kwargs):
     )
     st.plotly_chart(fig, use_container_width=True)
 
+    ### PLOT ###
+    regime_colors = {
+        0: 'red',  # Reflation
+        1: 'yellow',  # Stagflation
+        2: 'green',  # Goldilocks
+        3: 'blue'  # Deflation
+    }
+    regime_labels = {
+        0: 'Reflation',
+        1: 'Stagflation',
+        2: 'Goldilocks',
+        3: 'Deflation'
+    }
+
+    fig = go.Figure()
+
+    for regime in sorted(regime_colors.keys()):
+        mask = growth_inflation_df['regime_code'] == regime
+        # Find continuous stretches belonging to this regime
+        df_masked = growth_inflation_df[mask]
+        # Plot in regime chunks
+        if not df_masked.empty:
+            fig.add_trace(go.Scatter(
+                x=df_masked.index,
+                y=df_masked['sp500'],
+                mode='lines',
+                name=regime_labels[regime],
+                line=dict(color=regime_colors[regime])
+            ))
+
+    fig.update_layout(
+        title="SP500 Segmented by Regime",
+        yaxis_title="SP500",
+        hovermode='x unified',
+        legend=dict(
+            title="Regime",
+            itemsizing='constant'
+        )
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 
 
