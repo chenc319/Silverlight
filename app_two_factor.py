@@ -127,21 +127,20 @@ def plot_growth_inflation(start, end, **kwargs):
     deflation_averages = deflation_regime[['sp500_pct','bonds_pct']].mean(axis=0) * 100
 
     gi_2_factor_results = pd.DataFrame()
-    gi_2_factor_results['equities'] = [goldilocks_averages[0],
-                                       reflation_averages[0],
-                                       deflation_averages[0],
-                                       stagflation_averages[0],]
-    gi_2_factor_results['bonds'] = [goldilocks_averages[1],
-                                    reflation_averages[1],
-                                    deflation_averages[1],
-                                    stagflation_averages[1]]
-
-    gi_2_factor_results.index =  [
+    gi_2_factor_results['Regime'] = [
         'Goldilocks (I-G+)',
         'Reflation (I+G+)',
         'Deflation (I-G-)',
         'Stagflation (I+G-)',
     ]
+    gi_2_factor_results['Equities'] = [goldilocks_averages[0],
+                                       reflation_averages[0],
+                                       deflation_averages[0],
+                                       stagflation_averages[0],]
+    gi_2_factor_results['Bonds'] = [goldilocks_averages[1],
+                                    reflation_averages[1],
+                                    deflation_averages[1],
+                                    stagflation_averages[1]]
 
     ### PLOT ###
     cols = ['growth', 'inflation','growth_roc','inflation_roc','growth_roc_2','inflation_roc_2']
@@ -273,7 +272,7 @@ def plot_growth_inflation(start, end, **kwargs):
         "#ff3333", "#ffffff", "#39b241"
     ], N=256)
 
-    styled = gi_2_factor_results.style.background_gradient(cmap=cmap, subset=['bonds'])
+    styled = gi_2_factor_results.style.background_gradient(cmap=cmap, subset=['equities','bonds'])
     st.dataframe(styled, use_container_width=True, hide_index=True)
 
 
