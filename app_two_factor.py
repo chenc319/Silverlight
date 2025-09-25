@@ -200,8 +200,6 @@ def plot_growth_inflation(start, end, **kwargs):
     df['regime_label'] = df['regime_code'].map(regime_labels)
 
     fig = go.Figure()
-
-    # Main SP500 line WITHOUT legend or hover
     fig.add_trace(go.Scatter(
         x=df.index,
         y=df['sp500'],
@@ -211,8 +209,6 @@ def plot_growth_inflation(start, end, **kwargs):
         showlegend=False,
         hoverinfo='skip'  # Suppress hover for line
     ))
-
-    # Colored regime markers, legend and hover active
     for code, color in regime_colors.items():
         mask = df['regime_code'] == code
         fig.add_trace(go.Scatter(
@@ -227,14 +223,42 @@ def plot_growth_inflation(start, end, **kwargs):
             ),
             text=[regime_labels[code]] * sum(mask)
         ))
-
     fig.update_layout(
-        title="SP500 with Single-Regime Markers",
-        yaxis_title="SP500",
+        title="SP500 by Regime",
         hovermode='x',  # Only show one trace at a time
         legend=dict(title='Regime')
     )
+    st.plotly_chart(fig, use_container_width=True)
 
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df['bonds'],
+        mode='lines',
+        line=dict(color='black', width=2),
+        name='Bonds',
+        showlegend=False,
+        hoverinfo='skip'  # Suppress hover for line
+    ))
+    for code, color in regime_colors.items():
+        mask = df['regime_code'] == code
+        fig.add_trace(go.Scatter(
+            x=df.index[mask],
+            y=df['bonds'][mask],
+            mode='markers',
+            marker=dict(color=color, size=8),
+            name=regime_labels[code],
+            showlegend=True,
+            hovertemplate=(
+                "Regime: %{text}<br>SP500: %{y}<br>Date: %{x}"
+            ),
+            text=[regime_labels[code]] * sum(mask)
+        ))
+    fig.update_layout(
+        title="Bonds by Regime",
+        hovermode='x',  # Only show one trace at a time
+        legend=dict(title='Regime')
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 
