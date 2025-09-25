@@ -110,7 +110,7 @@ def plot_growth_inflation(start, end, **kwargs):
             return np.nan
 
     growth_inflation_df['regime_code'] = growth_inflation_df.apply(regime_label, axis=1)
-    
+
     reflation_averages = reflation_regime[['sp500_pct','bonds_pct']].mean(axis=0) * 100
     stagflation_averages = stagflation_regime[['sp500_pct','bonds_pct']].mean(axis=0)*  100
     goldilocks_averages = goldilocks_regime[['sp500_pct','bonds_pct']].mean(axis=0) * 100
@@ -176,27 +176,34 @@ def plot_growth_inflation(start, end, **kwargs):
 
     fig = go.Figure()
 
-    for regime in sorted(regime_colors.keys()):
-        mask = growth_inflation_df['regime_code'] == regime
-        # Find continuous stretches belonging to this regime
-        df_masked = growth_inflation_df[mask]
-        # Plot in regime chunks
-        if not df_masked.empty:
-            fig.add_trace(go.Scatter(
-                x=df_masked.index,
-                y=df_masked['sp500'],
-                mode='lines',
-                name=regime_labels[regime],
-                line=dict(color=regime_colors[regime])
-            ))
+    # Find continuous segments by regime
+    df = growth_inflation_df.copy()
+    df['regime_code'] = df['regime_code'].astype('Int64')
+
+    # Identify regime change points
+    segment_indices = (df['regime_code'] != df['regime_code'].shift()).cumsum()
+
+    for seg_id, seg_df in df.groupby(segment_indices):
+        regime = seg_df['regime_code'].iloc[0]
+        color = regime_colors.get(regime, 'gray')
+        label = regime_labels.get(regime, 'Unknown')
+        # Only add legend for the first occurrence of each regime
+        showlegend = (seg_id == df[df['regime_code'] == regime].index[0])
+        fig.add_trace(go.Scatter(
+            x=seg_df.index,
+            y=seg_df['sp500'],
+            mode='lines',
+            line=dict(color=color, width=2),
+            name=label,
+            showlegend=not any([t.name == label for t in fig.data])
+        ))
 
     fig.update_layout(
-        title="SP500 Segmented by Regime",
+        title="SP500 Time Series Regime-Colored",
         yaxis_title="SP500",
         hovermode='x unified',
         legend=dict(
-            title="Regime",
-            itemsizing='constant'
+            title="Regime"
         )
     )
 
