@@ -182,38 +182,49 @@ def plot_growth_inflation(start, end, **kwargs):
     }
 
     fig = go.Figure()
+    added_legends = set()
 
-    # Find continuous segments by regime
-    df = growth_inflation_df.copy()
-    df['regime_code'] = df['regime_code'].astype('Int64')
-
-    # Identify regime change points
-    segment_indices = (df['regime_code'] != df['regime_code'].shift()).cumsum()
-
-    for seg_id, seg_df in df.groupby(segment_indices):
-        regime = seg_df['regime_code'].iloc[0]
-        color = regime_colors.get(regime, 'gray')
-        label = regime_labels.get(regime, 'Unknown')
-        # Only add legend for the first occurrence of each regime
-        showlegend = (seg_id == df[df['regime_code'] == regime].index[0])
-        fig.add_trace(go.Scatter(
-            x=seg_df.index,
-            y=seg_df['sp500'],
-            mode='lines',
-            line=dict(color=color, width=2),
-            name=label,
-            showlegend=not any([t.name == label for t in fig.data])
-        ))
+    # Iterate through DataFrame by regime-segment (continuous runs with same regime)
+    prev_regime = None
+    segment_x = []
+    segment_y = []
+    for i, (idx, row) in enumerate(df.iterrows()):
+        regime = row['regime_code']
+        if prev_regime is None:
+            prev_regime = regime
+        if regime != prev_regime or i == len(df) - 1:
+            # Plot the previous segment
+            # On last row, also append current point
+            if i == len(df) - 1:
+                segment_x.append(idx)
+                segment_y.append(row['sp500'])
+            if segment_x:
+                name = regime_labels[prev_regime]
+                showlegend = name not in added_legends
+                fig.add_trace(go.Scatter(
+                    x=segment_x,
+                    y=segment_y,
+                    mode='lines',
+                    line=dict(color=regime_colors[prev_regime], width=2),
+                    name=name,
+                    showlegend=showlegend
+                ))
+                added_legends.add(name)
+            # Start new segment
+            segment_x = []
+            segment_y = []
+            prev_regime = regime
+        segment_x.append(idx)
+        segment_y.append(row['sp500'])
 
     fig.update_layout(
-        title="SP500 Time Series Regime-Colored",
+        title="SP500 Regime-Colored (Continuous)",
         yaxis_title="SP500",
         hovermode='x unified',
         legend=dict(
             title="Regime"
         )
     )
-
     st.plotly_chart(fig, use_container_width=True)
 
 
