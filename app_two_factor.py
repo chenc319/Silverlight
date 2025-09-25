@@ -122,7 +122,7 @@ def plot_growth_inflation(start, end, **kwargs):
         'CLI 2nd Order Change'
     ]
     colors = ['#0B2138', '#48DEE9', '#7EC0EE','#F9D15B','#F9C846','#F39C12']
-    fig = make_subplots(rows=1, cols=2, subplot_titles=labels)
+    fig = make_subplots(rows=3, cols=2, subplot_titles=labels)
     for i, (col, color, label) in enumerate(zip(cols, colors, labels)):
         row = i // 2 + 1
         col_position = i % 2 + 1
