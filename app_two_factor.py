@@ -272,8 +272,11 @@ def plot_growth_inflation(start, end, **kwargs):
         "#ff3333", "#ffffff", "#39b241"
     ], N=256)
 
-    styled = gi_2_factor_results.style.background_gradient(cmap=cmap, subset=['Equities','Bonds'])
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    styled = gi_2_factor_results.style \
+        .format({'Equities': "{:.2f}%", 'Bonds': "{:.2f}%"}) \
+        .set_properties(subset=['Equities', 'Bonds'], **{'width': '80px'}) \
+        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
+    st.dataframe(styled, use_container_width=False, hide_index=True)
 
 
 
