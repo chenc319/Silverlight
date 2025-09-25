@@ -181,19 +181,6 @@ def plot_growth_inflation(start, end, **kwargs):
 
     ### PLOT ###
     regime_colors = {
-        0: '#E74C3C',  # Reflation: vivid red, energetic
-        1: '#F1C40F',  # Stagflation: clear gold-yellow, caution
-        2: '#27AE60',  # Goldilocks: medium green, stability
-        3: '#2980B9'  # Deflation: solid blue, cool/calm
-    }
-    regime_labels = {
-        0: 'Reflation',
-        1: 'Stagflation',
-        2: 'Goldilocks',
-        3: 'Deflation'
-    }
-
-    regime_colors = {
         0: '#E74C3C',  # Reflation (red)
         1: '#F1C40F',  # Stagflation (yellow)
         2: '#27AE60',  # Goldilocks (green)
@@ -214,34 +201,42 @@ def plot_growth_inflation(start, end, **kwargs):
 
     fig = go.Figure()
 
-    # Add main SP500 unbroken line
+    # Main SP500 line WITHOUT legend or hover
     fig.add_trace(go.Scatter(
         x=df.index,
         y=df['sp500'],
         mode='lines',
-        line=dict(color='black', width=2),  # or your preferred line color
-        name='SP500'
+        line=dict(color='black', width=2),
+        name='SP500',
+        showlegend=False,
+        hoverinfo='skip'  # Suppress hover for line
     ))
 
-    # Add colored regime markers
-    for rc, color in regime_colors.items():
-        mask = df['regime_code'] == rc
+    # Colored regime markers, legend and hover active
+    for code, color in regime_colors.items():
+        mask = df['regime_code'] == code
         fig.add_trace(go.Scatter(
             x=df.index[mask],
             y=df['sp500'][mask],
             mode='markers',
             marker=dict(color=color, size=8),
-            name=regime_labels[rc],
-            showlegend=True
+            name=regime_labels[code],
+            showlegend=True,
+            hovertemplate=(
+                "Regime: %{text}<br>SP500: %{y}<br>Date: %{x}"
+            ),
+            text=[regime_labels[code]] * sum(mask)
         ))
 
     fig.update_layout(
-        title='SP500 with Regime-Colored Markers',
-        yaxis_title='SP500',
-        hovermode='x unified',
+        title="SP500 with Single-Regime Markers",
+        yaxis_title="SP500",
+        hovermode='x',  # Only show one trace at a time
         legend=dict(title='Regime')
     )
+
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
