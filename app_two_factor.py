@@ -140,7 +140,7 @@ def plot_growth_inflation(start, end, **kwargs):
     fig.update_layout(
         title="Growth and Inflation Factors",
         showlegend=False,
-        height=300,
+        height=900,
         hovermode='x unified'
     )
     st.plotly_chart(fig, use_container_width=True)
