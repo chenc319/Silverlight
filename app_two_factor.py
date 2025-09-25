@@ -11,6 +11,7 @@ from matplotlib import pyplot as plt
 from pathlib import Path
 import os
 import pickle
+from plotly.subplots import make_subplots
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 def merge_dfs(array_of_dfs):
@@ -64,9 +65,11 @@ def plot_growth_inflation(start, end, **kwargs):
 
     growth_inflation_df = merge_dfs([growth,inflation,sp500,agg]).dropna()
     growth_inflation_df.columns = ['growth','inflation','sp500','bonds']
-    growth_inflation_df['growth_roc'] = growth_inflation_df['growth'].diff(1)
+    growth_inflation_df['growth_roc'] = growth_inflation_df['growth'].diff()
+    growth_inflation_df['growth_roc_2'] = growth_inflation_df['growth_roc'].diff()
     growth_inflation_df['growth_z'] = rolling_zscore(growth_inflation_df['growth'],12)
-    growth_inflation_df['inflation_roc'] = growth_inflation_df['inflation'].diff(1)
+    growth_inflation_df['inflation_roc'] = growth_inflation_df['inflation'].diff()
+    growth_inflation_df['inflation_roc_2'] = growth_inflation_df['inflation_roc'].diff()
     growth_inflation_df['inflation_z'] = rolling_zscore(growth_inflation_df['inflation_roc'],12)
     growth_inflation_df['sp500_pct'] = growth_inflation_df['sp500'].pct_change()
     growth_inflation_df['bonds_pct'] = growth_inflation_df['bonds'].pct_change()
@@ -80,7 +83,7 @@ def plot_growth_inflation(start, end, **kwargs):
         (growth_inflation_df['inflation_roc'] > 0) &
         (growth_inflation_df['growth_roc'] > 0)
     ]
-    inflation_regime = growth_inflation_df[
+    stagflation_regime = growth_inflation_df[
         (growth_inflation_df['inflation_roc'] > 0) &
         (growth_inflation_df['growth_roc'] < 0)
     ]
@@ -94,39 +97,60 @@ def plot_growth_inflation(start, end, **kwargs):
     ]
 
     reflation_averages = reflation_regime[['sp500_pct','bonds_pct']].mean(axis=0) * 100
-    inflation_averages = inflation_regime[['sp500_pct','bonds_pct']].mean(axis=0)*  100
+    stagflation_averages = stagflation_regime[['sp500_pct','bonds_pct']].mean(axis=0)*  100
     goldilocks_averages = goldilocks_regime[['sp500_pct','bonds_pct']].mean(axis=0) * 100
     deflation_averages = deflation_regime[['sp500_pct','bonds_pct']].mean(axis=0) * 100
 
     gi_2_factor_results = pd.DataFrame()
     gi_2_factor_results['equities'] = [goldilocks_averages[0],
                                        reflation_averages[0],
-                                       inflation_averages[0],
-                                       deflation_averages[0]]
+                                       deflation_averages[0],
+                                       stagflation_averages[0],]
     gi_2_factor_results['bonds'] = [goldilocks_averages[1],
                                     reflation_averages[1],
-                                    inflation_averages[1],
-                                    deflation_averages[1]]
-
-
-    ### PLOT ###
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=growth_inflation_df.index, y=growth_inflation_df['growth'],
-                             mode='lines', name="SOFR - IORB"))
-    fig.update_layout(
-        title="CLI: Amplitude Adjusted for US",
-        yaxis_title="Index Points",
-        hovermode='x unified'
-    )
-    st.plotly_chart(fig, use_container_width=True)
+                                    deflation_averages[1],
+                                    stagflation_averages[1]]
 
     ### PLOT ###
+    colors = {
+        'SOFR': '#0B2138',
+        'DVP': '#48DEE9',
+        'TRIPARTY': '#7EC0EE',
+        'GCF': '#F9D15B',
+        'SRF': '#F9C846',
+        'RRP': '#F39C12',
+        'EFFR': '#023e8a',
+        'IORB': '#808080',
+    }
+    cols = ['growth', 'inflation','growth_roc','inflation_roc','growth_roc_2','inflation_roc_2']
+    labels = [
+        'CLI Outright',
+        'CPI Outright',
+        'CLI 1st Order Change',
+        'CPI 1st Order Change',
+        'CPI 2nd Order Change',
+        'CLI 2nd Order Change'
+    ]
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=growth_inflation_df.index, y=growth_inflation_df['inflation'],
-                             mode='lines', name="SOFR - IORB"))
+    fig = make_subplots(rows=3, cols=2, subplot_titles=labels)
+    for i, (col, color, label) in enumerate(zip(cols, colors, labels)):
+        row = i // 2 + 1
+        col_position = i % 2 + 1
+        fig.add_trace(
+            go.Scatter(
+                x=growth_inflation_df.index,
+                y=growth_inflation_df[col],
+                mode='lines',
+                name=label,
+                line=dict(color=color)
+            ),
+            row=row,
+            col=col_position
+        )
     fig.update_layout(
-        title="CPI",
-        yaxis_title="Index Points",
+        title="Growth and Inflation Factors",
+        showlegend=False,
+        height=300,
         hovermode='x unified'
     )
     st.plotly_chart(fig, use_container_width=True)
