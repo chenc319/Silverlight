@@ -156,6 +156,43 @@ def plot_growth_inflation(start, end, **kwargs):
         '#AB68D7',  # CPI 2nd Order Change: violet-purple
         '#38C8E7'  # CLI 2nd Order Change: clear aqua blue
     ]
+    fig = make_subplots(rows=3, cols=2, subplot_titles=labels)
+    for i, (col, color, label) in enumerate(zip(cols, colors, labels)):
+        row = i // 2 + 1
+        col_position = i % 2 + 1
+        fig.add_trace(
+            go.Scatter(
+                x=growth_inflation_df.index,
+                y=growth_inflation_df[col],
+                mode='lines',
+                name=label,
+                line=dict(color=color)
+            ),
+            row=row,
+            col=col_position
+        )
+    fig.update_layout(
+        title="Growth and Inflation Factors",
+        showlegend=False,
+        height=900,
+        hovermode='x unified'
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    ### PLOT ###
+    regime_colors = {
+        0: '#E74C3C',  # Reflation: vivid red, energetic
+        1: '#F1C40F',  # Stagflation: clear gold-yellow, caution
+        2: '#27AE60',  # Goldilocks: medium green, stability
+        3: '#2980B9'  # Deflation: solid blue, cool/calm
+    }
+    regime_labels = {
+        0: 'Reflation',
+        1: 'Stagflation',
+        2: 'Goldilocks',
+        3: 'Deflation'
+    }
+
     regime_colors = {
         0: '#E74C3C',  # Reflation (red)
         1: '#F1C40F',  # Stagflation (yellow)
