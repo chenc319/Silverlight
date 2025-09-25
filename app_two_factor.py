@@ -156,35 +156,11 @@ def plot_growth_inflation(start, end, **kwargs):
         '#AB68D7',  # CPI 2nd Order Change: violet-purple
         '#38C8E7'  # CLI 2nd Order Change: clear aqua blue
     ]
-    fig = make_subplots(rows=3, cols=2, subplot_titles=labels)
-    for i, (col, color, label) in enumerate(zip(cols, colors, labels)):
-        row = i // 2 + 1
-        col_position = i % 2 + 1
-        fig.add_trace(
-            go.Scatter(
-                x=growth_inflation_df.index,
-                y=growth_inflation_df[col],
-                mode='lines',
-                name=label,
-                line=dict(color=color)
-            ),
-            row=row,
-            col=col_position
-        )
-    fig.update_layout(
-        title="Growth and Inflation Factors",
-        showlegend=False,
-        height=900,
-        hovermode='x unified'
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    ### PLOT ###
     regime_colors = {
-        0: '#E74C3C',  # Reflation: vivid red, energetic
-        1: '#F1C40F',  # Stagflation: clear gold-yellow, caution
-        2: '#27AE60',  # Goldilocks: medium green, stability
-        3: '#2980B9'  # Deflation: solid blue, cool/calm
+        0: '#E74C3C',  # Reflation (red)
+        1: '#F1C40F',  # Stagflation (yellow)
+        2: '#27AE60',  # Goldilocks (green)
+        3: '#2980B9'  # Deflation (blue)
     }
     regime_labels = {
         0: 'Reflation',
@@ -192,53 +168,41 @@ def plot_growth_inflation(start, end, **kwargs):
         2: 'Goldilocks',
         3: 'Deflation'
     }
+    df = growth_inflation_df.copy()
+    df = df.dropna(subset=['regime_code']).copy()
+    df = df[~df.index.duplicated(keep='first')]
+    df['regime_code'] = df['regime_code'].astype(int)
+    df['regime_color'] = df['regime_code'].map(regime_colors)
+    df['regime_label'] = df['regime_code'].map(regime_labels)
 
     fig = go.Figure()
-    added_legends = set()
 
-    prev_regime = None
-    segment_x = []
-    segment_y = []
-    segment_color = None
-    segment_label = None
+    # Add main SP500 unbroken line
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df['sp500'],
+        mode='lines',
+        line=dict(color='black', width=2),  # or your preferred line color
+        name='SP500'
+    ))
 
-    for i, (idx, row) in enumerate(df.iterrows()):
-        regime = row['regime_code']
-        color = row['regime_color']
-        label = regime_labels[regime]
-        if prev_regime is None:
-            prev_regime = regime
-            segment_color = color
-            segment_label = label
-        if regime != prev_regime or i == len(df) - 1:
-            # On last row, also append current point
-            if i == len(df) - 1:
-                segment_x.append(idx)
-                segment_y.append(row['sp500'])
-            if segment_x:
-                showlegend = segment_label not in added_legends
-                fig.add_trace(go.Scatter(
-                    x=segment_x,
-                    y=segment_y,
-                    mode='lines',
-                    line=dict(color=segment_color, width=2),
-                    name=segment_label,
-                    showlegend=showlegend
-                ))
-                added_legends.add(segment_label)
-            segment_x = []
-            segment_y = []
-            segment_color = color
-            segment_label = label
-            prev_regime = regime
-        segment_x.append(idx)
-        segment_y.append(row['sp500'])
+    # Add colored regime markers
+    for rc, color in regime_colors.items():
+        mask = df['regime_code'] == rc
+        fig.add_trace(go.Scatter(
+            x=df.index[mask],
+            y=df['sp500'][mask],
+            mode='markers',
+            marker=dict(color=color, size=8),
+            name=regime_labels[rc],
+            showlegend=True
+        ))
 
     fig.update_layout(
-        title="SP500 Regime-Colored (Continuous, Hex-in-DF)",
-        yaxis_title="SP500",
+        title='SP500 with Regime-Colored Markers',
+        yaxis_title='SP500',
         hovermode='x unified',
-        legend=dict(title="Regime")
+        legend=dict(title='Regime')
     )
     st.plotly_chart(fig, use_container_width=True)
 
