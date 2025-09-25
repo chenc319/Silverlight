@@ -112,16 +112,6 @@ def plot_growth_inflation(start, end, **kwargs):
                                     stagflation_averages[1]]
 
     ### PLOT ###
-    colors = {
-        'SOFR': '#0B2138',
-        'DVP': '#48DEE9',
-        'TRIPARTY': '#7EC0EE',
-        'GCF': '#F9D15B',
-        'SRF': '#F9C846',
-        'RRP': '#F39C12',
-        'EFFR': '#023e8a',
-        'IORB': '#808080',
-    }
     cols = ['growth', 'inflation','growth_roc','inflation_roc','growth_roc_2','inflation_roc_2']
     labels = [
         'CLI Outright',
@@ -131,8 +121,8 @@ def plot_growth_inflation(start, end, **kwargs):
         'CPI 2nd Order Change',
         'CLI 2nd Order Change'
     ]
-    fig = go.Figure()
-    fig = make_subplots(rows=3, cols=2, subplot_titles=labels)
+    colors = ['#0B2138', '#48DEE9', '#7EC0EE','#F9D15B','#F9C846','#F39C12']
+    fig = make_subplots(rows=1, cols=2, subplot_titles=labels)
     for i, (col, color, label) in enumerate(zip(cols, colors, labels)):
         row = i // 2 + 1
         col_position = i % 2 + 1
