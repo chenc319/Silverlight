@@ -110,6 +110,18 @@ def plot_growth_inflation(start, end, **kwargs):
             return np.nan
 
     growth_inflation_df['regime_code'] = growth_inflation_df.apply(regime_label, axis=1)
+    regime_colors = {
+        0: '#E74C3C',  # Reflation (red)
+        1: '#F1C40F',  # Stagflation (yellow)
+        2: '#27AE60',  # Goldilocks (green)
+        3: '#2980B9'  # Deflation (blue)
+    }
+
+    df = growth_inflation_df.copy()
+    df = df.dropna(subset=['regime_code']).copy()
+    df = df[~df.index.duplicated(keep='first')]
+    df['regime_code'] = df['regime_code'].astype(int)
+    df['regime_color'] = df['regime_code'].map(regime_colors)
 
     reflation_averages = reflation_regime[['sp500_pct','bonds_pct']].mean(axis=0) * 100
     stagflation_averages = stagflation_regime[['sp500_pct','bonds_pct']].mean(axis=0)*  100
@@ -184,48 +196,52 @@ def plot_growth_inflation(start, end, **kwargs):
     fig = go.Figure()
     added_legends = set()
 
-    # Iterate through DataFrame by regime-segment (continuous runs with same regime)
     prev_regime = None
     segment_x = []
     segment_y = []
+    segment_color = None
+    segment_label = None
+
     for i, (idx, row) in enumerate(df.iterrows()):
         regime = row['regime_code']
+        color = row['regime_color']
+        label = regime_labels[regime]
         if prev_regime is None:
             prev_regime = regime
+            segment_color = color
+            segment_label = label
         if regime != prev_regime or i == len(df) - 1:
-            # Plot the previous segment
             # On last row, also append current point
             if i == len(df) - 1:
                 segment_x.append(idx)
                 segment_y.append(row['sp500'])
             if segment_x:
-                name = regime_labels[prev_regime]
-                showlegend = name not in added_legends
+                showlegend = segment_label not in added_legends
                 fig.add_trace(go.Scatter(
                     x=segment_x,
                     y=segment_y,
                     mode='lines',
-                    line=dict(color=regime_colors[prev_regime], width=2),
-                    name=name,
+                    line=dict(color=segment_color, width=2),
+                    name=segment_label,
                     showlegend=showlegend
                 ))
-                added_legends.add(name)
-            # Start new segment
+                added_legends.add(segment_label)
             segment_x = []
             segment_y = []
+            segment_color = color
+            segment_label = label
             prev_regime = regime
         segment_x.append(idx)
         segment_y.append(row['sp500'])
 
     fig.update_layout(
-        title="SP500 Regime-Colored (Continuous)",
+        title="SP500 Regime-Colored (Continuous, Hex-in-DF)",
         yaxis_title="SP500",
         hovermode='x unified',
-        legend=dict(
-            title="Regime"
-        )
+        legend=dict(title="Regime")
     )
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
