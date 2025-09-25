@@ -68,10 +68,8 @@ def plot_growth_inflation(start, end, **kwargs):
     growth_inflation_df.columns = ['growth','inflation','sp500','bonds']
     growth_inflation_df['growth_roc'] = growth_inflation_df['growth'].diff()
     growth_inflation_df['growth_roc_2'] = growth_inflation_df['growth_roc'].diff()
-    growth_inflation_df['growth_z'] = rolling_zscore(growth_inflation_df['growth'],12)
     growth_inflation_df['inflation_roc'] = growth_inflation_df['inflation'].diff()
     growth_inflation_df['inflation_roc_2'] = growth_inflation_df['inflation_roc'].diff()
-    growth_inflation_df['inflation_z'] = rolling_zscore(growth_inflation_df['inflation_roc'],12)
     growth_inflation_df['sp500_pct'] = growth_inflation_df['sp500'].pct_change()
     growth_inflation_df['bonds_pct'] = growth_inflation_df['bonds'].pct_change()
     growth_inflation_df = growth_inflation_df.dropna()
@@ -137,6 +135,13 @@ def plot_growth_inflation(start, end, **kwargs):
                                     reflation_averages[1],
                                     deflation_averages[1],
                                     stagflation_averages[1]]
+
+    gi_2_factor_results.index =  [
+        'Goldilocks (I-G+)',
+        'Reflation (I+G+)',
+        'Deflation (I-G-)',
+        'Stagflation (I+G-)',
+    ]
 
     ### PLOT ###
     cols = ['growth', 'inflation','growth_roc','inflation_roc','growth_roc_2','inflation_roc_2']
@@ -260,6 +265,16 @@ def plot_growth_inflation(start, end, **kwargs):
         legend=dict(title='Regime')
     )
     st.plotly_chart(fig, use_container_width=True)
+
+    from matplotlib.colors import LinearSegmentedColormap
+
+    # Create a colormap from red (neg), white (zero), to green (pos)
+    cmap = LinearSegmentedColormap.from_list('red_white_green', [
+        "#ff3333", "#ffffff", "#39b241"
+    ], N=256)
+
+    styled = df.style.background_gradient(cmap=cmap, subset=['bonds'])
+    st.dataframe(styled, use_container_width=True, hide_index=True)
 
 
 
