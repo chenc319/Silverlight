@@ -136,7 +136,14 @@ def plot_growth_inflation(start, end, **kwargs):
         'CPI 2nd Order Change',
         'CLI 2nd Order Change'
     ]
-    colors = ['#0B2138', '#48DEE9', '#7EC0EE','#F9D15B','#F9C846','#F39C12']
+    colors = [
+        '#2056AE',  # CLI Outright: rich blue
+        '#F2552C',  # CPI Outright: strong orange-red
+        '#6AC47E',  # CLI 1st Order Change: fresh green
+        '#F7BC38',  # CPI 1st Order Change: gold yellow
+        '#AB68D7',  # CPI 2nd Order Change: violet-purple
+        '#38C8E7'  # CLI 2nd Order Change: clear aqua blue
+    ]
     fig = make_subplots(rows=3, cols=2, subplot_titles=labels)
     for i, (col, color, label) in enumerate(zip(cols, colors, labels)):
         row = i // 2 + 1
@@ -162,10 +169,10 @@ def plot_growth_inflation(start, end, **kwargs):
 
     ### PLOT ###
     regime_colors = {
-        0: 'red',  # Reflation
-        1: 'yellow',  # Stagflation
-        2: 'green',  # Goldilocks
-        3: 'blue'  # Deflation
+        0: '#E74C3C',  # Reflation: vivid red, energetic
+        1: '#F1C40F',  # Stagflation: clear gold-yellow, caution
+        2: '#27AE60',  # Goldilocks: medium green, stability
+        3: '#2980B9'  # Deflation: solid blue, cool/calm
     }
     regime_labels = {
         0: 'Reflation',
