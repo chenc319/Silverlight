@@ -8,7 +8,6 @@ import pandas as pd
 import functools as ft
 import app_growth_inflation
 import app_firv_regime
-import app_regime_factors
 import app_barra_factors
 import app_tail_hedge
 
@@ -63,7 +62,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 ### SIDEBAR ###
-st.sidebar.title("Multifactor Regime Models")
+st.sidebar.title("Factor Models & Backtests")
 start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime('1999-12-31'))
 end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 
@@ -71,7 +70,6 @@ menu = st.sidebar.radio(
     "Go to section:",
     ['Growth and Inflation Model',
      'Yield Curve Regime Model',
-     'Quad Regime Factor Model',
      'Barra Factor Model',
      'Tail Hedge Portfolio']
 )
@@ -90,14 +88,6 @@ if menu == 'Growth and Inflation Model':
 elif menu == 'Yield Curve Regime Model':
     st.title("Yield Curve Tenors by Regime")
     app_firv_regime.plot_treasury_yield_curves(start_date, end_date)
-
-
-### ---------------------------------------------------------------------------------------- ###
-### ------------------------------- QUAD REGIME FACTOR MODEL ------------------------------- ###
-### ---------------------------------------------------------------------------------------- ###
-
-elif menu == 'Quad Regime Factor Model':
-    st.title("Quad Regime Factor Model")
 
 
 ### ---------------------------------------------------------------------------------------- ###
