@@ -215,44 +215,85 @@ def plot_growth_inflation(start, end, **kwargs):
 
     ### PLOT ###
     st.title("Growth and Inflation Inputs")
-    cols = ['growth', 'inflation','growth_roc','inflation_roc','growth_roc_2','inflation_roc_2']
-    labels = [
-        'CLI Outright',
-        'CPI Outright',
-        'CLI 1st Order Change',
-        'CPI 1st Order Change',
-        'CPI 2nd Order Change',
-        'CLI 2nd Order Change'
-    ]
-    colors = [
-        '#2056AE',  # CLI Outright: rich blue
-        '#F2552C',  # CPI Outright: strong orange-red
-        '#6AC47E',  # CLI 1st Order Change: fresh green
-        '#F7BC38',  # CPI 1st Order Change: gold yellow
-        '#AB68D7',  # CPI 2nd Order Change: violet-purple
-        '#38C8E7'  # CLI 2nd Order Change: clear aqua blue
-    ]
-    fig = make_subplots(rows=3, cols=2, subplot_titles=labels)
-    for i, (col, color, label) in enumerate(zip(cols, colors, labels)):
-        row = i // 2 + 1
-        col_position = i % 2 + 1
-        fig.add_trace(
-            go.Scatter(
-                x=growth_inflation_df.index,
-                y=growth_inflation_df[col],
-                mode='lines',
-                name=label,
-                line=dict(color=color)
-            ),
-            row=row,
-            col=col_position
-        )
-    fig.update_layout(
-        title="Growth and Inflation Factors",
-        showlegend=False,
-        height=900,
-        hovermode='x unified'
+    # Define data columns
+    cli_col = 'growth'
+    cli_diff_col = 'growth_roc'
+    cpi_col = 'inflation'
+    cpi_diff_col = 'inflation_roc'
+
+    # Axis/curve settings
+    colors = {
+        'CLI': '#2056AE',
+        'CLI 1st Change': '#6AC47E',
+        'CPI': '#F2552C',
+        'CPI 1st Change': '#F7BC38'
+    }
+
+    # Set up two subplots, both using secondary y-axis
+    fig = make_subplots(
+        rows=1, cols=2,
+        subplot_titles=['CLI (Outright + 1st Order Change)', 'CPI (Outright + 1st Order Change)'],
+        specs=[[{"secondary_y": True}, {"secondary_y": True}]]
     )
+
+    # CLI: Outright (primary y), 1st change (secondary y)
+    fig.add_trace(
+        go.Scatter(
+            x=growth_inflation_df.index,
+            y=growth_inflation_df[cli_col],
+            name='CLI Outright',
+            mode='lines',
+            line=dict(color=colors['CLI'], width=2)
+        ),
+        row=1, col=1, secondary_y=False
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=growth_inflation_df.index,
+            y=growth_inflation_df[cli_diff_col],
+            name='CLI 1st Order Change',
+            mode='lines',
+            line=dict(color=colors['CLI 1st Change'], dash='dot', width=2)
+        ),
+        row=1, col=1, secondary_y=True
+    )
+
+    # CPI: Outright (primary y), 1st change (secondary y)
+    fig.add_trace(
+        go.Scatter(
+            x=growth_inflation_df.index,
+            y=growth_inflation_df[cpi_col],
+            name='CPI Outright',
+            mode='lines',
+            line=dict(color=colors['CPI'], width=2)
+        ),
+        row=1, col=2, secondary_y=False
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=growth_inflation_df.index,
+            y=growth_inflation_df[cpi_diff_col],
+            name='CPI 1st Order Change',
+            mode='lines',
+            line=dict(color=colors['CPI 1st Change'], dash='dot', width=2)
+        ),
+        row=1, col=2, secondary_y=True
+    )
+
+    fig.update_layout(
+        title='Growth (CLI) and Inflation (CPI): Outright & 1st Order Change',
+        height=500,
+        width=1100,
+        hovermode='x unified',
+        legend=dict(title='Series', orientation='h', y=-0.2),
+        margin=dict(t=50, b=50)
+    )
+    fig.update_yaxes(title_text="CLI Outright", row=1, col=1, secondary_y=False)
+    fig.update_yaxes(title_text="CLI 1st Order Change", row=1, col=1, secondary_y=True)
+    fig.update_yaxes(title_text="CPI Outright", row=1, col=2, secondary_y=False)
+    fig.update_yaxes(title_text="CPI 1st Order Change", row=1, col=2, secondary_y=True)
+
+    # Streamlit plot
     st.plotly_chart(fig, use_container_width=True)
 
     ### PLOT ###
