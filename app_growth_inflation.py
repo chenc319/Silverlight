@@ -322,16 +322,19 @@ def plot_growth_inflation(start, end, **kwargs):
     st.plotly_chart(fig, use_container_width=True)
 
     ### TABLE ###
-    st.title("Growth and Inflation Backtest Results")
-    cmap = LinearSegmentedColormap.from_list('red_white_green', [
-        "#ff3333", "#ffffff", "#39b241"
-    ], N=256)
-
+    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
     styled = gi_2_factor_results.style \
         .format({'Equities': "{:.2f}%", 'Bonds': "{:.2f}%"}) \
         .set_properties(subset=['Equities', 'Bonds'], **{'width': '80px'}) \
         .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
-    st.dataframe(styled, use_container_width=False, hide_index=True)
+
+    # --- Centering with columns ---
+    st.title("Growth and Inflation Historical Performance")
+
+    # Make three columns; the center is for the table, the others are spacers
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.write(styled, unsafe_allow_html=True)
 
     ### ---------------------------------------------------------------------------------------------------------- ###
     ### ------------------------------------------------- PLOTS -------------------------------------------------- ###
@@ -397,13 +400,13 @@ def plot_growth_inflation(start, end, **kwargs):
     st.title("Top Bottom SPX Sector Performance")
     cols = st.columns(4)
     with cols[0]:
-        st.write(style_percent(reflation_sector_averages), unsafe_allow_html=True)
-    with cols[1]:
-        st.write(style_percent(stagflation_sector_averages), unsafe_allow_html=True)
-    with cols[2]:
         st.write(style_percent(goldilocks_sector_averages), unsafe_allow_html=True)
-    with cols[3]:
+    with cols[1]:
+        st.write(style_percent(reflation_sector_averages), unsafe_allow_html=True)
+    with cols[2]:
         st.write(style_percent(deflation_sector_averages), unsafe_allow_html=True)
+    with cols[3]:
+        st.write(style_percent(stagflation_sector_averages), unsafe_allow_html=True)
 
 
 
