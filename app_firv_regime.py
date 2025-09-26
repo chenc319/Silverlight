@@ -87,7 +87,6 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     treasury_yield_curve['regime_color'] = treasury_yield_curve['Curve Regime'].map(regime_colors)
 
     ### PLOT ###
-    st.title("Equity and Fixed Income by Regime")
     regime_colors = {
         0: '#E74C3C',  # Reflation (red)
         1: '#F1C40F',  # Stagflation (yellow)
@@ -141,7 +140,6 @@ def plot_treasury_yield_curves(start,end,**kwargs):
             ), row=r, col=c)
 
     fig.update_layout(
-        title="Treasury Yields by Regime (2x5 Subplots, Tenor by Tenor)",
         legend=dict(title='Regime', x=1.02, y=1),
         margin=dict(t=40, b=40),
         hovermode='closest',
