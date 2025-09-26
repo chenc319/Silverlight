@@ -379,22 +379,31 @@ def plot_growth_inflation(start, end, **kwargs):
     # Custom diverging colormap: red (neg), white (zero), green (pos)
     cmap = LinearSegmentedColormap.from_list("red_white_green", ["#ff3333", "#ffffff", "#33cc33"])
 
-    def style_df(df):
-        colname = df.columns[0]
-        return df.style.format({colname: "{:.2f}%"}) \
-            .background_gradient(cmap=cmap, vmin=df[colname].min(), vmax=df[colname].max(), subset=[colname])
+    def highlight_red_green(val):
+        if val < 0:
+            color = 'background-color: #ffcccc'  # light red
+        elif val > 0:
+            color = 'background-color: #ccffcc'  # light green
+        else:
+            color = ''  # no highlight for zero
+        return color
+
+    def style_percent(df):
+        col = df.columns[0]
+        return df.style.format({col: "{:.2f}%"}) \
+            .applymap(highlight_red_green, subset=[col])
 
     ### PLOT ###
     st.title("Top Bottom SPX Sector Performance")
     cols = st.columns(4)
     with cols[0]:
-        st.write(style_df(reflation_sector_averages), unsafe_allow_html=True)
+        st.write(style_percent(reflation_sector_averages), unsafe_allow_html=True)
     with cols[1]:
-        st.write(style_df(stagflation_sector_averages), unsafe_allow_html=True)
+        st.write(style_percent(stagflation_sector_averages), unsafe_allow_html=True)
     with cols[2]:
-        st.write(style_df(goldilocks_sector_averages), unsafe_allow_html=True)
+        st.write(style_percent(goldilocks_sector_averages), unsafe_allow_html=True)
     with cols[3]:
-        st.write(style_df(deflation_sector_averages), unsafe_allow_html=True)
+        st.write(style_percent(deflation_sector_averages), unsafe_allow_html=True)
 
 
 
