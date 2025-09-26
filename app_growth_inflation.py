@@ -385,7 +385,7 @@ def plot_growth_inflation(start, end, **kwargs):
             .background_gradient(cmap=cmap, vmin=df[colname].min(), vmax=df[colname].max(), subset=[colname])
 
     ### PLOT ###
-    st.title("Growth and Inflation Backtest Results")
+    st.title("Top Bottom SPX Sector Performance")
     cols = st.columns(4)
     with cols[0]:
         st.write(style_df(reflation_sector_averages), unsafe_allow_html=True)
