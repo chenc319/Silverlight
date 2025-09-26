@@ -131,16 +131,16 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     # Tenors to use (10, omitting '7y' as example)
     subplot_tenors = ['1m', '3m', '6m', '1y', '2y', '3y', '5y', '10y', '20y', '30y']
     regime_colors = {
-        'Bear Steepener': '#27AE60',
-        'Bear Flattener': '#F1C40F',
-        'Bull Steepener': '#E74C3C',
-        'Bull Flattener': '#2980B9',
+        'Bear Steepening': '#27AE60',
+        'Bear Steepening': '#F1C40F',
+        'Bull Steepening': '#E74C3C',
+        'Bull Steepening': '#2980B9',
     }
     regime_labels = {
-        'Bear Steepener': 'Bear Steepener',
-        'Bear Flattener': 'Bear Flattener',
-        'Bull Steepener': 'Bull Steepener',
-        'Bull Flattener': 'Bull Flattener'
+        'Bear Steepening': 'Bear Steepening',
+        'Bear Steepening': 'Bear Steepening',
+        'Bull Steepening': 'Bull Steepening',
+        'Bull Steepening': 'Bull Steepening'
     }
 
     rows, cols = 2, 5
