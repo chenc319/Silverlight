@@ -396,7 +396,7 @@ def plot_growth_inflation(start, end, **kwargs):
                  'Bonds': "{:.2f}%",
                  '% of Occurences': "{:.2f}%"}) \
         .set_properties(subset=['Equities', 'Bonds', '% of Occurences'], **{'width': '80px'}) \
-        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds', '% of Occurences'])
+        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
 
     # --- Centering with columns ---
     st.title("Growth and Inflation Historical Performance")
