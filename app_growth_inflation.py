@@ -365,12 +365,16 @@ def plot_growth_inflation(start, end, **kwargs):
 
     reflation_sector_averages = pd.DataFrame((reflation_sector_regime[
         sector_merge.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
+    reflation_sector_averages.columns = ['Reflation']
     stagflation_sector_averages = pd.DataFrame((stagflation_sector_regime[
         sector_merge.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
+    stagflation_sector_averages.columns = ['Stagflation']
     goldilocks_sector_averages = pd.DataFrame((goldilocks_sector_regime[
         sector_merge.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
+    goldilocks_sector_averages.columns = ['Goldilocks']
     deflation_sector_averages = pd.DataFrame((deflation_sector_regime[
         sector_merge.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
+    deflation_sector_averages.columns = ['Deflation']
 
     # Custom diverging colormap: red (neg), white (zero), green (pos)
     cmap = LinearSegmentedColormap.from_list("red_white_green", ["#ff3333", "#ffffff", "#33cc33"])
