@@ -102,7 +102,8 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     }
     df = treasury_yield_curve.copy()
 
-
+    # Tenors to use (10, omitting '7y' as example)
+    subplot_tenors = ['1m', '3m', '6m', '1y', '2y', '3y', '5y', '10y', '20y', '30y']
     regime_colors = {
         'Bear Steepener': '#27AE60',
         'Bear Flattener': '#F1C40F',
@@ -115,29 +116,37 @@ def plot_treasury_yield_curves(start,end,**kwargs):
         'Bull Steepener': 'Bull Steepener',
         'Bull Flattener': 'Bull Flattener'
     }
-    tenors = ['1m', '3m', '6m', '1y', '2y', '3y', '5y', '7y', '10y', '20y', '30y']
 
-    fig = go.Figure()
-    for regime, color in regime_colors.items():
-        mask = df['Curve Regime'] == regime
-        for tenor in tenors:
+    rows, cols = 2, 5
+    fig = make_subplots(rows=rows, cols=cols,
+                        subplot_titles=[t for t in subplot_tenors],
+                        shared_xaxes=True, shared_yaxes=False)
+
+    for i, tenor in enumerate(subplot_tenors):
+        r = i // cols + 1
+        c = i % cols + 1
+        for regime, color in regime_colors.items():
+            mask = df['Curve Regime'] == regime
             fig.add_trace(go.Scatter(
                 x=df.index[mask],
                 y=df[tenor][mask],
                 mode='markers',
-                marker=dict(color=color, size=8),
-                name=f"{regime} {tenor}" if tenor == '1m' else None,  # one legend entry per regime
-                showlegend=(tenor == '1m'),
+                marker=dict(size=7, color=color),
+                name=regime if (i == 0) else None,  # legend only in first plot
+                showlegend=(i == 0),
                 hovertemplate=(
                     f"Regime: {regime_labels[regime]}<br>Tenor: {tenor}<br>Yield: %{{y}}<br>Date: %{{x}}"
                 ),
                 text=[regime_labels[regime]] * mask.sum()
-            ))
+            ), row=r, col=c)
 
     fig.update_layout(
-        title="Treasury Yields by Curve Regime",
-        hovermode='x',
-        legend=dict(title='Regime')
+        title="Treasury Yields by Regime (2x5 Subplots, Tenor by Tenor)",
+        legend=dict(title='Regime', x=1.02, y=1),
+        margin=dict(t=40, b=40),
+        hovermode='closest',
+        height=700,
+        width=1200
     )
     st.plotly_chart(fig, use_container_width=True)
 
