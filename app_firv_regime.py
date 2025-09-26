@@ -114,8 +114,6 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     treasury_yield_curve['regime_color'] = treasury_yield_curve['curve_regime'].map(regime_colors)
 
     ### PLOT ###
-
-    # Tenors to use (10, omitting '7y' as example)
     subplot_tenors = ['1m', '3m', '6m', '1y', '2y', '3y', '5y', '10y', '20y', '30y']
     regime_colors = {
         'Bear Steepening': '#27AE60',
@@ -139,10 +137,10 @@ def plot_treasury_yield_curves(start,end,**kwargs):
         r = i // cols + 1
         c = i % cols + 1
         for regime, color in regime_colors.items():
-            mask = df['curve_regime'] == regime
+            mask = treasury_yield_curve['curve_regime'] == regime
             fig.add_trace(go.Scatter(
-                x=df.index[mask],
-                y=df[tenor][mask],
+                x=treasury_yield_curve.index[mask],
+                y=treasury_yield_curve[tenor][mask],
                 mode='markers',
                 marker=dict(size=7, color=color),
                 name=regime if (i == 0) else None,  # legend only in first plot
