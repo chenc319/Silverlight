@@ -6,7 +6,7 @@
 import streamlit as st
 import pandas as pd
 import functools as ft
-import app_two_factor
+import app_growth_inflation
 
 import time
 
@@ -26,7 +26,7 @@ def merge_dfs(array_of_dfs):
 
 ### CONFIGURE PAGE SETTINGS ###
 st.set_page_config(
-    page_title="Silverlight Regime Dashboard",
+    page_title="Factor Models & Backtests",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -65,8 +65,8 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 
 menu = st.sidebar.radio(
     "Go to section:",
-    ['2-Factor Model',
-     'Sector Overlay']
+    ['Growth and Inflation Model',
+     'Tail Hedge Backtest']
 )
 
 ### ---------------------------------------------------------------------------------------- ###
@@ -74,7 +74,10 @@ menu = st.sidebar.radio(
 ### ---------------------------------------------------------------------------------------- ###
 
 if menu == '2-Factor Model':
-    st.title("Growth and Inflation")
-    app_two_factor.plot_growth_inflation(start_date, end_date)
+    app_growth_inflation.plot_growth_inflation(start_date, end_date)
+
+if menu == '2-Factor Model':
+    st.title("Tail Hedge Backtest")
+    app_tail_hedge.plot_growth_inflation(start_date, end_date)
 
 
