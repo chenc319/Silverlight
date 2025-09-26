@@ -74,17 +74,44 @@ def plot_treasury_yield_curves(start,end,**kwargs):
         df.columns = [treasury_factors[each_factor]]
         treasury_yield_curve = merge_dfs([treasury_yield_curve, df])
     treasury_yield_curve = treasury_yield_curve.dropna()
+    treasury_yield_curve['yc_spread_2_10'] = treasury_yield_curve['10y'] - treasury_yield_curve['2y']
+    treasury_yield_curve['yc_spread_2_30'] = treasury_yield_curve['30y'] - treasury_yield_curve['2y']
+    treasury_yield_curve['yc_spread_3m_10'] = treasury_yield_curve['30y'] - treasury_yield_curve['2y']
+    treasury_yield_curve['yc_spread_avg'] = (
+            treasury_yield_curve['yc_spread_2_10'] +
+            treasury_yield_curve['yc_spread_2_30'] +
+            treasury_yield_curve['yc_spread_3m_10']
+    )
+    treasury_yield_curve['yc_spread_diff'] = treasury_yield_curve['yc_spread_avg'].diff()
 
-    classify_curve_regime(treasury_yield_curve,'30y','2y')
+    yield_pct = treasury_yield_curve.pct_change()
+    short_term_pct = yield_pct[['1m','3m','6m','1y']].mean(axis=1)
+    medium_term_pct = yield_pct[['2y','3y','5y','7y','10y']].mean(axis=1)
+    long_term_pct = yield_pct[['20y','30y']].mean(axis=1)
+    treasury_yield_curve['short_ylds_pct'] = short_term_pct
+    treasury_yield_curve['medium_ylds_pct'] = medium_term_pct
+    treasury_yield_curve['long_ylds_pct'] = long_term_pct
 
+    treasury_yield_curve['curve_regime'] = np.nan
+    for row in treasury_yield_curve.index:
+        if treasury_yield_curve.loc[row,'yc_spread_diff'] > 0:
+            if treasury_yield_curve.loc[row,'short_ylds_pct'] > 0:
+                treasury_yield_curve.loc[row,'curve_regime'] = 'Bear Steepening'
+            else:
+                treasury_yield_curve.loc[row, 'curve_regime'] = 'Bull Steepening'
+        elif treasury_yield_curve.loc[row,'yc_spread_diff'] < 0:
+            if treasury_yield_curve.loc[row,'short_ylds_pct'] > 0:
+                treasury_yield_curve.loc[row,'curve_regime'] = 'Bear Flattening'
+            else:
+                treasury_yield_curve.loc[row, 'curve_regime'] = 'Bull Flattening'
 
     regime_colors = {
-        'Bull Steepener': '#E74C3C',  # Reflation (red)
-        'Bear Flattener': '#F1C40F',  # Stagflation (yellow)
-        'Bear Steepener': '#27AE60',  # Goldilocks (green)
-        'Bull Flattener': '#2980B9'  # Deflation (blue)
+        'Bull Steepening': '#E74C3C',  # Reflation (red)
+        'Bear Flattening': '#F1C40F',  # Stagflation (yellow)
+        'Bear Steepening': '#27AE60',  # Goldilocks (green)
+        'Bull Flattening': '#2980B9'  # Deflation (blue)
     }
-    treasury_yield_curve['regime_color'] = treasury_yield_curve['Curve Regime'].map(regime_colors)
+    treasury_yield_curve['regime_color'] = treasury_yield_curve['curve_regime'].map(regime_colors)
 
     ### PLOT ###
     regime_colors = {
@@ -125,7 +152,7 @@ def plot_treasury_yield_curves(start,end,**kwargs):
         r = i // cols + 1
         c = i % cols + 1
         for regime, color in regime_colors.items():
-            mask = df['Curve Regime'] == regime
+            mask = df['curve_regime'] == regime
             fig.add_trace(go.Scatter(
                 x=df.index[mask],
                 y=df[tenor][mask],
