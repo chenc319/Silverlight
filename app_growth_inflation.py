@@ -29,6 +29,23 @@ spx_sectors = {
     "XLU": "utilities"
 }
 
+quad_regime_factors = {
+    "SPHB": "high_beta",
+    "SPLV": "low_beta",
+    "IWM": "small_caps",
+    "IWR": "mid_caps",
+    "MGK": "mega_cap_growth",
+    "IYT": "cyclicals", # or IWN
+    "DEF": "defensives",
+    "OEF": "size",
+    "QUAL": "quality",
+    "SPHD": "dividends",
+    "MTUM": "momentum",
+    "IWD": "value",
+    "IWF": "equity_growth",
+    "IWB": "large_caps"
+}
+
 def merge_dfs(array_of_dfs):
     return ft.reduce(lambda left, right: pd.merge(left, right,
                                                   left_index=True,
@@ -337,7 +354,7 @@ def plot_growth_inflation(start, end, **kwargs):
         st.write(styled, unsafe_allow_html=True)
 
     ### ---------------------------------------------------------------------------------------------------------- ###
-    ### ------------------------------------------------- PLOTS -------------------------------------------------- ###
+    ### ------------------------------------------------ SECTORS ------------------------------------------------- ###
     ### ---------------------------------------------------------------------------------------------------------- ###
 
     sector_merge = merge_dfs([xlc,xly, xlp,
@@ -408,8 +425,85 @@ def plot_growth_inflation(start, end, **kwargs):
     with cols[3]:
         st.write(style_percent(stagflation_sector_averages), unsafe_allow_html=True)
 
+    ### ---------------------------------------------------------------------------------------------------------- ###
+    ### ------------------------------------------------ SECTORS ------------------------------------------------- ###
+    ### ---------------------------------------------------------------------------------------------------------- ###
 
+    all_quad_regime_factors = pd.DataFrame()
+    for each_factor in list(quad_regime_factors.keys()):
+        with open(Path(DATA_DIR) / (each_factor + '.csv'), 'rb') as file:
+            df = pd.read_csv(file)
+        df.index = pd.to_datetime(df['Date']).values
+        final_df = pd.DataFrame(df['Close'])
+        final_df.columns = [quad_regime_factors[each_factor]]
+        all_quad_regime_factors = merge_dfs([all_quad_regime_factors, final_df])
 
+    factors_pct = all_quad_regime_factors.resample('ME').last().pct_change()
+
+    growth_inflation_factors = merge_dfs([growth_inflation_df, factors_pct])
+
+    reflation_factor_regime = growth_inflation_factors[
+        (growth_inflation_factors['inflation_roc'] > 0) &
+        (growth_inflation_factors['growth_roc'] > 0)
+        ]
+    stagflation_factor_regime = growth_inflation_factors[
+        (growth_inflation_factors['inflation_roc'] > 0) &
+        (growth_inflation_factors['growth_roc'] < 0)
+        ]
+    goldilocks_factor_regime = growth_inflation_factors[
+        (growth_inflation_factors['inflation_roc'] < 0) &
+        (growth_inflation_factors['growth_roc'] > 0)
+        ]
+    deflation_factor_regime = growth_inflation_factors[
+        (growth_inflation_factors['inflation_roc'] < 0) &
+        (growth_inflation_factors['growth_roc'] < 0)
+        ]
+
+    reflation_factor_averages = pd.DataFrame((reflation_factor_regime[
+                                                  factors_pct.columns].mean(axis=0).sort_values(
+        ascending=False) * 100).round(2))
+    reflation_factor_averages.columns = ['Reflation']
+    stagflation_factor_averages = pd.DataFrame((stagflation_factor_regime[
+                                                    factors_pct.columns].mean(axis=0).sort_values(
+        ascending=False) * 100).round(2))
+    stagflation_factor_averages.columns = ['Stagflation']
+    goldilocks_factor_averages = pd.DataFrame((goldilocks_factor_regime[
+                                                   factors_pct.columns].mean(axis=0).sort_values(
+        ascending=False) * 100).round(2))
+    goldilocks_factor_averages.columns = ['Goldilocks']
+    deflation_factor_averages = pd.DataFrame((deflation_factor_regime[
+                                                  factors_pct.columns].mean(axis=0).sort_values(
+        ascending=False) * 100).round(2))
+    deflation_factor_averages.columns = ['Deflation']
+
+    # Custom diverging colormap: red (neg), white (zero), green (pos)
+    cmap = LinearSegmentedColormap.from_list("red_white_green", ["#ff3333", "#ffffff", "#33cc33"])
+
+    def highlight_red_green(val):
+        if val < 0:
+            color = 'background-color: #ffcccc'  # light red
+        elif val > 0:
+            color = 'background-color: #ccffcc'  # light green
+        else:
+            color = ''  # no highlight for zero
+        return color
+
+    def style_percent(df):
+        col = df.columns[0]
+        return df.style.format({col: "{:.2f}%"}) \
+            .applymap(highlight_red_green, subset=[col])
+
+    ### PLOT ###
+    st.title("Top Bottom SPX Factor Performance")
+    cols = st.columns(4)
+    with cols[0]:
+        st.write(style_percent(goldilocks_factor_averages), unsafe_allow_html=True)
+    with cols[1]:
+        st.write(style_percent(reflation_factor_averages), unsafe_allow_html=True)
+    with cols[2]:
+        st.write(style_percent(deflation_factor_averages), unsafe_allow_html=True)
+    with cols[3]:
+        st.write(style_percent(stagflation_factor_averages), unsafe_allow_html=True)
 
 
 
