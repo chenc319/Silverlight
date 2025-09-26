@@ -66,6 +66,8 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 menu = st.sidebar.radio(
     "Go to section:",
     ['Growth and Inflation Model',
+     'Quad Regime Factor Model',
+     'Barra Factor Model',
      'Tail Hedge Backtest']
 )
 
@@ -73,11 +75,10 @@ menu = st.sidebar.radio(
 ### -------------------------------------- RISK CHECKS ------------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-if menu == '2-Factor Model':
+if menu == 'Growth and Inflation Model':
     app_growth_inflation.plot_growth_inflation(start_date, end_date)
 
-if menu == '2-Factor Model':
+elif menu == 'Tail Hedge Backtest':
     st.title("Tail Hedge Backtest")
-    app_tail_hedge.plot_growth_inflation(start_date, end_date)
 
 
