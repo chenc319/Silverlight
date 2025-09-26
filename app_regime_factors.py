@@ -45,11 +45,10 @@ def plot_quad_regime_factors(start,end,**kwargs):
     for each_factor in list(quad_regime_factors.keys()):
         with open(Path(DATA_DIR) / (each_factor + '.csv'), 'rb') as file:
             df = pd.read_csv(file)
-            df.index = pd.to_datetime(df['Date']).values
-            all_quad_regime_factors[each_factor] = df['Close']
-            final_df = pd.DataFrame(df['Close'])
-            final_df
-            all_quad_regime_factors = merge_dfs([all_quad_regime_factors])
+        df.index = pd.to_datetime(df['Date']).values
+        final_df = pd.DataFrame(df['Close'])
+        final_df.columns = [quad_regime_factors[each_factor]]
+        all_quad_regime_factors = merge_dfs([all_quad_regime_factors,final_df])
 
 
 
