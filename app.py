@@ -7,6 +7,7 @@ import streamlit as st
 import pandas as pd
 import functools as ft
 import app_growth_inflation
+import app_firv_regime
 import app_regime_factors
 import app_barra_factors
 import app_tail_hedge
@@ -88,6 +89,7 @@ if menu == 'Growth and Inflation Model':
 
 elif menu == 'Yield Curve Regime Model':
     st.title("Yield Curve Regime Model")
+    app_firv_regime.plot_treasury_yield_curves(start_date, end_date)
 
 
 ### ---------------------------------------------------------------------------------------- ###
