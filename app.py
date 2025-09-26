@@ -7,6 +7,9 @@ import streamlit as st
 import pandas as pd
 import functools as ft
 import app_growth_inflation
+import app_regime_factors
+import app_barra_factors
+import app_tail_hedge
 
 import time
 
@@ -66,19 +69,48 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 menu = st.sidebar.radio(
     "Go to section:",
     ['Growth and Inflation Model',
+     'Yield Curve Regime Model',
      'Quad Regime Factor Model',
      'Barra Factor Model',
-     'Tail Hedge Backtest']
+     'Tail Hedge Portfolio']
 )
 
 ### ---------------------------------------------------------------------------------------- ###
-### -------------------------------------- RISK CHECKS ------------------------------------- ###
+### --------------------------------- GROWTH AND INFLATION --------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
 if menu == 'Growth and Inflation Model':
     app_growth_inflation.plot_growth_inflation(start_date, end_date)
 
-elif menu == 'Tail Hedge Backtest':
-    st.title("Tail Hedge Backtest")
+### ---------------------------------------------------------------------------------------- ###
+### ------------------------------- YIELD CURVE REGIME MODEL ------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif menu == 'Yield Curve Regime Model':
+    st.title("Yield Curve Regime Model")
+
+
+### ---------------------------------------------------------------------------------------- ###
+### ------------------------------- QUAD REGIME FACTOR MODEL ------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif menu == 'Quad Regime Factor Model':
+    st.title("Quad Regime Factor Model")
+
+
+### ---------------------------------------------------------------------------------------- ###
+### ---------------------------------- BARRA FACTOR MODEL ---------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif menu == 'Barra Factor Model':
+    st.title("Barra Factor Model")
+
+
+### ---------------------------------------------------------------------------------------- ###
+### --------------------------------- TAIL HEDGE PORTFOLIO --------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif menu == 'Tail Hedge Portfolio':
+    st.title("Tail Hedge Portfolio")
 
 

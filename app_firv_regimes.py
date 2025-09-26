@@ -36,21 +36,6 @@ def merge_dfs(array_of_dfs):
                                                   left_index=True,
                                                   right_index=True, how='outer'), array_of_dfs)
 
-### ---------------------------------------------------------------------------------------------------------- ###
-### -------------------------------------------- REGIME FACTORS ---------------------------------------------- ###
-### ---------------------------------------------------------------------------------------------------------- ###
-
-def plot_quad_regime_factors(start,end,**kwargs):
-    all_quad_regime_factors = pd.DataFrame()
-    for each_factor in list(quad_regime_factors.keys()):
-        with open(Path(DATA_DIR) / (each_factor + '.csv'), 'rb') as file:
-            df = pd.read_csv(file)
-            df.index = pd.to_datetime(df['Date']).values
-            all_quad_regime_factors[each_factor] = df['Close']
-            final_df = pd.DataFrame(df['Close'])
-            final_df
-            all_quad_regime_factors = merge_dfs([all_quad_regime_factors])
-
 
 
 
