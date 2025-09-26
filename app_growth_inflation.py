@@ -175,6 +175,7 @@ def plot_growth_inflation(start, end, **kwargs):
             return np.nan
 
     growth_inflation_df['regime_code'] = growth_inflation_df.apply(regime_label, axis=1)
+
     regime_colors = {
         0: '#E74C3C',  # Reflation (red)
         1: '#F1C40F',  # Stagflation (yellow)
@@ -208,6 +209,15 @@ def plot_growth_inflation(start, end, **kwargs):
                                     reflation_averages[1],
                                     deflation_averages[1],
                                     stagflation_averages[1]]
+    total_rows = len(goldilocks_regime) + len(reflation_regime) + len(deflation_regime) + len(stagflation_regime)
+    gi_2_factor_results['% of Occurences'] = [
+        len(goldilocks_regime)/ total_rows,
+        len(reflation_regime) / total_rows,
+        len(deflation_regime) / total_rows,
+        len(stagflation_regime) / total_rows
+    ]
+    gi_2_factor_results['% of Occurences'] = (gi_2_factor_results['% of Occurences'] * 100)
+
 
     ### ---------------------------------------------------------------------------------------------------------- ###
     ### ------------------------------------------------- PLOTS -------------------------------------------------- ###
@@ -382,9 +392,11 @@ def plot_growth_inflation(start, end, **kwargs):
     ### TABLE ###
     cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
     styled = gi_2_factor_results.style \
-        .format({'Equities': "{:.2f}%", 'Bonds': "{:.2f}%"}) \
-        .set_properties(subset=['Equities', 'Bonds'], **{'width': '80px'}) \
-        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
+        .format({'Equities': "{:.2f}%",
+                 'Bonds': "{:.2f}%",
+                 '% of Occurences': "{:.2f}%"}) \
+        .set_properties(subset=['Equities', 'Bonds', '% of Occurences'], **{'width': '80px'}) \
+        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds', '% of Occurences'])
 
     # --- Centering with columns ---
     st.title("Growth and Inflation Historical Performance")
