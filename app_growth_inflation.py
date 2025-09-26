@@ -51,60 +51,60 @@ def plot_growth_inflation(start, end, **kwargs):
         agg = pd.read_csv(file)
 
     with open(Path(DATA_DIR) / 'XLB.csv', 'rb') as file:
-        xlb = pd.read_csv(file)
+        xlb_df = pd.read_csv(file)
     with open(Path(DATA_DIR) / 'XLC.csv', 'rb') as file:
-        xlc = pd.read_csv(file)
+        xlc_df = pd.read_csv(file)
     with open(Path(DATA_DIR) / 'XLE.csv', 'rb') as file:
-        xle = pd.read_csv(file)
+        xle_df = pd.read_csv(file)
     with open(Path(DATA_DIR) / 'XLF.csv', 'rb') as file:
-        xlf = pd.read_csv(file)
+        xlf_df = pd.read_csv(file)
     with open(Path(DATA_DIR) / 'XLI.csv', 'rb') as file:
-        xli = pd.read_csv(file)
+        xli_df = pd.read_csv(file)
     with open(Path(DATA_DIR) / 'XLK.csv', 'rb') as file:
-        xlk = pd.read_csv(file)
+        xlk_df = pd.read_csv(file)
     with open(Path(DATA_DIR) / 'XLP.csv', 'rb') as file:
-        xlp = pd.read_csv(file)
+        xlp_df = pd.read_csv(file)
     with open(Path(DATA_DIR) / 'XLRE.csv', 'rb') as file:
-        xlre = pd.read_csv(file)
+        xlre_df = pd.read_csv(file)
     with open(Path(DATA_DIR) / 'XLU.csv', 'rb') as file:
-        xlu = pd.read_csv(file)
+        xlu_df = pd.read_csv(file)
     with open(Path(DATA_DIR) / 'XLV.csv', 'rb') as file:
-        xlv = pd.read_csv(file)
+        xlv_df = pd.read_csv(file)
     with open(Path(DATA_DIR) / 'XLY.csv', 'rb') as file:
-        xly = pd.read_csv(file)
+        xly_df = pd.read_csv(file)
 
-    xlb.index = pd.to_datetime(xlb['Date']).values
-    xlb = pd.DataFrame(xlb['Close'])
+    xlb_df.index = pd.to_datetime(xlb_df['Date']).values
+    xlb = pd.DataFrame(xlb_df['Close'])
     xlb.columns = ['xlb']
-    xlc.index = pd.to_datetime(xlc['Date']).values
-    xlc = pd.DataFrame(xlc['Close'])
+    xlc_df.index = pd.to_datetime(xlc_df['Date']).values
+    xlc = pd.DataFrame(xlc_df['Close'])
     xlc.columns = ['xlc']
-    xle.index = pd.to_datetime(xle['Date']).values
-    xle = pd.DataFrame(xle['Close'])
+    xle_df.index = pd.to_datetime(xle_df['Date']).values
+    xle = pd.DataFrame(xle_df['Close'])
     xle.columns = ['xle']
-    xlf.index = pd.to_datetime(xlf['Date']).values
-    xlf = pd.DataFrame(xlf['Close'])
+    xlf_df.index = pd.to_datetime(xlf_df['Date']).values
+    xlf = pd.DataFrame(xlf_df['Close'])
     xlf.columns = ['xlf']
-    xli.index = pd.to_datetime(xli['Date']).values
-    xli = pd.DataFrame(xli['Close'])
+    xli_df.index = pd.to_datetime(xli_df['Date']).values
+    xli = pd.DataFrame(xli_df['Close'])
     xli.columns = ['xli']
-    xlk.index = pd.to_datetime(xlk['Date']).values
-    xlk = pd.DataFrame(xlk['Close'])
+    xlk_df.index = pd.to_datetime(xlk_df['Date']).values
+    xlk = pd.DataFrame(xlk_df['Close'])
     xlk.columns = ['xlk']
-    xlp.index = pd.to_datetime(xlp['Date']).values
-    xlp = pd.DataFrame(xlp['Close'])
+    xlp_df.index = pd.to_datetime(xlp_df['Date']).values
+    xlp = pd.DataFrame(xlp_df['Close'])
     xlp.columns = ['xlp']
-    xlre.index = pd.to_datetime(xlre['Date']).values
-    xlre = pd.DataFrame(xlre['Close'])
+    xlre_df.index = pd.to_datetime(xlre_df['Date']).values
+    xlre = pd.DataFrame(xlre_df['Close'])
     xlre.columns = ['xlre']
-    xlu.index = pd.to_datetime(xlu['Date']).values
-    xlu = pd.DataFrame(xlu['Close'])
+    xlu_df.index = pd.to_datetime(xlu_df['Date']).values
+    xlu = pd.DataFrame(xlu_df['Close'])
     xlu.columns = ['xlu']
-    xlv.index = pd.to_datetime(xlv['Date']).values
-    xlv = pd.DataFrame(xlv['Close'])
+    xlv_df.index = pd.to_datetime(xlv_df['Date']).values
+    xlv = pd.DataFrame(xlv_df['Close'])
     xlv.columns = ['xlv']
-    xly.index = pd.to_datetime(xly['Date']).values
-    xly = pd.DataFrame(xly['Close'])
+    xly_df.index = pd.to_datetime(xly_df['Date']).values
+    xly = pd.DataFrame(xly_df['Close'])
     xly.columns = ['xly']
 
     sp500.index = pd.to_datetime(sp500['Date']).values
