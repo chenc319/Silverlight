@@ -114,33 +114,20 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     treasury_yield_curve['regime_color'] = treasury_yield_curve['curve_regime'].map(regime_colors)
 
     ### PLOT ###
-    regime_colors = {
-        0: '#E74C3C',  # Reflation (red)
-        1: '#F1C40F',  # Stagflation (yellow)
-        2: '#27AE60',  # Goldilocks (green)
-        3: '#2980B9'  # Deflation (blue)
-    }
-    regime_labels = {
-        0: 'Reflation',
-        1: 'Stagflation',
-        2: 'Goldilocks',
-        3: 'Deflation'
-    }
-    df = treasury_yield_curve.copy()
 
     # Tenors to use (10, omitting '7y' as example)
     subplot_tenors = ['1m', '3m', '6m', '1y', '2y', '3y', '5y', '10y', '20y', '30y']
     regime_colors = {
         'Bear Steepening': '#27AE60',
-        'Bear Steepening': '#F1C40F',
+        'Bear Flattening': '#F1C40F',
         'Bull Steepening': '#E74C3C',
-        'Bull Steepening': '#2980B9',
+        'Bull Flattening': '#2980B9',
     }
     regime_labels = {
         'Bear Steepening': 'Bear Steepening',
-        'Bear Steepening': 'Bear Steepening',
+        'Bear Flattening': 'Bear Flattening',
         'Bull Steepening': 'Bull Steepening',
-        'Bull Steepening': 'Bull Steepening'
+        'Bull Flattening': 'Bull Flattening'
     }
 
     rows, cols = 2, 5
