@@ -37,34 +37,6 @@ def merge_dfs(array_of_dfs):
 ### ---------------------------------------------- FIRV FACTORS ---------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-def classify_curve_regime(df, short_end='2y', long_end='30y'):
-    short = df[short_end]
-    long = df[long_end]
-    d_short = short.diff()
-    d_long = long.diff()
-    spread = long - short
-    d_spread = spread.diff()
-
-    regimes = []
-    for i in range(1, len(df)):
-        ds = d_short.iloc[i]
-        dl = d_long.iloc[i]
-        dsp = d_spread.iloc[i]
-
-        if ds > 0 and dl > 0:  # RATES UP
-            regime = 'Bear Steepener' if dsp > 0 else 'Bear Flattener'
-        elif ds < 0 and dl < 0:  # RATES DOWN
-            regime = 'Bull Steepener' if dsp > 0 else 'Bull Flattener'
-        elif abs(dl) >= abs(ds):  # Long end dominant (regardless of sign)
-            # Use long end sign for classification
-            regime = 'Bear Steepener' if dl > 0 else 'Bull Steepener'
-        else:  # Short end dominant
-            regime = 'Bear Flattener' if ds > 0 else 'Bull Flattener'
-        regimes.append(regime)
-    regimes = [None] + regimes
-    df['Curve Regime'] = regimes
-    return df
-
 def plot_treasury_yield_curves(start,end,**kwargs):
     treasury_yield_curve = pd.DataFrame()
     for each_factor in list(treasury_factors.keys()):
@@ -73,6 +45,7 @@ def plot_treasury_yield_curves(start,end,**kwargs):
         df.index = pd.to_datetime(df.index).values
         df.columns = [treasury_factors[each_factor]]
         treasury_yield_curve = merge_dfs([treasury_yield_curve, df])
+    treasury_yield_curve = treasury_yield_curve.resample('ME').last()
     treasury_yield_curve = treasury_yield_curve.dropna()
     treasury_yield_curve['yc_spread_2_10'] = treasury_yield_curve['10y'] - treasury_yield_curve['2y']
     treasury_yield_curve['yc_spread_2_30'] = treasury_yield_curve['30y'] - treasury_yield_curve['2y']
@@ -153,4 +126,17 @@ def plot_treasury_yield_curves(start,end,**kwargs):
         width=1200
     )
     st.plotly_chart(fig, use_container_width=True)
+
+    ### ---------------------------------------------------------------------------------------------------------- ###
+    ### ---------------------------------------------- FIRV FACTORS ---------------------------------------------- ###
+    ### ---------------------------------------------------------------------------------------------------------- ###
+    with open(Path(DATA_DIR) / 'sp500.csv', 'rb') as file:
+        sp500 = pd.read_csv(file)
+    sp500.index = pd.to_datetime(sp500['Date']).values
+    sp500.drop('Date', axis=1, inplace=True)
+    sp500.columns = ['close']
+    sp500 = sp500.resample('ME').last()
+
+    treasury_yield_curve_spx = merge_dfs([treasury_yield_curve,sp500])
+
 
