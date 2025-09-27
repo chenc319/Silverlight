@@ -85,7 +85,7 @@ if menu == 'Growth & Inflation Model':
 ### ------------------------------- YIELD CURVE REGIME MODEL ------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'Yield Curve Regime Model':
+elif menu == 'Yield Curve Regimes':
     st.title("Yield Curve Tenors by Regime")
     app_firv_regime.plot_treasury_yield_curves(start_date, end_date)
 
