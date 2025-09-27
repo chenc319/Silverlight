@@ -114,13 +114,7 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     treasury_yield_curve['regime_color'] = treasury_yield_curve['curve_regime'].map(regime_colors)
 
     ### PLOT ###
-    subplot_tenors = ['1m', '3m', '6m', '1y', '2y', '3y', '5y', '10y', '20y', '30y']
-    regime_colors = {
-        'Bear Steepening': '#27AE60',
-        'Bear Flattening': '#F1C40F',
-        'Bull Steepening': '#E74C3C',
-        'Bull Flattening': '#2980B9',
-    }
+    subplot_tenors = ['1m', '3m', '6m', '1y', '2y', '3y', '5y', '10y', '30y']
     regime_labels = {
         'Bear Steepening': 'Bear Steepening',
         'Bear Flattening': 'Bear Flattening',
@@ -128,7 +122,7 @@ def plot_treasury_yield_curves(start,end,**kwargs):
         'Bull Flattening': 'Bull Flattening'
     }
 
-    rows, cols = 2, 5
+    rows, cols = 3, 3
     fig = make_subplots(rows=rows, cols=cols,
                         subplot_titles=[t for t in subplot_tenors],
                         shared_xaxes=True, shared_yaxes=False)
