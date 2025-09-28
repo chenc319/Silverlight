@@ -15,7 +15,6 @@ from plotly.subplots import make_subplots
 import numpy as np
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
-
 barra_factors = {
     "SPHB": "beta",                # High Beta ETF
     "VLUE": "book_to_price",       # Value/Book-to-Price ETF
@@ -39,10 +38,20 @@ def merge_dfs(array_of_dfs):
                                                   left_index=True,
                                                   right_index=True, how='outer'), array_of_dfs)
 
+barra_factors_df = pd.DataFrame()
+for each_factor in list(barra_factors.keys()):
+    with open(Path(DATA_DIR) / (each_factor + '.csv'), 'rb') as file:
+        factor_df = pd.read_csv(file)
+    factor_df.index = pd.to_datetime(factor_df['Date']).values
+    factor_df = pd.DataFrame(factor_df['Close'])
+    factor_df.columns = [barra_factors[each_factor]]
+    barra_factors_df = merge_dfs([barra_factors_df, factor_df])
+
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------- BARRA FACTORS ----------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-
+def plot_factors(start, end, **kwargs):
+    barra_factors_pct = barra_factors_df.pct_change()
 
 

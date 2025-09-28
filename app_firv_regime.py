@@ -37,6 +37,22 @@ def merge_dfs(array_of_dfs):
 ### ---------------------------------------------- FIRV FACTORS ---------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
+def classify_regime(short_change, long_change):
+    if short_change > 0 and long_change > 0:
+        if long_change > short_change:
+            return 'Bear Steepening'
+        else:
+            return 'Bear Flattening'
+    elif short_change < 0 and long_change < 0:
+        if long_change < short_change:
+            return 'Bull Flattening'
+        else:
+            return 'Bull Steepening'
+    elif short_change > 0 and long_change < 0:
+        return 'Bear Flattening'
+    elif short_change < 0 and long_change > 0:
+        return 'Bull Steepening'
+
 def plot_treasury_yield_curves(start,end,**kwargs):
     treasury_yield_curve = pd.DataFrame()
     for each_factor in list(treasury_factors.keys()):
@@ -45,38 +61,12 @@ def plot_treasury_yield_curves(start,end,**kwargs):
         df.index = pd.to_datetime(df.index).values
         df.columns = [treasury_factors[each_factor]]
         treasury_yield_curve = merge_dfs([treasury_yield_curve, df])
-    treasury_yield_curve = treasury_yield_curve.resample('ME').last()
-    treasury_yield_curve = treasury_yield_curve.dropna()
-    treasury_yield_curve['yc_spread_2_10'] = treasury_yield_curve['10y'] - treasury_yield_curve['2y']
-    treasury_yield_curve['yc_spread_2_30'] = treasury_yield_curve['30y'] - treasury_yield_curve['2y']
-    treasury_yield_curve['yc_spread_3m_10'] = treasury_yield_curve['30y'] - treasury_yield_curve['2y']
-    treasury_yield_curve['yc_spread_avg'] = (
-            treasury_yield_curve['yc_spread_2_10'] +
-            treasury_yield_curve['yc_spread_2_30'] +
-            treasury_yield_curve['yc_spread_3m_10']
-    )
-    treasury_yield_curve['yc_spread_diff'] = treasury_yield_curve['yc_spread_avg'].diff()
 
-    yield_pct = treasury_yield_curve.pct_change()
-    short_term_pct = yield_pct[['1m','3m','6m','1y']].mean(axis=1)
-    medium_term_pct = yield_pct[['2y','3y','5y','7y','10y']].mean(axis=1)
-    long_term_pct = yield_pct[['20y','30y']].mean(axis=1)
-    treasury_yield_curve['short_ylds_pct'] = short_term_pct
-    treasury_yield_curve['medium_ylds_pct'] = medium_term_pct
-    treasury_yield_curve['long_ylds_pct'] = long_term_pct
-
-    treasury_yield_curve['curve_regime'] = np.nan
-    for row in treasury_yield_curve.index:
-        if treasury_yield_curve.loc[row,'yc_spread_diff'] > 0:
-            if treasury_yield_curve.loc[row,'short_ylds_pct'] > 0:
-                treasury_yield_curve.loc[row,'curve_regime'] = 'Bear Steepening'
-            else:
-                treasury_yield_curve.loc[row, 'curve_regime'] = 'Bull Steepening'
-        elif treasury_yield_curve.loc[row,'yc_spread_diff'] < 0:
-            if treasury_yield_curve.loc[row,'short_ylds_pct'] > 0:
-                treasury_yield_curve.loc[row,'curve_regime'] = 'Bear Flattening'
-            else:
-                treasury_yield_curve.loc[row, 'curve_regime'] = 'Bull Flattening'
+    treasury_yield_curve = treasury_yield_curve.resample("ME").last().dropna()
+    treasury_yield_curve['short_chg'] = treasury_yield_curve['2y'].diff()
+    treasury_yield_curve['long_chg'] = treasury_yield_curve['10y'].diff()
+    treasury_yield_curve['curve_regime'] = np.vectorize(classify_regime)(treasury_yield_curve['short_chg'],
+                                                       treasury_yield_curve['long_chg'])
 
     regime_colors = {
         'Bull Steepening': '#E74C3C',  # Reflation (red)
@@ -130,13 +120,31 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     ### ---------------------------------------------------------------------------------------------------------- ###
     ### ---------------------------------------------- FIRV FACTORS ---------------------------------------------- ###
     ### ---------------------------------------------------------------------------------------------------------- ###
-    with open(Path(DATA_DIR) / 'sp500.csv', 'rb') as file:
+
+    with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
         sp500 = pd.read_csv(file)
     sp500.index = pd.to_datetime(sp500['Date']).values
     sp500.drop('Date', axis=1, inplace=True)
-    sp500.columns = ['close']
-    sp500 = sp500.resample('ME').last()
+    spx_daily = pd.DataFrame(sp500['Close'])
+    spx_daily.columns = ['spx']
+    spx_daily = spx_daily.resample('ME').last()
 
-    treasury_yield_curve_spx = merge_dfs([treasury_yield_curve,sp500])
+    treasury_yield_curve_spx = merge_dfs([treasury_yield_curve,spx_daily]).dropna()
+    treasury_yield_curve_spx['spx_pct'] = treasury_yield_curve_spx['spx'].pct_change()
+
+
+    bull_steepening_regime = treasury_yield_curve_spx[(treasury_yield_curve_spx['curve_regime'] == 'Bull Steepening')]
+    bull_flattening_regime = treasury_yield_curve_spx[(treasury_yield_curve_spx['curve_regime'] == 'Bull Flattening')]
+    bear_steepening_regime = treasury_yield_curve_spx[(treasury_yield_curve_spx['curve_regime'] == 'Bear Steepening')]
+    bear_flattening_regime = treasury_yield_curve_spx[(treasury_yield_curve_spx['curve_regime'] == 'Bear Flattening')]
+
+
+    bull_steepening_regime['spx_pct'].mean()
+    bull_flattening_regime['spx_pct'].mean()
+    bear_steepening_regime['spx_pct'].mean()
+    bear_flattening_regime['spx_pct'].mean()
+
+
+
 
 

@@ -38,6 +38,14 @@ def plot_tsunami_model(start, end, **kwargs):
     vvix = pd.DataFrame(vvix['Close'])
     vvix.columns = ['vvix']
 
+def plot_veqtor_vix(start, end, **kwargs):
+    with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
+        spx = pd.read_csv(file)
+    spx.index = pd.to_datetime(spx['Date']).values
+    factor_df = pd.DataFrame(spx['Close'])
+    factor_df.columns = ['spx']
+
+
 
 
 
