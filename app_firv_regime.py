@@ -140,24 +140,40 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     bear_steepening_regime = treasury_yield_curve_spx[(treasury_yield_curve_spx['curve_regime'] == 'Bear Steepening')]
     bear_flattening_regime = treasury_yield_curve_spx[(treasury_yield_curve_spx['curve_regime'] == 'Bear Flattening')]
 
+    ### PLOT ###
+    st.title('SPX by YC Regime')
     df = treasury_yield_curve_spx.reset_index().rename(columns={'index': 'date'})
+    regime_code_to_label = {
+        "#2980B9": "Bull Steepening",
+        "#E74C3C": "Bear Steepening",
+        "#27AE60": "Bear Flattening",
+        "#F1C40F": "Bull Flattening"
+    }
+    df["regime_label"] = df["regime_color"].map(regime_code_to_label)
+    regime_color_map = {
+        "Bull Steepening": "#2980B9",
+        "Bear Steepening": "#E74C3C",
+        "Bear Flattening": "#27AE60",
+        "Bull Flattening": "#F1C40F"
+    }
     fig = px.scatter(
         df,
-        x='date',
-        y='spx',
-        color='regime_color',  # for legend (won't show colors directly)
-        color_discrete_map='identity',  # interpret regime_color as actual color values
-        custom_data=['regime_color', 'spx_pct'],
+        x="date",
+        y="spx",
+        color="regime_label",
+        color_discrete_map=regime_color_map,
+        custom_data=["spx_pct"]
     )
+
     fig.update_traces(
         marker=dict(size=8),
-        marker_color=df['regime_color'],  # sets actual marker colors per row
+        selector=dict(mode='markers')
     )
     fig.update_layout(
-        title='SPX by Regime',
+        title='SPX by Yield Curve Regime',
         xaxis_title='Date',
         yaxis_title='SPX Level',
-        showlegend=True,
+        legend_title='Curve Regime'
     )
     st.plotly_chart(fig, use_container_width=True)
 
