@@ -7,8 +7,8 @@ import pandas as pd
 import functools as ft
 import streamlit as st
 import plotly.graph_objs as go
-from pandas_datareader import data as pdr
 from pathlib import Path
+import plotly.subplots as sp
 import os
 from matplotlib.colors import LinearSegmentedColormap
 from plotly.subplots import make_subplots
@@ -401,6 +401,44 @@ def plot_growth_inflation(start, end, **kwargs):
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.write(styled, unsafe_allow_html=True)
+
+    ### RETURN DISTRIBUTIONS ###
+    st.title("Equity Return Distributions")
+    regimes = [
+        "Bear Flattening",
+        "Bear Steepening",
+        "Bull Flattening",
+        "Bull Steepening",
+    ]
+    fig = sp.make_subplots(
+        rows=2, cols=2,
+        subplot_titles=regimes
+    )
+    for i, regime in enumerate(regimes):
+        row = i // 2 + 1
+        col = i % 2 + 1
+        subdata = df[df['regime_label'] == regime]
+        fig.add_trace(
+            go.Histogram(
+                x=subdata['sp500_pct'].dropna(),  # replace 'spx_pct' with 'spx' for levels
+                name=regime,
+                marker_color=regime_colors[regime],
+                opacity=0.8,
+                nbinsx=30
+            ),
+            row=row,
+            col=col
+        )
+    fig.update_layout(
+        title="Distribution of Equity Returns by Regime",
+        showlegend=False,
+        height=600
+    )
+    fig.update_xaxes(title_text="SPX % Return", row=2, col=1)
+    fig.update_xaxes(title_text="SPX % Return", row=2, col=2)
+    fig.update_yaxes(title_text="Count", row=1, col=1)
+    fig.update_yaxes(title_text="Count", row=2, col=1)
+    st.plotly_chart(fig, use_container_width=True)
 
     ### ---------------------------------------------------------------------------------------------------------- ###
     ### ------------------------------------------------ SECTORS ------------------------------------------------- ###

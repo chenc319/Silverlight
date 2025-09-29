@@ -7,7 +7,6 @@ import pandas as pd
 import functools as ft
 import streamlit as st
 import plotly.graph_objs as go
-from pandas_datareader import data as pdr
 from pathlib import Path
 import plotly.express as px
 import os
@@ -215,6 +214,7 @@ def plot_treasury_yield_curves(start,end,**kwargs):
         st.write(styled, unsafe_allow_html=True)
 
     ### RETURN DISTRIBUTIONS ###
+    st.title("YC Regime SPX Return Distributions")
     regimes = [
         "Bear Flattening",
         "Bear Steepening",
