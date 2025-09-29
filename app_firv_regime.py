@@ -14,6 +14,7 @@ import os
 from matplotlib.colors import LinearSegmentedColormap
 from plotly.subplots import make_subplots
 import numpy as np
+import plotly.subplots as sp
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 treasury_factors = {
@@ -212,6 +213,43 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.write(styled, unsafe_allow_html=True)
+
+    ### RETURN DISTRIBUTIONS ###
+    regimes = [
+        "Bear Flattening",
+        "Bear Steepening",
+        "Bull Flattening",
+        "Bull Steepening",
+    ]
+    fig = sp.make_subplots(
+        rows=2, cols=2,
+        subplot_titles=regimes
+    )
+    for i, regime in enumerate(regimes):
+        row = i // 2 + 1
+        col = i % 2 + 1
+        subdata = df[df['regime_label'] == regime]
+        fig.add_trace(
+            go.Histogram(
+                x=subdata['spx_pct'].dropna(),  # replace 'spx_pct' with 'spx' for levels
+                name=regime,
+                marker_color=regime_color_map[regime],
+                opacity=0.8,
+                nbinsx=30
+            ),
+            row=row,
+            col=col
+        )
+    fig.update_layout(
+        title="Distribution of SPX Returns by Yield Curve Regime",
+        showlegend=False,
+        height=600
+    )
+    fig.update_xaxes(title_text="SPX % Return", row=2, col=1)
+    fig.update_xaxes(title_text="SPX % Return", row=2, col=2)
+    fig.update_yaxes(title_text="Count", row=1, col=1)
+    fig.update_yaxes(title_text="Count", row=2, col=1)
+    st.plotly_chart(fig, use_container_width=True)
 
 
 
