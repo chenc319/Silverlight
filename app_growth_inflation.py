@@ -251,6 +251,7 @@ def plot_growth_inflation(start, end, **kwargs):
         go.Scatter(
             x=growth_inflation_df.index,
             y=growth_inflation_df[cli_col],
+            name='CLI Outright',
             mode='lines',
             line=dict(color=colors['CLI'], width=2)
         ),
@@ -260,6 +261,7 @@ def plot_growth_inflation(start, end, **kwargs):
         go.Scatter(
             x=growth_inflation_df.index,
             y=growth_inflation_df[cli_diff_col],
+            name='CLI ROC',
             mode='lines',
             line=dict(color=colors['CLI 1st Change'], dash='dot', width=2)
         ),
@@ -271,6 +273,7 @@ def plot_growth_inflation(start, end, **kwargs):
         go.Scatter(
             x=growth_inflation_df.index,
             y=growth_inflation_df[cpi_col],
+            name='CPI Outright',
             mode='lines',
             line=dict(color=colors['CPI'], width=2)
         ),
@@ -280,6 +283,7 @@ def plot_growth_inflation(start, end, **kwargs):
         go.Scatter(
             x=growth_inflation_df.index,
             y=growth_inflation_df[cpi_diff_col],
+            name='CPI ROC',
             mode='lines',
             line=dict(color=colors['CPI 1st Change'], dash='dot', width=2)
         ),
