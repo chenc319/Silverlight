@@ -405,10 +405,10 @@ def plot_growth_inflation(start, end, **kwargs):
     ### RETURN DISTRIBUTIONS ###
     st.title("Equity Return Distributions")
     regimes = [
-        "Bear Flattening",
-        "Bear Steepening",
-        "Bull Flattening",
-        "Bull Steepening",
+        'Reflation',
+        'Stagflation',
+        'Goldilocks',
+        'Deflation'
     ]
     fig = sp.make_subplots(
         rows=2, cols=2,
