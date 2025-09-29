@@ -104,7 +104,9 @@ elif menu == 'Barra Factor Model':
 ### ---------------------------------------------------------------------------------------- ###
 
 elif menu == 'Tail Hedge Portfolio':
-    st.title("Tail Hedge Portfolio")
+    st.title("VIX & VVIX Levels")
     app_tail_hedge.plot_vix_vvix(start_date,end_date)
+    st.title('VEQTOR Tail Hedge')
+    app_tail_hedge.plot_veqtor_vix(start_date,end_date)
 
 

@@ -36,9 +36,11 @@ def plot_vix_vvix(start, end, **kwargs):
     vix.index = pd.to_datetime(vix['Date']).values
     vix = pd.DataFrame(vix['Close'])
     vix.columns = ['vix']
+    vix = vix.dropna()
     vvix.index = pd.to_datetime(vvix['Date']).values
     vvix = pd.DataFrame(vvix['Close'])
     vvix.columns = ['vvix']
+    vvix = vix.dropna()
 
     ### PLOT ###
     vix_vvix_merge = merge_dfs([vix,vvix]).dropna()
@@ -65,29 +67,103 @@ def plot_vix_vvix(start, end, **kwargs):
     st.plotly_chart(fig, use_container_width=True)
 
 def plot_veqtor_vix(start, end, **kwargs):
+    def compute_ivt(df, window=10):
+        d_ivt = df['divt'].astype(int).values
+        ivt_trend = np.zeros_like(d_ivt)
+        for i in range(window - 1, len(d_ivt)):
+            window_slice = d_ivt[i - window + 1:i + 1]
+            if np.all(window_slice == 1):
+                ivt_trend[i] = 1
+            elif np.all(window_slice == -1):
+                ivt_trend[i] = -1
+            else:
+                ivt_trend[i] = 0
+        # Add to DataFrame
+        df['IVT'] = ivt_trend
+        return df
+    def assign_weight(rv, ivt):
+        if rv < 0.10:
+            if ivt == -1:
+                return 0.025
+            elif ivt == 0:
+                return 0.025
+            elif ivt == 1:
+                return 0.10
+        elif 0.10 <= rv < 0.20:
+            if ivt == -1:
+                return 0.025
+            elif ivt == 0:
+                return 0.10
+            elif ivt == 1:
+                return 0.15
+        elif 0.20 <= rv < 0.35:
+            if ivt == -1:
+                return 0.10
+            elif ivt == 0:
+                return 0.15
+            elif ivt == 1:
+                return 0.25
+        elif 0.35 <= rv <= 0.45:
+            if ivt == -1:
+                return 0.15
+            elif ivt == 0:
+                return 0.25
+            elif ivt == 1:
+                return 0.40
+        elif rv > 0.45:
+            if ivt == -1:
+                return 0.25
+            elif ivt == 0:
+                return 0.40
+            elif ivt == 1:
+                return 0.40
+        return np.nan  # Default if none match
     with open(Path(DATA_DIR) / 'VIX.csv', 'rb') as file:
         vix = pd.read_csv(file)
     with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
         spx = pd.read_csv(file)
-        ### CALCULATE DATA ###
+
+    ### CALCULATE DATA ###
     vix.index = pd.to_datetime(vix['Date']).values
-    vix = pd.DataFrame(vix['Close'])
-    vix.columns = ['vix']
+    vix_df = pd.DataFrame(vix['Close'])
+    vix_df.columns = ['vix']
+    vix_df = vix_df.dropna()
     spx.index = pd.to_datetime(spx['Date']).values
     spx = pd.DataFrame(spx['Close'])
     spx.columns = ['spx']
+    spx = spx.dropna()
 
     rv_df = pd.DataFrame(
         spx.pct_change().rolling(window=21).std() * 252**0.5
     )
-    vix['5d'] = vix['vix'].rolling(window=5).mean()
-    vix['20d'] = vix['vix'].rolling(window=20).mean()
-    vix['divt'] = np.nan
-    for row in vix.index:
-        if vix.loc[row,'5d'] >= vix.loc[row,'20d']:
-            vix.loc[row, 'divt'] = 1
-        elif vix.loc[row,'5d'] < vix.loc[row,'20d']:
-            vix.loc[row, 'divt'] = -1
+    rv_df.columns = ['rv']
+    vix_df['5d'] = vix_df['vix'].rolling(window=5).mean()
+    vix_df['20d'] = vix_df['vix'].rolling(window=20).mean()
+    vix_df['divt'] = np.nan
+    for row in vix_df.index:
+        if vix_df.loc[row,'5d'] >= vix_df.loc[row,'20d']:
+            vix_df.loc[row, 'divt'] = 1
+        elif vix_df.loc[row,'5d'] < vix_df.loc[row,'20d']:
+            vix_df.loc[row, 'divt'] = -1
+    vix_df = compute_ivt(vix_df.dropna())
+    vix_df = merge_dfs([vix_df,rv_df])
+    vix_df['weights'] = vix_df.apply(
+        lambda row: assign_weight(row['rv'], row['IVT']), axis=1)
+    vix_df = vix_df.dropna()
+
+    ### PLOT ###
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=vix_df.index,
+        y=vix_df['weights'] * 100,
+        mode='lines',
+        name='RV/IV Cross Weights',
+        line=dict(color='#29B6D9', width=2)))
+    st.plotly_chart(fig, use_container_width=True)
+
+
+
+
 
 
 
