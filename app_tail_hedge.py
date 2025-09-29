@@ -160,7 +160,7 @@ def plot_veqtor_vix(start, end, **kwargs):
         ),
         row=1, col=1
     )
-    fig.update_yaxes(title_text="RV", row=1, col=1)
+    fig.update_yaxes(title_text="Annualized 1m SPX Volatility", row=1, col=1)
     fig.add_trace(
         go.Scatter(
             x=vix_df.index, y=vix_df["vix"], mode="lines",
@@ -168,7 +168,7 @@ def plot_veqtor_vix(start, end, **kwargs):
         ),
         row=1, col=2
     )
-    fig.update_yaxes(title_text="IV", row=1, col=2)
+    fig.update_yaxes(title_text="VIX", row=1, col=2)
     fig.update_layout(height=400, width=900, showlegend=False)
     st.plotly_chart(fig, use_container_width=True)
 
