@@ -389,44 +389,6 @@ def plot_growth_inflation(start, end, **kwargs):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    ### RETURN DISTRIBUTIONS ###
-    st.title("Equity Return Distributions")
-    regimes = [
-        'Reflation',
-        'Stagflation',
-        'Goldilocks',
-        'Deflation'
-    ]
-    fig = sp.make_subplots(
-        rows=2, cols=2,
-        subplot_titles=regimes
-    )
-    for i, regime in enumerate(regimes):
-        row = i // 2 + 1
-        col = i % 2 + 1
-        subdata = df[df['regime_label'] == regime]
-        fig.add_trace(
-            go.Histogram(
-                x=subdata['sp500_pct'].dropna(),  # replace 'spx_pct' with 'spx' for levels
-                name=regime,
-                marker_color=regime_colors[regime],
-                opacity=0.8,
-                nbinsx=30
-            ),
-            row=row,
-            col=col
-        )
-    fig.update_layout(
-        title="Distribution of Equity Returns by Regime",
-        showlegend=False,
-        height=600
-    )
-    fig.update_xaxes(title_text="SPX % Return", row=2, col=1)
-    fig.update_xaxes(title_text="SPX % Return", row=2, col=2)
-    fig.update_yaxes(title_text="Count", row=1, col=1)
-    fig.update_yaxes(title_text="Count", row=2, col=1)
-    st.plotly_chart(fig, use_container_width=True)
-
     ### TABLE ###
     cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
     styled = gi_2_factor_results.style \
@@ -439,6 +401,55 @@ def plot_growth_inflation(start, end, **kwargs):
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.write(styled, unsafe_allow_html=True)
+
+    regimes = [
+        'Reflation',
+        'Stagflation',
+        'Goldilocks',
+        'Deflation'
+    ]
+    regime_colors = {
+        "Reflation": "#27AE60",
+        "Stagflation": "#E74C3C",
+        "Goldilocks": "#F1C40F",
+        "Deflation": "#2980B9"
+    }
+
+    fig = sp.make_subplots(
+        rows=2, cols=2,
+        subplot_titles=regimes
+    )
+
+    for i, regime in enumerate(regimes):
+        row = i // 2 + 1
+        col = i % 2 + 1
+        subdata = df[df['regime_label'] == regime]
+        fig.add_trace(
+            go.Histogram(
+                x=subdata['sp500_pct'].dropna(),
+                name=regime,
+                marker_color=regime_colors.get(regime, "#AAAAAA"),
+                opacity=0.8,
+                nbinsx=30
+            ),
+            row=row,
+            col=col
+        )
+
+    # You can set axis titles for all subplots for clarity
+    for row in [1, 2]:
+        for col in [1, 2]:
+            fig.update_xaxes(title_text="SPX % Return", row=row, col=col)
+            fig.update_yaxes(title_text="Count", row=row, col=col)
+
+    fig.update_layout(
+        title="Distribution of Equity Returns by Regime",
+        showlegend=False,
+        height=600
+    )
+
+    st.title("Equity Return Distributions")
+    st.plotly_chart(fig, use_container_width=True)
 
     ### ---------------------------------------------------------------------------------------------------------- ###
     ### ------------------------------------------------ SECTORS ------------------------------------------------- ###
