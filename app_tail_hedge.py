@@ -163,7 +163,7 @@ def plot_veqtor_vix(start, end, **kwargs):
     fig.update_yaxes(title_text="RV", row=1, col=1)
     fig.add_trace(
         go.Scatter(
-            x=vix_df.index, y=vix_df["IVT"], mode="lines",
+            x=vix_df.index, y=vix_df["vix"], mode="lines",
             line=dict(color="#E67E22", width=2), name="IV"
         ),
         row=1, col=2
