@@ -210,13 +210,13 @@ def plot_growth_inflation(start, end, **kwargs):
                                     deflation_averages[1],
                                     stagflation_averages[1]]
     total_rows = len(goldilocks_regime) + len(reflation_regime) + len(deflation_regime) + len(stagflation_regime)
-    gi_2_factor_results['% of Occurences'] = [
+    gi_2_factor_results['% of Occurrences'] = [
         len(goldilocks_regime)/ total_rows,
         len(reflation_regime) / total_rows,
         len(deflation_regime) / total_rows,
         len(stagflation_regime) / total_rows
     ]
-    gi_2_factor_results['% of Occurences'] = (gi_2_factor_results['% of Occurences'] * 100)
+    gi_2_factor_results['% of Occurrences'] = (gi_2_factor_results['% of Occurrences'] * 100)
 
 
     ### ---------------------------------------------------------------------------------------------------------- ###
@@ -397,11 +397,7 @@ def plot_growth_inflation(start, end, **kwargs):
                  '% of Occurences': "{:.2f}%"}) \
         .set_properties(subset=['Equities', 'Bonds', '% of Occurences'], **{'width': '80px'}) \
         .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
-
-    # --- Centering with columns ---
     st.title("Growth and Inflation Historical Performance")
-
-    # Make three columns; the center is for the table, the others are spacers
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.write(styled, unsafe_allow_html=True)

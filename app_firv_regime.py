@@ -140,6 +140,30 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     bear_steepening_regime = treasury_yield_curve_spx[(treasury_yield_curve_spx['curve_regime'] == 'Bear Steepening')]
     bear_flattening_regime = treasury_yield_curve_spx[(treasury_yield_curve_spx['curve_regime'] == 'Bear Flattening')]
 
+    ### RESULTS ###
+    yc_regime_results = pd.DataFrame()
+    yc_regime_results['Regime'] = [
+        'Bull Flattening',
+        'Bear Flattening',
+        'Bull Steepening',
+        'Bear Steepening'
+    ]
+    yc_regime_results['SPX'] = [
+        bull_flattening_regime['spx_pct'].mean() * 100,
+        bear_flattening_regime['spx_pct'].mean() * 100,
+        bull_steepening_regime['spx_pct'].mean() * 100,
+        bear_steepening_regime['spx_pct'].mean() * 100
+    ]
+    total_rows = (len(bull_steepening_regime) + len(bull_flattening_regime) +
+                  len(bear_steepening_regime) + len(bear_flattening_regime))
+    yc_regime_results['% of Occurrences'] = [
+        len(bull_steepening_regime) / total_rows,
+        len(bull_flattening_regime) / total_rows,
+        len(bear_steepening_regime) / total_rows,
+        len(bear_flattening_regime) / total_rows
+    ]
+    yc_regime_results['% of Occurrences'] = (yc_regime_results['% of Occurrences'] * 100)
+
     ### PLOT ###
     st.title('SPX by YC Regime')
     df = treasury_yield_curve_spx.reset_index().rename(columns={'index': 'date'})
@@ -177,11 +201,19 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    ### RESULTS ###
-    bull_steepening_regime['spx_pct'].mean()
-    bull_flattening_regime['spx_pct'].mean()
-    bear_steepening_regime['spx_pct'].mean()
-    bear_flattening_regime['spx_pct'].mean()
+    ### TABLE ###
+    st.title("YC Regime SPX Historical Performance")
+    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
+    styled = yc_regime_results.style \
+        .format({'SPX': "{:.2f}%",
+                 '% of Occurrences': "{:.2f}%"}) \
+        .set_properties(subset=['SPX', '% of Occurrences'], **{'width': '80px'}) \
+        .background_gradient(cmap=cmap, subset=['SPX'])
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.write(styled, unsafe_allow_html=True)
+
+
 
 
 
