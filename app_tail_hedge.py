@@ -155,12 +155,7 @@ def plot_veqtor_vix(start, end, **kwargs):
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=vix_df.index,
-        y=vix_df['IVT'] * 100,
-        mode='lines',
-        line=dict(color='#29B6D9', width=2)))
-    fig.add_trace(go.Scatter(
-        x=vix_df.index,
-        y=vix_df['rv'] * 100,
+        y=vix_df['weights'] * 100,
         mode='lines',
         line=dict(color='#29B6D9', width=2)))
     fig.update_layout(
@@ -168,16 +163,27 @@ def plot_veqtor_vix(start, end, **kwargs):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=vix_df.index,
-        y=vix_df['weights'] * 100,
-        mode='lines',
-        line=dict(color='#29B6D9', width=2)))
-    fig.update_layout(
-        title = 'RV/IV Cross Weights'
+    fig = make_subplots(rows=1, cols=2, subplot_titles=["VIX", "VVIX"])
+    fig.add_trace(
+        go.Scatter(
+            x=vix_df.index, y=vix_df["rv"], mode="lines",
+            line=dict(color="#2874A6", width=2), name="VIX"
+        ),
+        row=1, col=1
     )
+    fig.update_yaxes(title_text="VIX", row=1, col=1)
+    fig.add_trace(
+        go.Scatter(
+            x=vix_df.index, y=vix_df["IVT"], mode="lines",
+            line=dict(color="#E67E22", width=2), name="VVIX"
+        ),
+        row=1, col=2
+    )
+    fig.update_yaxes(title_text="IV", row=1, col=2)
+    fig.update_layout(height=400, width=900, showlegend=False)
     st.plotly_chart(fig, use_container_width=True)
+
+
 
 
 
