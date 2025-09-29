@@ -155,6 +155,22 @@ def plot_veqtor_vix(start, end, **kwargs):
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=vix_df.index,
+        y=vix_df['IVT'] * 100,
+        mode='lines',
+        line=dict(color='#29B6D9', width=2)))
+    fig.add_trace(go.Scatter(
+        x=vix_df.index,
+        y=vix_df['rv'] * 100,
+        mode='lines',
+        line=dict(color='#29B6D9', width=2)))
+    fig.update_layout(
+        title='RV/IV Cross Weights'
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=vix_df.index,
         y=vix_df['weights'] * 100,
         mode='lines',
         line=dict(color='#29B6D9', width=2)))
@@ -162,6 +178,8 @@ def plot_veqtor_vix(start, end, **kwargs):
         title = 'RV/IV Cross Weights'
     )
     st.plotly_chart(fig, use_container_width=True)
+
+
 
 
 
