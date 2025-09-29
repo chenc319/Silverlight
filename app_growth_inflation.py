@@ -394,8 +394,8 @@ def plot_growth_inflation(start, end, **kwargs):
     styled = gi_2_factor_results.style \
         .format({'Equities': "{:.2f}%",
                  'Bonds': "{:.2f}%",
-                 '% of Occurences': "{:.2f}%"}) \
-        .set_properties(subset=['Equities', 'Bonds', '% of Occurences'], **{'width': '80px'}) \
+                 '% of Occurrences': "{:.2f}%"}) \
+        .set_properties(subset=['Equities', 'Bonds', '% of Occurrences'], **{'width': '80px'}) \
         .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
     st.title("Growth and Inflation Historical Performance")
     col1, col2, col3 = st.columns([1, 2, 1])
