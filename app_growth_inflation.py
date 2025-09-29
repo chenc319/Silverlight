@@ -242,7 +242,7 @@ def plot_growth_inflation(start, end, **kwargs):
     # Set up two subplots, both using secondary y-axis
     fig = make_subplots(
         rows=1, cols=2,
-        subplot_titles=['CLI (Outright + 1st Order Change)', 'CPI (Outright + 1st Order Change)'],
+        subplot_titles=['CLI (Growth)', 'CPI (Inflation)'],
         specs=[[{"secondary_y": True}, {"secondary_y": True}]]
     )
 
@@ -251,7 +251,7 @@ def plot_growth_inflation(start, end, **kwargs):
         go.Scatter(
             x=growth_inflation_df.index,
             y=growth_inflation_df[cli_col],
-            name='CLI Outright',
+            name='Outright',
             mode='lines',
             line=dict(color=colors['CLI'], width=2)
         ),
@@ -261,7 +261,7 @@ def plot_growth_inflation(start, end, **kwargs):
         go.Scatter(
             x=growth_inflation_df.index,
             y=growth_inflation_df[cli_diff_col],
-            name='CLI 1st Order Change',
+            name='ROC',
             mode='lines',
             line=dict(color=colors['CLI 1st Change'], dash='dot', width=2)
         ),
@@ -273,7 +273,7 @@ def plot_growth_inflation(start, end, **kwargs):
         go.Scatter(
             x=growth_inflation_df.index,
             y=growth_inflation_df[cpi_col],
-            name='CPI Outright',
+            name='Outright',
             mode='lines',
             line=dict(color=colors['CPI'], width=2)
         ),
@@ -283,7 +283,7 @@ def plot_growth_inflation(start, end, **kwargs):
         go.Scatter(
             x=growth_inflation_df.index,
             y=growth_inflation_df[cpi_diff_col],
-            name='CPI 1st Order Change',
+            name='ROC',
             mode='lines',
             line=dict(color=colors['CPI 1st Change'], dash='dot', width=2)
         ),
@@ -291,17 +291,16 @@ def plot_growth_inflation(start, end, **kwargs):
     )
 
     fig.update_layout(
-        title='Growth (CLI) and Inflation (CPI): Outright & 1st Order Change',
         height=500,
         width=1100,
         hovermode='x unified',
         legend=dict(title='Series', orientation='h', y=-0.2),
         margin=dict(t=50, b=50)
     )
-    fig.update_yaxes(title_text="CLI Outright", row=1, col=1, secondary_y=False)
-    fig.update_yaxes(title_text="CLI 1st Order Change", row=1, col=1, secondary_y=True)
-    fig.update_yaxes(title_text="CPI Outright", row=1, col=2, secondary_y=False)
-    fig.update_yaxes(title_text="CPI 1st Order Change", row=1, col=2, secondary_y=True)
+    fig.update_yaxes(title_text="Outright", row=1, col=1, secondary_y=False)
+    fig.update_yaxes(title_text="ROC", row=1, col=1, secondary_y=True)
+    fig.update_yaxes(title_text="Outright", row=1, col=2, secondary_y=False)
+    fig.update_yaxes(title_text="ROC", row=1, col=2, secondary_y=True)
 
     # Streamlit plot
     st.plotly_chart(fig, use_container_width=True)

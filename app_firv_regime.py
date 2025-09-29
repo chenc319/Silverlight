@@ -251,7 +251,6 @@ def plot_treasury_yield_curves(start,end,**kwargs):
             fig.update_xaxes(title_text="SPX % Return", row=row, col=col, range=[min_bound, max_bound])
             fig.update_yaxes(title_text="Count", row=row, col=col)
     fig.update_layout(
-        title="Distribution of SPX Returns by Yield Curve Regime",
         showlegend=False,
         height=600
     )
