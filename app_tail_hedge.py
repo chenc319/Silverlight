@@ -40,7 +40,7 @@ def plot_vix_vvix(start, end, **kwargs):
     vvix.index = pd.to_datetime(vvix['Date']).values
     vvix = pd.DataFrame(vvix['Close'])
     vvix.columns = ['vvix']
-    vvix = vix.dropna()
+    vvix = vvix.dropna()
 
     ### PLOT ###
     vix_vvix_merge = merge_dfs([vix,vvix]).dropna()
