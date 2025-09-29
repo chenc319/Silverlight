@@ -55,7 +55,6 @@ def merge_dfs(array_of_dfs):
 ### ------------------------------------------------ DATA PULL ----------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-
 def plot_growth_inflation(start, end, **kwargs):
     ### DATA PULL ###
     with open(Path(DATA_DIR) / 'sp500.csv', 'rb') as file:
@@ -67,62 +66,14 @@ def plot_growth_inflation(start, end, **kwargs):
     with open(Path(DATA_DIR) / 'AGG.csv', 'rb') as file:
         agg = pd.read_csv(file)
 
-    with open(Path(DATA_DIR) / 'XLB.csv', 'rb') as file:
-        xlb_df = pd.read_csv(file)
-    with open(Path(DATA_DIR) / 'XLC.csv', 'rb') as file:
-        xlc_df = pd.read_csv(file)
-    with open(Path(DATA_DIR) / 'XLE.csv', 'rb') as file:
-        xle_df = pd.read_csv(file)
-    with open(Path(DATA_DIR) / 'XLF.csv', 'rb') as file:
-        xlf_df = pd.read_csv(file)
-    with open(Path(DATA_DIR) / 'XLI.csv', 'rb') as file:
-        xli_df = pd.read_csv(file)
-    with open(Path(DATA_DIR) / 'XLK.csv', 'rb') as file:
-        xlk_df = pd.read_csv(file)
-    with open(Path(DATA_DIR) / 'XLP.csv', 'rb') as file:
-        xlp_df = pd.read_csv(file)
-    with open(Path(DATA_DIR) / 'XLRE.csv', 'rb') as file:
-        xlre_df = pd.read_csv(file)
-    with open(Path(DATA_DIR) / 'XLU.csv', 'rb') as file:
-        xlu_df = pd.read_csv(file)
-    with open(Path(DATA_DIR) / 'XLV.csv', 'rb') as file:
-        xlv_df = pd.read_csv(file)
-    with open(Path(DATA_DIR) / 'XLY.csv', 'rb') as file:
-        xly_df = pd.read_csv(file)
-
-    xlb_df.index = pd.to_datetime(xlb_df['Date']).values
-    xlb = pd.DataFrame(xlb_df['Close'])
-    xlb.columns = ['xlb']
-    xlc_df.index = pd.to_datetime(xlc_df['Date']).values
-    xlc = pd.DataFrame(xlc_df['Close'])
-    xlc.columns = ['xlc']
-    xle_df.index = pd.to_datetime(xle_df['Date']).values
-    xle = pd.DataFrame(xle_df['Close'])
-    xle.columns = ['xle']
-    xlf_df.index = pd.to_datetime(xlf_df['Date']).values
-    xlf = pd.DataFrame(xlf_df['Close'])
-    xlf.columns = ['xlf']
-    xli_df.index = pd.to_datetime(xli_df['Date']).values
-    xli = pd.DataFrame(xli_df['Close'])
-    xli.columns = ['xli']
-    xlk_df.index = pd.to_datetime(xlk_df['Date']).values
-    xlk = pd.DataFrame(xlk_df['Close'])
-    xlk.columns = ['xlk']
-    xlp_df.index = pd.to_datetime(xlp_df['Date']).values
-    xlp = pd.DataFrame(xlp_df['Close'])
-    xlp.columns = ['xlp']
-    xlre_df.index = pd.to_datetime(xlre_df['Date']).values
-    xlre = pd.DataFrame(xlre_df['Close'])
-    xlre.columns = ['xlre']
-    xlu_df.index = pd.to_datetime(xlu_df['Date']).values
-    xlu = pd.DataFrame(xlu_df['Close'])
-    xlu.columns = ['xlu']
-    xlv_df.index = pd.to_datetime(xlv_df['Date']).values
-    xlv = pd.DataFrame(xlv_df['Close'])
-    xlv.columns = ['xlv']
-    xly_df.index = pd.to_datetime(xly_df['Date']).values
-    xly = pd.DataFrame(xly_df['Close'])
-    xly.columns = ['xly']
+    spx_sectors_merge = pd.DataFrame()
+    for each_factor in list(spx_sectors.keys()):
+        with open(Path(DATA_DIR) / (each_factor + '.csv'), 'rb') as file:
+            df = pd.read_csv(file)
+        df.index = pd.to_datetime(df['Date']).values
+        df = pd.DataFrame(df['Close'])
+        df.columns = [spx_sectors[each_factor]]
+        spx_sectors_merge = merge_dfs([spx_sectors_merge, df])
 
     sp500.index = pd.to_datetime(sp500['Date']).values
     sp500.drop('Date', axis=1, inplace=True)
@@ -505,14 +456,11 @@ def plot_growth_inflation(start, end, **kwargs):
     ### ------------------------------------------------ SECTORS ------------------------------------------------- ###
     ### ---------------------------------------------------------------------------------------------------------- ###
 
-    sector_merge = merge_dfs([xlc,xly, xlp,
-                              xle, xlf, xlv,
-                              xli, xlb, xlre,
-                              xlk, xlu]).resample('ME').last().pct_change()
-    sector_merge.columns = ['comm_serv','cons_disc', 'cons_stap', 'energy',
+    spx_sector_pct = spx_sectors_merge.resample('ME').last().pct_change()
+    spx_sector_pct.columns = ['comm_serv','cons_disc', 'cons_stap', 'energy',
                             'financials', 'healthcare', 'industrial', 'materials',
                             'real_estate', 'tech', 'utilities']
-    growth_inflation_sector = merge_dfs([growth_inflation_df,sector_merge])
+    growth_inflation_sector = merge_dfs([growth_inflation_df,spx_sector_pct])
 
     reflation_sector_regime = growth_inflation_sector[
         (growth_inflation_sector['inflation_roc'] > 0) &
@@ -532,16 +480,16 @@ def plot_growth_inflation(start, end, **kwargs):
         ]
 
     reflation_sector_averages = pd.DataFrame((reflation_sector_regime[
-        sector_merge.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
+        spx_sector_pct.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
     reflation_sector_averages.columns = ['Reflation']
     stagflation_sector_averages = pd.DataFrame((stagflation_sector_regime[
-        sector_merge.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
+        spx_sector_pct.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
     stagflation_sector_averages.columns = ['Stagflation']
     goldilocks_sector_averages = pd.DataFrame((goldilocks_sector_regime[
-        sector_merge.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
+        spx_sector_pct.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
     goldilocks_sector_averages.columns = ['Goldilocks']
     deflation_sector_averages = pd.DataFrame((deflation_sector_regime[
-        sector_merge.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
+        spx_sector_pct.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
     deflation_sector_averages.columns = ['Deflation']
 
     # Custom diverging colormap: red (neg), white (zero), green (pos)
