@@ -172,6 +172,28 @@ def plot_veqtor_vix(start, end, **kwargs):
     fig.update_layout(height=400, width=900, showlegend=False)
     st.plotly_chart(fig, use_container_width=True)
 
+    ### PLOT ###
+    fig = make_subplots(rows=1, cols=2, subplot_titles=["5d IV", "20d IV"])
+    fig.add_trace(
+        go.Scatter(
+            x=vix_df.index, y=vix_df["5d"], mode="lines",
+            line=dict(color="#2874A6", width=2), name="5d IV"
+        ),
+        row=1, col=1
+    )
+    fig.update_yaxes(title_text="Rolling 5d VIX", row=1, col=1)
+    fig.add_trace(
+        go.Scatter(
+            x=vix_df.index, y=vix_df["20d"], mode="lines",
+            line=dict(color="#E67E22", width=2), name="20d IV"
+        ),
+        row=1, col=2
+    )
+    fig.update_yaxes(title_text="Rolling 20d VIX", row=1, col=2)
+    fig.update_layout(height=400, width=900, showlegend=False)
+    st.plotly_chart(fig, use_container_width=True)
+
+    ### PLOT ###
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=vix_df.index,
