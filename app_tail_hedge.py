@@ -26,11 +26,13 @@ def merge_dfs(array_of_dfs):
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def plot_vix_vvix(start, end, **kwargs):
+    ### data pull ###
     with open(Path(DATA_DIR) / 'VIX.csv', 'rb') as file:
         vix = pd.read_csv(file)
     with open(Path(DATA_DIR) / 'VVIX.csv', 'rb') as file:
         vvix = pd.read_csv(file)
 
+    ### CALCULATE DATA ###
     vix.index = pd.to_datetime(vix['Date']).values
     vix = pd.DataFrame(vix['Close'])
     vix.columns = ['vix']
@@ -38,9 +40,9 @@ def plot_vix_vvix(start, end, **kwargs):
     vvix = pd.DataFrame(vvix['Close'])
     vvix.columns = ['vvix']
 
+    ### PLOT ###
     vix_vvix_merge = merge_dfs([vix,vvix]).dropna()
     fig = make_subplots(rows=1, cols=2, subplot_titles=["VIX", "VVIX"])
-    # VIX plot (left)
     fig.add_trace(
         go.Scatter(
             x=vix_vvix_merge.index, y=vix_vvix_merge["vix"], mode="lines",
@@ -50,8 +52,6 @@ def plot_vix_vvix(start, end, **kwargs):
     )
     fig.update_yaxes(title_text="VIX", row=1, col=1)
     fig.update_xaxes(title_text="Date", row=1, col=1)
-
-    # VVIX plot (right)
     fig.add_trace(
         go.Scatter(
             x=vix_vvix_merge.index, y=vix_vvix_merge["vvix"], mode="lines",
@@ -61,17 +61,33 @@ def plot_vix_vvix(start, end, **kwargs):
     )
     fig.update_yaxes(title_text="VVIX", row=1, col=2)
     fig.update_xaxes(title_text="Date", row=1, col=2)
-
     fig.update_layout(height=400, width=900, showlegend=False)
     st.plotly_chart(fig, use_container_width=True)
 
 def plot_veqtor_vix(start, end, **kwargs):
+    with open(Path(DATA_DIR) / 'VIX.csv', 'rb') as file:
+        vix = pd.read_csv(file)
     with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
         spx = pd.read_csv(file)
+        ### CALCULATE DATA ###
+    vix.index = pd.to_datetime(vix['Date']).values
+    vix = pd.DataFrame(vix['Close'])
+    vix.columns = ['vix']
     spx.index = pd.to_datetime(spx['Date']).values
-    factor_df = pd.DataFrame(spx['Close'])
-    factor_df.columns = ['spx']
+    spx = pd.DataFrame(spx['Close'])
+    spx.columns = ['spx']
 
+    rv_df = pd.DataFrame(
+        spx.pct_change().rolling(window=21).std() * 252**0.5
+    )
+    vix['5d'] = vix['vix'].rolling(window=5).mean()
+    vix['20d'] = vix['vix'].rolling(window=20).mean()
+    vix['divt'] = np.nan
+    for row in vix.index:
+        if vix.loc[row,'5d'] >= vix.loc[row,'20d']:
+            vix.loc[row, 'divt'] = 1
+        elif vix.loc[row,'5d'] < vix.loc[row,'20d']:
+            vix.loc[row, 'divt'] = -1
 
 
 
