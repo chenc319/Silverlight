@@ -39,45 +39,30 @@ def plot_vix_vvix(start, end, **kwargs):
     vvix.columns = ['vvix']
 
     vix_vvix_merge = merge_dfs([vix,vvix])
-    fig = go.Figure()
-
-    # VIX on left y-axis
+    fig = make_subplots(rows=1, cols=2, subplot_titles=["VIX", "VVIX"])
+    # VIX plot (left)
     fig.add_trace(
         go.Scatter(
-            x=vix_vvix_merge.index, y=vix_vvix_merge['vix'], name='VIX',
-            line=dict(color='#1f77b4', width=2),
-            yaxis='y1'
-        )
+            x=vix_vvix_merge.index, y=vix_vvix_merge["vix"], mode="lines",
+            line=dict(color="#2874A6", width=2), name="VIX"
+        ),
+        row=1, col=1
     )
+    fig.update_yaxes(title_text="VIX", row=1, col=1)
+    fig.update_xaxes(title_text="Date", row=1, col=1)
 
-    # VVIX on right y-axis
+    # VVIX plot (right)
     fig.add_trace(
         go.Scatter(
-            x=vix_vvix_merge.index, y=vix_vvix_merge['vvix'], name='VVIX',
-            line=dict(color='#ff7f0e', width=2),
-            yaxis='y2'
-        )
-    )
-
-    fig.update_layout(
-        yaxis=dict(
-            title='VIX',
-            showgrid=True,
-            zeroline=False
+            x=vix_vvix_merge.index, y=vix_vvix_merge["vvix"], mode="lines",
+            line=dict(color="#E67E22", width=2), name="VVIX"
         ),
-        yaxis2=dict(
-            title='VVIX',
-            overlaying='y',
-            side='right',
-            showgrid=False,
-            zeroline=False
-        ),
-        xaxis=dict(title='Date'),
-        legend=dict(x=0.01, y=0.97),
-        height=400,
-        width=900
+        row=1, col=2
     )
+    fig.update_yaxes(title_text="VVIX", row=1, col=2)
+    fig.update_xaxes(title_text="Date", row=1, col=2)
 
+    fig.update_layout(height=400, width=900, showlegend=False)
     st.plotly_chart(fig, use_container_width=True)
 
 def plot_veqtor_vix(start, end, **kwargs):
