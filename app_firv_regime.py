@@ -130,7 +130,7 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     sp500.drop('Date', axis=1, inplace=True)
     spx_daily = pd.DataFrame(sp500['Close'])
     spx_daily.columns = ['spx']
-    spx_daily = spx_daily.resample('ME').last().shift(-1)
+    spx_daily = spx_daily.resample('ME').last()
     treasury_yield_curve_spx = merge_dfs([treasury_yield_curve,spx_daily]).dropna()
     treasury_yield_curve_spx['spx_pct'] = treasury_yield_curve_spx['spx'].pct_change()
 
