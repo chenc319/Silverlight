@@ -157,10 +157,10 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     total_rows = (len(bull_steepening_regime) + len(bull_flattening_regime) +
                   len(bear_steepening_regime) + len(bear_flattening_regime))
     yc_regime_results['% of Occurrences'] = [
-        len(bull_steepening_regime) / total_rows,
         len(bull_flattening_regime) / total_rows,
-        len(bear_steepening_regime) / total_rows,
-        len(bear_flattening_regime) / total_rows
+        len(bear_flattening_regime) / total_rows,
+        len(bull_steepening_regime) / total_rows,
+        len(bear_steepening_regime) / total_rows
     ]
     yc_regime_results['% of Occurrences'] = (yc_regime_results['% of Occurrences'] * 100)
 
