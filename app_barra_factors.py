@@ -72,35 +72,6 @@ def plot_barra_factors(start, end, **kwargs):
         "#6bb7f4",  # Sky Blue
     ]
 
-    ### CALCULATE FACTOR RETURNS ###
-    barra_factors_pct = barra_factors_df.pct_change().dropna()
-    mean_factor_returns = barra_factors_pct.rolling(63).mean()
-    std_factor_returns = barra_factors_pct.rolling(63).std()
-    barr_factor_z_scores = (barra_factors_pct - mean_factor_returns) / std_factor_returns
-    barr_factor_z_spx_merge = merge_dfs([barr_factor_z_scores,spx_daily.pct_change()])
-
-    # replace 'df' with your actual dataframe
-    factor_cols = [col for col in barr_factor_z_spx_merge.columns if col != 'spx']
-    bin_edges = [-np.inf, -2, -1, 1, 2, np.inf]
-    bin_labels = ["<-2", "-2 to -1", "-1 to 1", "1 to 2", ">=2"]
-
-    results = []
-    for factor in factor_cols:
-        bins = pd.cut(barr_factor_z_spx_merge[factor], bins=bin_edges, labels=bin_labels)
-        group = barr_factor_z_spx_merge.groupby(bins)['spx'].mean().reset_index()
-        group["factor"] = factor
-        group.rename(columns={factor: "z_bin"}, inplace=True)
-        results.append(group)
-
-    panel_df = pd.concat(results, ignore_index=True)
-    panel_df = panel_df[['factor', panel_df.columns[0], 'spx']]
-    panel_df.rename(columns={panel_df.columns[1]: 'z_bin'}, inplace=True)
-    panel_df['spx'] = panel_df['spx'].round(6)
-
-    ### ---------------------------------------------------------------------------------------------------- ###
-    ### ----------------------------------------------- PLOT ----------------------------------------------- ###
-    ### ---------------------------------------------------------------------------------------------------- ###
-
     ### PLOT ###
     columns_to_plot = barra_factors_df.columns
     fig = sp.make_subplots(rows=4, cols=3, subplot_titles=columns_to_plot)
@@ -130,6 +101,35 @@ def plot_barra_factors(start, end, **kwargs):
     st.plotly_chart(fig, use_container_width=True)
     barra_factors_pct = barra_factors_df.pct_change()
 
+### ---------------------------------------------------------------------------------------------------------- ###
+### -------------------------------------------- BARRA FACTORS ----------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
+def plot_z_score_barra_factors_spx(start,end,**kwarg):
+    ### CALCULATE FACTOR RETURNS ###
+    barra_factors_pct = barra_factors_df.pct_change().dropna()
+    mean_factor_returns = barra_factors_pct.rolling(63).mean()
+    std_factor_returns = barra_factors_pct.rolling(63).std()
+    barr_factor_z_scores = (barra_factors_pct - mean_factor_returns) / std_factor_returns
+    barr_factor_z_spx_merge = merge_dfs([barr_factor_z_scores, spx_daily.pct_change()])
+
+    # replace 'df' with your actual dataframe
+    factor_cols = [col for col in barr_factor_z_spx_merge.columns if col != 'spx']
+    bin_edges = [-np.inf, -2, -1, 1, 2, np.inf]
+    bin_labels = ["<-2", "-2 to -1", "-1 to 1", "1 to 2", ">=2"]
+
+    results = []
+    for factor in factor_cols:
+        bins = pd.cut(barr_factor_z_spx_merge[factor], bins=bin_edges, labels=bin_labels)
+        group = barr_factor_z_spx_merge.groupby(bins)['spx'].mean().reset_index()
+        group["factor"] = factor
+        group.rename(columns={factor: "z_bin"}, inplace=True)
+        results.append(group)
+
+    panel_df = pd.concat(results, ignore_index=True)
+    panel_df = panel_df[['factor', panel_df.columns[0], 'spx']]
+    panel_df.rename(columns={panel_df.columns[1]: 'z_bin'}, inplace=True)
+    panel_df['spx'] = panel_df['spx'].round(6)
     ### PLOT ###
     factors = panel_df['factor'].unique()
     z_bins = ["<-2", "-2 to -1", "-1 to 1", "1 to 2", ">=2"]
@@ -158,6 +158,71 @@ def plot_barra_factors(start, end, **kwargs):
         bargap=0.15,
     )
     st.plotly_chart(fig)
+
+### ---------------------------------------------------------------------------------------------------------- ###
+### -------------------------------------------- BARRA FACTORS ----------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
+def plot_kNN_barra_factor_results(start,end,**kwargs):
+    from sklearn.neighbors import NearestNeighbors
+    ### CALCULATE FACTOR RETURNS ###
+    barra_factors_pct = barra_factors_df.pct_change().dropna()
+    mean_factor_returns = barra_factors_pct.rolling(252).mean()
+    std_factor_returns = barra_factors_pct.rolling(252).std()
+    barr_factor_z_scores = (barra_factors_pct - mean_factor_returns) / std_factor_returns
+    barr_factor_z_spx_merge = merge_dfs([barr_factor_z_scores, spx_daily.pct_change()])
+    barr_factor_z_spx_merge['spx_forward_lag1'] = barr_factor_z_spx_merge['spx'].shift(-1)
+    barr_factor_z_spx_merge = barr_factor_z_spx_merge.dropna()
+    df = barr_factor_z_spx_merge.copy()
+
+    factor_cols = [c for c in df.columns if c not in ['spx', 'spx_forward_lag1']]
+    window_years = 1
+    lookback = window_years * 252  # Approx. trading days in 3 years.
+
+    results = []
+
+    for idx in range(lookback, len(df) - 1):  # can't predict for the very last row
+        now = df.iloc[idx]
+        dt = df.index[idx]
+
+        historical = df.iloc[idx - lookback:idx]
+        # Drop NA and any rows in lookback where a factor is missing
+        historical = historical.dropna(subset=factor_cols + ['spx_forward_lag1'])
+
+        current_factors = now[factor_cols].values.reshape(1, -1)
+        hist_factors = historical[factor_cols].values
+
+        # Use k=5 neighbors
+        if len(historical) < 5:
+            continue  # Not enough data, skip
+        knn = NearestNeighbors(n_neighbors=5, metric='euclidean').fit(hist_factors)
+        dist, indices = knn.kneighbors(current_factors)
+        neighbor_indices = indices[0]
+
+        pred_spx_next = historical.iloc[neighbor_indices]['spx_forward_lag1'].mean()
+        avg_distance = np.mean(dist[0])
+        realized_spx_next = df.iloc[idx + 1]['spx']
+
+        results.append({
+            'date': dt,
+            'knn_pred_spx_avg5': pred_spx_next,
+            'knn_avg_distance': avg_distance,
+            'realized_spx_next': realized_spx_next
+        })
+
+    knn_results = pd.DataFrame(results).set_index('date')
+
+    # Trading logic: long if knn_pred_spx_avg5 > 0, short otherwise
+    knn_results['position'] = np.where(knn_results['knn_pred_spx_avg5'] > 0, 1, -1)
+    knn_results['strategy_return'] = knn_results['position'] * knn_results['realized_spx_next']
+
+    (knn_results['strategy_return'].mean() * 252) / (knn_results['strategy_return'].std() * (252**0.5))
+    (knn_results['realized_spx_next'].mean() * 252) / (knn_results['realized_spx_next'].std() * (252**0.5))
+
+
+    print(knn_results.head(10))
+
+
 
 
 

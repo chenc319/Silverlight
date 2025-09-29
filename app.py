@@ -95,7 +95,9 @@ elif menu == 'Yield Curve Regimes':
 ### ---------------------------------------------------------------------------------------- ###
 
 elif menu == 'Barra Factor Model':
-    st.title("Barra Factor Model")
+    st.title("Barra Factors")
+    app_barra_factors.plot_barra_factors(start_date,end_date)
+    st.title("Z-Scored Factors: Average SPX Daily Return")
     app_barra_factors.plot_barra_factors(start_date,end_date)
 
 
@@ -104,9 +106,7 @@ elif menu == 'Barra Factor Model':
 ### ---------------------------------------------------------------------------------------- ###
 
 elif menu == 'Tail Hedge Portfolio':
-    st.title("VIX & VVIX Levels")
-    app_tail_hedge.plot_vix_vvix(start_date,end_date)
-    st.title('VEQTOR')
+    st.title('Realized and Implied Volatility')
     app_tail_hedge.plot_veqtor_vix(start_date,end_date)
 
 
