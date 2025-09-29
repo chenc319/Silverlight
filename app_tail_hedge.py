@@ -157,8 +157,10 @@ def plot_veqtor_vix(start, end, **kwargs):
         x=vix_df.index,
         y=vix_df['weights'] * 100,
         mode='lines',
-        name='RV/IV Cross Weights',
         line=dict(color='#29B6D9', width=2)))
+    fig.update_layout(
+        title = 'RV/IV Cross Weights'
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 
