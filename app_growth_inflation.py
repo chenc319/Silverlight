@@ -452,6 +452,56 @@ def plot_growth_inflation(start, end, **kwargs):
     fig.show()
     st.plotly_chart(fig, use_container_width=True)
 
+    ### BONDS RETURN DISTRIBUTION ###
+    st.title("Bonds Return Distributions")
+    regimes = [
+        'Reflation',
+        'Stagflation',
+        'Goldilocks',
+        'Deflation'
+    ]
+    regime_colors = {
+        "Reflation": "#27AE60",
+        "Stagflation": "#E74C3C",
+        "Goldilocks": "#F1C40F",
+        "Deflation": "#2980B9"
+    }
+    fig = sp.make_subplots(
+        rows=2, cols=2,
+        subplot_titles=regimes
+    )
+    min_bound = df['bonds_pct'].min()
+    max_bound = df['bonds_pct'].max()
+    for i, regime in enumerate(regimes):
+        row = i // 2 + 1
+        col = i % 2 + 1
+        subdata = df[df['regime_label'] == regime]
+        fig.add_trace(
+            go.Histogram(
+                x=subdata['bonds_pct'].dropna(),
+                name=regime,
+                marker_color=regime_colors.get(regime, "#AAAAAA"),
+                opacity=0.8,
+                nbinsx=30,
+                xbins=dict(
+                    start=min_bound,
+                    end=max_bound
+                )
+            ),
+            row=row,
+            col=col
+        )
+    for row in [1, 2]:
+        for col in [1, 2]:
+            fig.update_xaxes(title_text="Bond % Return", row=row, col=col, range=[min_bound, max_bound])
+            fig.update_yaxes(title_text="Count", row=row, col=col)
+    fig.update_layout(
+        showlegend=False,
+        height=600
+    )
+    fig.show()
+    st.plotly_chart(fig, use_container_width=True)
+
     ### ---------------------------------------------------------------------------------------------------------- ###
     ### ------------------------------------------------ SECTORS ------------------------------------------------- ###
     ### ---------------------------------------------------------------------------------------------------------- ###

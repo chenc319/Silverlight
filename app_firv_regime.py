@@ -221,6 +221,8 @@ def plot_treasury_yield_curves(start,end,**kwargs):
         "Bull Flattening",
         "Bull Steepening",
     ]
+    min_bound = df['spx_pct'].min()
+    max_bound = df['spx_pct'].max()
     fig = sp.make_subplots(
         rows=2, cols=2,
         subplot_titles=regimes
@@ -231,24 +233,28 @@ def plot_treasury_yield_curves(start,end,**kwargs):
         subdata = df[df['regime_label'] == regime]
         fig.add_trace(
             go.Histogram(
-                x=subdata['spx_pct'].dropna(),  # replace 'spx_pct' with 'spx' for levels
+                x=subdata['spx_pct'].dropna(),
                 name=regime,
                 marker_color=regime_color_map[regime],
                 opacity=0.8,
-                nbinsx=30
+                nbinsx=30,
+                xbins=dict(
+                    start=min_bound,
+                    end=max_bound
+                )
             ),
             row=row,
             col=col
         )
+    for row in [1, 2]:
+        for col in [1, 2]:
+            fig.update_xaxes(title_text="SPX % Return", row=row, col=col, range=[min_bound, max_bound])
+            fig.update_yaxes(title_text="Count", row=row, col=col)
     fig.update_layout(
         title="Distribution of SPX Returns by Yield Curve Regime",
         showlegend=False,
         height=600
     )
-    fig.update_xaxes(title_text="SPX % Return", row=2, col=1)
-    fig.update_xaxes(title_text="SPX % Return", row=2, col=2)
-    fig.update_yaxes(title_text="Count", row=1, col=1)
-    fig.update_yaxes(title_text="Count", row=2, col=1)
     st.plotly_chart(fig, use_container_width=True)
 
 
