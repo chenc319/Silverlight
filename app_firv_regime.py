@@ -157,7 +157,7 @@ def plot_treasury_yield_curves(start,end,**kwargs):
         title='SPX by Regime',
         xaxis_title='Date',
         yaxis_title='SPX Level',
-        showlegend=False,
+        showlegend=True,
     )
     st.plotly_chart(fig, use_container_width=True)
 
