@@ -53,7 +53,7 @@ def plot_vix_vvix(start, end, **kwargs):
     # VVIX on right y-axis
     fig.add_trace(
         go.Scatter(
-            x=vix_vvix_merge.index, y=vix_vvix_merge['vvix'], name='VVIX',
+            x=df.index, y=df['vvix'], name='VVIX',
             line=dict(color='#ff7f0e', width=2),
             yaxis='y2'
         )
