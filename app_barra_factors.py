@@ -52,12 +52,19 @@ for each_factor in list(barra_factors.keys()):
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def plot_factors(start, end, **kwargs):
-    df = barra_factors_df.copy()
+    df = barra_factors_df.copy().resample('ME').last()
     # Define a gentle neutral palette (no neons)
-    neutral_palette = [
-        "#7D8793", "#BCB7BC", "#A9A9A9", "#ADA587", "#9C9276",
-        "#76949F", "#B2B1A8", "#769898", "#D2CFC4", "#A4ACB5",
-        "#86949F", "#BABCBE", "#D3C9B0", "#A68769", "#9B9276"
+    palette = [
+        "#35c9c3",  # Teal
+        "#f9c6bb",  # Peach
+        "#98e3f9",  # Light Blue
+        "#59b758",  # Leaf Green
+        "#e54d42",  # Soft Red
+        "#fff8a9",  # Pale Yellow
+        "#c4b7f4",  # Lavender
+        "#bbf6c2",  # Mint Green
+        "#ecbe9d",  # Apricot
+        "#6bb7f4",  # Sky Blue
     ]
 
     # List columns to plot (replace with your actual DataFrame column list)
@@ -74,7 +81,7 @@ def plot_factors(start, end, **kwargs):
                 y=df[col],
                 mode='lines',
                 name=col,
-                line=dict(color=neutral_palette[i % len(neutral_palette)], width=2)
+                line=dict(color=palette[i % len(palette)], width=2)
             ),
             row=row,
             col=col_pos
