@@ -409,10 +409,10 @@ def plot_growth_inflation(start, end, **kwargs):
         'Deflation'
     ]
     regime_colors = {
-        "Reflation": "#27AE60",
-        "Stagflation": "#E74C3C",
-        "Goldilocks": "#F1C40F",
-        "Deflation": "#2980B9"
+        0: "#27AE60",
+        1: "#E74C3C",
+        2: "#F1C40F",
+        3: "#2980B9"
     }
 
     fig = sp.make_subplots(
