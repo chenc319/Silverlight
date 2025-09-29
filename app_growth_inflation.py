@@ -389,19 +389,6 @@ def plot_growth_inflation(start, end, **kwargs):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    ### TABLE ###
-    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
-    styled = gi_2_factor_results.style \
-        .format({'Equities': "{:.2f}%",
-                 'Bonds': "{:.2f}%",
-                 '% of Occurrences': "{:.2f}%"}) \
-        .set_properties(subset=['Equities', 'Bonds', '% of Occurrences'], **{'width': '80px'}) \
-        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
-    st.title("Growth and Inflation Historical Performance")
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.write(styled, unsafe_allow_html=True)
-
     ### RETURN DISTRIBUTIONS ###
     st.title("Equity Return Distributions")
     regimes = [
@@ -439,6 +426,19 @@ def plot_growth_inflation(start, end, **kwargs):
     fig.update_yaxes(title_text="Count", row=1, col=1)
     fig.update_yaxes(title_text="Count", row=2, col=1)
     st.plotly_chart(fig, use_container_width=True)
+
+    ### TABLE ###
+    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
+    styled = gi_2_factor_results.style \
+        .format({'Equities': "{:.2f}%",
+                 'Bonds': "{:.2f}%",
+                 '% of Occurrences': "{:.2f}%"}) \
+        .set_properties(subset=['Equities', 'Bonds', '% of Occurrences'], **{'width': '80px'}) \
+        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
+    st.title("Growth and Inflation Historical Performance")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.write(styled, unsafe_allow_html=True)
 
     ### ---------------------------------------------------------------------------------------------------------- ###
     ### ------------------------------------------------ SECTORS ------------------------------------------------- ###
