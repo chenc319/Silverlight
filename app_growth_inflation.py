@@ -297,10 +297,6 @@ def plot_growth_inflation(start, end, **kwargs):
         legend=dict(title='Series', orientation='h', y=-0.2),
         margin=dict(t=50, b=50)
     )
-    fig.update_yaxes(title_text="Outright", row=1, col=1, secondary_y=False)
-    fig.update_yaxes(title_text="ROC", row=1, col=1, secondary_y=True)
-    fig.update_yaxes(title_text="Outright", row=1, col=2, secondary_y=False)
-    fig.update_yaxes(title_text="ROC", row=1, col=2, secondary_y=True)
 
     # Streamlit plot
     st.plotly_chart(fig, use_container_width=True)
