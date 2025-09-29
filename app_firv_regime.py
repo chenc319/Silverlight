@@ -29,6 +29,8 @@ treasury_factors = {
     "treasury_20y": "20y",
     "treasury_30y": "30y"
 }
+with open(Path(DATA_DIR) / 'sp500.csv', 'rb') as file:
+    sp500 = pd.read_csv(file)
 def merge_dfs(array_of_dfs):
     return ft.reduce(lambda left, right: pd.merge(left, right,
                                                   left_index=True,
