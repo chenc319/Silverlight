@@ -143,24 +143,24 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     ### RESULTS ###
     yc_regime_results = pd.DataFrame()
     yc_regime_results['Regime'] = [
-        'Bull Flattening',
         'Bear Flattening',
-        'Bull Steepening',
-        'Bear Steepening'
+        'Bull Flattening',
+        'Bear Steepening',
+        'Bull Steepening'
     ]
     yc_regime_results['SPX'] = [
-        bull_flattening_regime['spx_pct'].mean() * 100,
         bear_flattening_regime['spx_pct'].mean() * 100,
-        bull_steepening_regime['spx_pct'].mean() * 100,
-        bear_steepening_regime['spx_pct'].mean() * 100
+        bull_flattening_regime['spx_pct'].mean() * 100,
+        bear_steepening_regime['spx_pct'].mean() * 100,
+        bull_steepening_regime['spx_pct'].mean() * 100
     ]
     total_rows = (len(bull_steepening_regime) + len(bull_flattening_regime) +
                   len(bear_steepening_regime) + len(bear_flattening_regime))
     yc_regime_results['% of Occurrences'] = [
-        len(bull_flattening_regime) / total_rows,
         len(bear_flattening_regime) / total_rows,
-        len(bull_steepening_regime) / total_rows,
-        len(bear_steepening_regime) / total_rows
+        len(bull_flattening_regime) / total_rows,
+        len(bear_steepening_regime) / total_rows,
+        len(bull_steepening_regime) / total_rows
     ]
     yc_regime_results['% of Occurrences'] = (yc_regime_results['% of Occurrences'] * 100)
 
