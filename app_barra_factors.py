@@ -61,10 +61,7 @@ def plot_factors(start, end, **kwargs):
     ]
 
     # List columns to plot (replace with your actual DataFrame column list)
-    columns_to_plot = [
-        'beta', 'book_to_price', 'residual_volatility', 'size',
-        # ... Up to 15 columns total based on your structure (5 rows x 3 cols)
-    ]
+    columns_to_plot = barra_factors_df.columns
 
     fig = sp.make_subplots(rows=5, cols=3, subplot_titles=columns_to_plot)
 
