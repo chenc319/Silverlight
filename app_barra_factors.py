@@ -7,12 +7,12 @@ import pandas as pd
 import functools as ft
 import streamlit as st
 import plotly.graph_objs as go
-from pandas_datareader import data as pdr
 from pathlib import Path
 import os
 from matplotlib.colors import LinearSegmentedColormap
 from plotly.subplots import make_subplots
 import numpy as np
+import plotly.subplots as sp
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 barra_factors = {
@@ -52,6 +52,48 @@ for each_factor in list(barra_factors.keys()):
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def plot_factors(start, end, **kwargs):
+    df = barra_factors_df.copy()
+    # Define a gentle neutral palette (no neons)
+    neutral_palette = [
+        "#7D8793", "#BCB7BC", "#A9A9A9", "#ADA587", "#9C9276",
+        "#76949F", "#B2B1A8", "#769898", "#D2CFC4", "#A4ACB5",
+        "#86949F", "#BABCBE", "#D3C9B0", "#A68769", "#9B9276"
+    ]
+
+    # List columns to plot (replace with your actual DataFrame column list)
+    columns_to_plot = [
+        'beta', 'book_to_price', 'residual_volatility', 'size',
+        # ... Up to 15 columns total based on your structure (5 rows x 3 cols)
+    ]
+
+    fig = sp.make_subplots(rows=5, cols=3, subplot_titles=columns_to_plot)
+
+    for i, col in enumerate(columns_to_plot):
+        row = i // 3 + 1
+        col_pos = i % 3 + 1
+        fig.add_trace(
+            go.Scatter(
+                x=df.index,
+                y=df[col],
+                mode='lines',
+                name=col,
+                line=dict(color=neutral_palette[i % len(neutral_palette)], width=2)
+            ),
+            row=row,
+            col=col_pos
+        )
+
+    for row in range(1, 6):
+        for col in range(1, 4):
+            fig.update_xaxes(title_text="Date", row=row, col=col)
+            fig.update_yaxes(title_text="Value", row=row, col=col)
+
+    fig.update_layout(
+        showlegend=False,
+        height=1800,
+        width=1200
+    )
+    st.plotly_chart(fig, use_container_width=True)
     barra_factors_pct = barra_factors_df.pct_change()
 
 

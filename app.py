@@ -96,6 +96,7 @@ elif menu == 'Yield Curve Regimes':
 
 elif menu == 'Barra Factor Model':
     st.title("Barra Factor Model")
+    app_barra_factors.plot_factors(start_date,end_date)
 
 
 ### ---------------------------------------------------------------------------------------- ###
