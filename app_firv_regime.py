@@ -9,6 +9,7 @@ import streamlit as st
 import plotly.graph_objs as go
 from pandas_datareader import data as pdr
 from pathlib import Path
+import plotly.express as px
 import os
 from matplotlib.colors import LinearSegmentedColormap
 from plotly.subplots import make_subplots
@@ -62,7 +63,8 @@ def plot_treasury_yield_curves(start,end,**kwargs):
         df.columns = [treasury_factors[each_factor]]
         treasury_yield_curve = merge_dfs([treasury_yield_curve, df])
 
-    treasury_yield_curve = treasury_yield_curve.resample("ME").last().dropna()
+    treasury_yield_curve = treasury_yield_curve.resample('ME').last()
+    treasury_yield_curve = treasury_yield_curve.dropna()
     treasury_yield_curve['short_chg'] = treasury_yield_curve['2y'].diff()
     treasury_yield_curve['long_chg'] = treasury_yield_curve['10y'].diff()
     treasury_yield_curve['curve_regime'] = np.vectorize(classify_regime)(treasury_yield_curve['short_chg'],
@@ -121,6 +123,7 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     ### ---------------------------------------------- FIRV FACTORS ---------------------------------------------- ###
     ### ---------------------------------------------------------------------------------------------------------- ###
 
+    ### PULL SPX DATA ###
     with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
         sp500 = pd.read_csv(file)
     sp500.index = pd.to_datetime(sp500['Date']).values
@@ -128,17 +131,37 @@ def plot_treasury_yield_curves(start,end,**kwargs):
     spx_daily = pd.DataFrame(sp500['Close'])
     spx_daily.columns = ['spx']
     spx_daily = spx_daily.resample('ME').last()
-
     treasury_yield_curve_spx = merge_dfs([treasury_yield_curve,spx_daily]).dropna()
     treasury_yield_curve_spx['spx_pct'] = treasury_yield_curve_spx['spx'].pct_change()
 
-
+    ### REGIMES ###
     bull_steepening_regime = treasury_yield_curve_spx[(treasury_yield_curve_spx['curve_regime'] == 'Bull Steepening')]
     bull_flattening_regime = treasury_yield_curve_spx[(treasury_yield_curve_spx['curve_regime'] == 'Bull Flattening')]
     bear_steepening_regime = treasury_yield_curve_spx[(treasury_yield_curve_spx['curve_regime'] == 'Bear Steepening')]
     bear_flattening_regime = treasury_yield_curve_spx[(treasury_yield_curve_spx['curve_regime'] == 'Bear Flattening')]
 
+    df = treasury_yield_curve_spx.reset_index().rename(columns={'index': 'date'})
+    fig = px.scatter(
+        df,
+        x='date',
+        y='spx',
+        color='regime_color',  # for legend (won't show colors directly)
+        color_discrete_map='identity',  # interpret regime_color as actual color values
+        custom_data=['regime_color', 'spx_pct'],
+    )
+    fig.update_traces(
+        marker=dict(size=8),
+        marker_color=df['regime_color'],  # sets actual marker colors per row
+    )
+    fig.update_layout(
+        title='SPX by Regime',
+        xaxis_title='Date',
+        yaxis_title='SPX Level',
+        showlegend=False,
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
+    ### RESULTS ###
     bull_steepening_regime['spx_pct'].mean()
     bull_flattening_regime['spx_pct'].mean()
     bear_steepening_regime['spx_pct'].mean()
