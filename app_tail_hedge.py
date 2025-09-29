@@ -38,7 +38,7 @@ def plot_vix_vvix(start, end, **kwargs):
     vvix = pd.DataFrame(vvix['Close'])
     vvix.columns = ['vvix']
 
-    vix_vvix_merge = merge_dfs([vix,vvix])
+    vix_vvix_merge = merge_dfs([vix,vvix]).dropna()
     fig = make_subplots(rows=1, cols=2, subplot_titles=["VIX", "VVIX"])
     # VIX plot (left)
     fig.add_trace(
