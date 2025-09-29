@@ -176,28 +176,21 @@ def plot_growth_inflation(start, end, **kwargs):
 
     ### PLOT ###
     st.title("Growth and Inflation Inputs")
-    # Define data columns
     cli_col = 'growth'
     cli_diff_col = 'growth_roc'
     cpi_col = 'inflation'
     cpi_diff_col = 'inflation_roc'
-
-    # Axis/curve settings
     colors = {
         'CLI': '#2056AE',
         'CLI 1st Change': '#6AC47E',
         'CPI': '#F2552C',
         'CPI 1st Change': '#F7BC38'
     }
-
-    # Set up two subplots, both using secondary y-axis
     fig = make_subplots(
         rows=1, cols=2,
         subplot_titles=['CLI (Growth)', 'CPI (Inflation)'],
         specs=[[{"secondary_y": True}, {"secondary_y": True}]]
     )
-
-    # CLI: Outright (primary y), 1st change (secondary y)
     fig.add_trace(
         go.Scatter(
             x=growth_inflation_df.index,
@@ -218,8 +211,6 @@ def plot_growth_inflation(start, end, **kwargs):
         ),
         row=1, col=1, secondary_y=True
     )
-
-    # CPI: Outright (primary y), 1st change (secondary y)
     fig.add_trace(
         go.Scatter(
             x=growth_inflation_df.index,
@@ -240,7 +231,6 @@ def plot_growth_inflation(start, end, **kwargs):
         ),
         row=1, col=2, secondary_y=True
     )
-
     fig.update_layout(
         height=500,
         width=1100,
@@ -252,8 +242,6 @@ def plot_growth_inflation(start, end, **kwargs):
     fig.update_yaxes(title_text="ROC", row=1, col=1, secondary_y=True)
     fig.update_yaxes(title_text="Outright", row=1, col=2, secondary_y=False)
     fig.update_yaxes(title_text="ROC", row=1, col=2, secondary_y=True)
-
-    # Streamlit plot
     st.plotly_chart(fig, use_container_width=True)
 
     ### PLOT ###
@@ -277,6 +265,7 @@ def plot_growth_inflation(start, end, **kwargs):
     df['regime_color'] = df['regime_code'].map(regime_colors)
     df['regime_label'] = df['regime_code'].map(regime_labels)
 
+    ### EQUITY REGIME GRAPH ###
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=df.index,
@@ -308,6 +297,7 @@ def plot_growth_inflation(start, end, **kwargs):
     )
     st.plotly_chart(fig, use_container_width=True)
 
+    ### BOND REGIME GRAPH ###
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=df.index,
@@ -492,9 +482,7 @@ def plot_growth_inflation(start, end, **kwargs):
         spx_sector_pct.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
     deflation_sector_averages.columns = ['Deflation']
 
-    # Custom diverging colormap: red (neg), white (zero), green (pos)
     cmap = LinearSegmentedColormap.from_list("red_white_green", ["#ff3333", "#ffffff", "#33cc33"])
-
     def highlight_red_green(val):
         if val < 0:
             color = 'background-color: #ffcccc'  # light red

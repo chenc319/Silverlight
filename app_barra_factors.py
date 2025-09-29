@@ -51,7 +51,7 @@ for each_factor in list(barra_factors.keys()):
 ### -------------------------------------------- BARRA FACTORS ----------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-def plot_factors(start, end, **kwargs):
+def plot_barra_factors(start, end, **kwargs):
     df = barra_factors_df.copy().resample('ME').last()
     # Define a gentle neutral palette (no neons)
     palette = [
