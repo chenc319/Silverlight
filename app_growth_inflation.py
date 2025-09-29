@@ -251,7 +251,6 @@ def plot_growth_inflation(start, end, **kwargs):
         go.Scatter(
             x=growth_inflation_df.index,
             y=growth_inflation_df[cli_col],
-            name='Outright',
             mode='lines',
             line=dict(color=colors['CLI'], width=2)
         ),
@@ -261,7 +260,6 @@ def plot_growth_inflation(start, end, **kwargs):
         go.Scatter(
             x=growth_inflation_df.index,
             y=growth_inflation_df[cli_diff_col],
-            name='ROC',
             mode='lines',
             line=dict(color=colors['CLI 1st Change'], dash='dot', width=2)
         ),
@@ -273,7 +271,6 @@ def plot_growth_inflation(start, end, **kwargs):
         go.Scatter(
             x=growth_inflation_df.index,
             y=growth_inflation_df[cpi_col],
-            name='Outright',
             mode='lines',
             line=dict(color=colors['CPI'], width=2)
         ),
@@ -283,7 +280,6 @@ def plot_growth_inflation(start, end, **kwargs):
         go.Scatter(
             x=growth_inflation_df.index,
             y=growth_inflation_df[cpi_diff_col],
-            name='ROC',
             mode='lines',
             line=dict(color=colors['CPI 1st Change'], dash='dot', width=2)
         ),
@@ -297,6 +293,10 @@ def plot_growth_inflation(start, end, **kwargs):
         legend=dict(title='Series', orientation='h', y=-0.2),
         margin=dict(t=50, b=50)
     )
+    fig.update_yaxes(title_text="Outright", row=1, col=1, secondary_y=False)
+    fig.update_yaxes(title_text="ROC", row=1, col=1, secondary_y=True)
+    fig.update_yaxes(title_text="Outright", row=1, col=2, secondary_y=False)
+    fig.update_yaxes(title_text="ROC", row=1, col=2, secondary_y=True)
 
     # Streamlit plot
     st.plotly_chart(fig, use_container_width=True)
