@@ -122,7 +122,6 @@ def refresh_data(start,end,**kwargs):
     hedge_eye_inflation_variables = merge_dfs(
         [cpi_total, cpi_less_foodenergy, ppi_total,
          cpi_food,cpi_energy,cpi_household_furnishings,
-         cpi_food, cpi_energy,cpi_household_furnishings,
          cpi_apparel, cpi_medical_care, cpi_transportation,
          cpi_alcohol, cpi_motor_fuel,cpi_services_less_energy]).resample('ME').last().shift(
         1).dropna()

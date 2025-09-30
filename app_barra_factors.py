@@ -99,7 +99,6 @@ def plot_barra_factors(start, end, **kwargs):
         width=1200
     )
     st.plotly_chart(fig, use_container_width=True)
-    barra_factors_pct = barra_factors_df.pct_change()
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------- BARRA FACTORS ----------------------------------------------- ###

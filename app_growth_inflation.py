@@ -55,44 +55,61 @@ def merge_dfs(array_of_dfs):
 ### ------------------------------------------------ DATA PULL ----------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
+### SPX DATA ###
+with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
+    sp500 = pd.read_csv(file)
+sp500.index = pd.to_datetime(sp500['Date']).values
+sp500.drop('Date', axis=1, inplace=True)
+spx_monthly = pd.DataFrame(sp500['Close']).resample('ME').last()
+spx_monthly.columns = ['spx']
+spx_monthly_pct = spx_monthly.pct_change().dropna()
+
+### BOND AGGREGATE DATA ###
+with open(Path(DATA_DIR) / 'AGG.csv', 'rb') as file:
+    agg = pd.read_csv(file)
+agg.index = pd.to_datetime(agg['Date']).values
+agg = pd.DataFrame(agg['Close']).resample('ME').last()
+
+### GROWTH INFLATION DATA ###
+with open(Path(DATA_DIR) / 'growth.pkl', 'rb') as file:
+    growth = pd.read_pickle(file)
+with open(Path(DATA_DIR) / 'inflation.pkl', 'rb') as file:
+    inflation = pd.read_pickle(file)
+
+### SECTOR DATA ###
+spx_sectors_merge = pd.DataFrame()
+for each_factor in list(spx_sectors.keys()):
+    with open(Path(DATA_DIR) / (each_factor + '.csv'), 'rb') as file:
+        df = pd.read_csv(file)
+    df.index = pd.to_datetime(df['Date']).values
+    df = pd.DataFrame(df['Close'])
+    df.columns = [spx_sectors[each_factor]]
+    spx_sectors_merge = merge_dfs([spx_sectors_merge, df])
+
+### GROWTH INFLATION DATA ###
+growth_inflation_df = merge_dfs([growth,inflation,sp500,agg]).dropna()
+growth_inflation_df.columns = ['growth','inflation','sp500','bonds']
+growth_inflation_df['growth_roc'] = growth_inflation_df['growth'].diff()
+growth_inflation_df['growth_roc_2'] = growth_inflation_df['growth_roc'].diff()
+growth_inflation_df['inflation_roc'] = growth_inflation_df['inflation'].diff()
+growth_inflation_df['inflation_roc_2'] = growth_inflation_df['inflation_roc'].diff()
+growth_inflation_df['sp500_pct'] = growth_inflation_df['sp500'].pct_change()
+growth_inflation_df['bonds_pct'] = growth_inflation_df['bonds'].pct_change()
+growth_inflation_df = growth_inflation_df.dropna()
+
 def plot_growth_inflation(start, end, **kwargs):
-    ### DATA PULL ###
-    with open(Path(DATA_DIR) / 'sp500.csv', 'rb') as file:
-        sp500 = pd.read_csv(file)
-    with open(Path(DATA_DIR) / 'growth.pkl', 'rb') as file:
-        growth = pd.read_pickle(file)
-    with open(Path(DATA_DIR) / 'inflation.pkl', 'rb') as file:
-        inflation = pd.read_pickle(file)
-    with open(Path(DATA_DIR) / 'AGG.csv', 'rb') as file:
-        agg = pd.read_csv(file)
 
-    spx_sectors_merge = pd.DataFrame()
-    for each_factor in list(spx_sectors.keys()):
-        with open(Path(DATA_DIR) / (each_factor + '.csv'), 'rb') as file:
-            df = pd.read_csv(file)
-        df.index = pd.to_datetime(df['Date']).values
-        df = pd.DataFrame(df['Close'])
-        df.columns = [spx_sectors[each_factor]]
-        spx_sectors_merge = merge_dfs([spx_sectors_merge, df])
-
-    sp500.index = pd.to_datetime(sp500['Date']).values
-    sp500.drop('Date', axis=1, inplace=True)
-    sp500.columns = ['close']
-    sp500 = sp500.resample('ME').last()
-    agg.index = pd.to_datetime(agg['Date']).values
-    agg = pd.DataFrame(agg['Close']).resample('ME').last()
-
-    growth_inflation_df = merge_dfs([growth,inflation,sp500,agg]).dropna()
-    growth_inflation_df.columns = ['growth','inflation','sp500','bonds']
-    growth_inflation_df['growth_roc'] = growth_inflation_df['growth'].diff()
-    growth_inflation_df['growth_roc_2'] = growth_inflation_df['growth_roc'].diff()
-    growth_inflation_df['inflation_roc'] = growth_inflation_df['inflation'].diff()
-    growth_inflation_df['inflation_roc_2'] = growth_inflation_df['inflation_roc'].diff()
-    growth_inflation_df['sp500_pct'] = growth_inflation_df['sp500'].pct_change()
-    growth_inflation_df['bonds_pct'] = growth_inflation_df['bonds'].pct_change()
-    growth_inflation_df = growth_inflation_df.dropna()
-
-    ### ------------------------------------------------ ANALYSIS ------------------------------------------------ ###
+    def regime_label(row):
+        if row['inflation_roc'] > 0 and row['growth_roc'] > 0:
+            return 0  # Reflation
+        elif row['inflation_roc'] > 0 and row['growth_roc'] < 0:
+            return 1  # Stagflation
+        elif row['inflation_roc'] < 0 and row['growth_roc'] > 0:
+            return 2  # Goldilocks
+        elif row['inflation_roc'] < 0 and row['growth_roc'] < 0:
+            return 3  # Deflation
+        else:
+            return np.nan
 
     reflation_regime = growth_inflation_df[
         (growth_inflation_df['inflation_roc'] > 0) &
@@ -110,19 +127,6 @@ def plot_growth_inflation(start, end, **kwargs):
         (growth_inflation_df['inflation_roc'] < 0) &
         (growth_inflation_df['growth_roc'] < 0)
     ]
-
-    def regime_label(row):
-        if row['inflation_roc'] > 0 and row['growth_roc'] > 0:
-            return 0  # Reflation
-        elif row['inflation_roc'] > 0 and row['growth_roc'] < 0:
-            return 1  # Stagflation
-        elif row['inflation_roc'] < 0 and row['growth_roc'] > 0:
-            return 2  # Goldilocks
-        elif row['inflation_roc'] < 0 and row['growth_roc'] < 0:
-            return 3  # Deflation
-        else:
-            return np.nan
-
     growth_inflation_df['regime_code'] = growth_inflation_df.apply(regime_label, axis=1)
 
     regime_colors = {
@@ -586,42 +590,95 @@ def plot_growth_inflation(start, end, **kwargs):
 ### ------------------------------------------------ DATA PULL ----------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
+growth_dict = {
+    'USALOLITOAASTSAM': 'cli_amplitude_adjusted',
+    'INDPRO': 'industrial_production',
+    'BOPGSTB': 'trade_balance_goods_and_services',
+    'RSXFS': 'advanced_retail_sales_retail_trade',
+    'TLMFGCONS': 'manufacturing_spending',
+    'PAYEMS': 'all_employees_total_nonfarm',
+    'USGOOD': 'goods_producing_employment',
+    'MANEMP': 'all_employees_manufacturing',
+    'CES0500000011': 'avg_earnings_all_private_employees',
+    'PCEC96': 'real_personal_consumption_expenditures',
+    'RRSFS': 'real_retail_food_services_sales',
+    'TOTALSA': 'total_vehicle_sales'
+}
+inflation_dict = {
+    'CPIAUCSL': 'cpi_all_items',
+    'CPILFESL': 'cpi_less_food_energy',
+    'PPIACO': 'ppi_all_commodities',
+    'CPIUFDSL': 'cpi_food',
+    'CPIENGSL': 'cpi_energy',
+    'CUSR0000SAH3': 'cpi_household_furnishings',
+    'CPIAPPSL': 'cpi_apparel',
+    'CPIMEDSL': 'cpi_medical_care',
+    'CPITRNSL': 'cpi_transportation',
+    'CUSR0000SAF116': 'cpi_alcohol',
+    'CUSR0000SETB': 'cpi_motor_fuel',
+    'CUSR0000SASLE': 'cpi_services_less_energy'
+}
+with open(Path(DATA_DIR) / 'hedge_eye_growth_variables.pkl', 'rb') as file:
+    hedge_eye_growth_variables = pd.read_pickle(file)
+with open(Path(DATA_DIR) / 'hedge_eye_inflation_variables.pkl', 'rb') as file:
+    hedge_eye_inflation_variables = pd.read_pickle(file)
+hedge_eye_growth_pct = hedge_eye_growth_variables.pct_change().dropna()
+hedge_eye_growth_pct.columns = growth_dict.keys()
+hedge_eye_inflation_pct = hedge_eye_inflation_variables.pct_change().dropna()
+hedge_eye_inflation_pct.columns = inflation_dict.keys()
+
 def plot_hedge_eye_factors(start,end,**kwargs):
-    growth_dict = {
-        'USALOLITOAASTSAM': 'cli_amplitude_adjusted',
-        'INDPRO': 'industrial_production',
-        'BOPGSTB': 'trade_balance_goods_and_services',
-        'RSXFS': 'advanced_retail_sales_retail_trade',
-        'TLMFGCONS': 'manufacturing_spending',
-        'PAYEMS': 'all_employees_total_nonfarm',
-        'USGOOD': 'goods_producing_employment',
-        'MANEMP': 'all_employees_manufacturing',
-        'CES0500000011': 'avg_earnings_all_private_employees',
-        'PCEC96': 'real_personal_consumption_expenditures',
-        'RRSFS': 'real_retail_food_services_sales',
-        'TOTALSA': 'total_vehicle_sales'
-    }
-    inflation_dict = {
-        'CPIAUCSL': 'cpi_all_items',
-        'CPILFESL': 'cpi_less_food_energy',
-        'PPIACO': 'ppi_all_commodities',
-        'CPIUFDSL': 'cpi_food',
-        'CPIENGSL': 'cpi_energy',
-        'CUSR0000SAH3': 'cpi_household_furnishings',
-        'CPIAPPSL': 'cpi_apparel',
-        'CPIMEDSL': 'cpi_medical_care',
-        'CPITRNSL': 'cpi_transportation',
-        'CUSR0000SAF116': 'cpi_alcohol',
-        'CUSR0000SETB': 'cpi_motor_fuel',
-        'CUSR0000SASLE': 'cpi_services_less_energy'
-    }
-    with open(Path(DATA_DIR) / 'hedge_eye_growth_variables.csv', 'rb') as file:
-        hedge_eye_growth_variables = pd.read_csv(file)
-    with open(Path(DATA_DIR) / 'hedge_eye_inflation_variables.csv', 'rb') as file:
-        hedge_eye_inflation_variables = pd.read_csv(file)
-    hedge_eye_growth_pct = hedge_eye_growth_variables.pct_change().dropna()
-    hedge_eye_growth_pct.columns = growth_dict.keys()
-    hedge_eye_inflation_pct = hedge_eye_inflation_variables.pct_change().dropna()
+    df = hedge_eye_growth_pct.copy().resample('ME').last()
+    # Define a gentle neutral palette (no neons)
+    palette = [
+        "#35c9c3",  # Teal
+        "#f9c6bb",  # Peach
+        "#98e3f9",  # Light Blue
+        "#59b758",  # Leaf Green
+        "#e54d42",  # Soft Red
+        "#fff8a9",  # Pale Yellow
+        "#c4b7f4",  # Lavender
+        "#bbf6c2",  # Mint Green
+        "#ecbe9d",  # Apricot
+        "#6bb7f4",  # Sky Blue
+        "#ffb7eb",  # Bubblegum Pink
+        "#78b4a4",  # Soft Sage Green
+    ]
+    ### PLOT ###
+    columns_to_plot = hedge_eye_growth_pct.columns
+    fig = sp.make_subplots(rows=4, cols=3, subplot_titles=columns_to_plot)
+    for i, col in enumerate(columns_to_plot):
+        row = i // 3 + 1
+        col_pos = i % 3 + 1
+        fig.add_trace(
+            go.Scatter(
+                x=df.index,
+                y=df[col],
+                mode='lines',
+                name=col,
+                line=dict(color=palette[i % len(palette)], width=2)
+            ),
+            row=row,
+            col=col_pos
+        )
+    for row in range(1, 6):
+        for col in range(1, 4):
+            fig.update_xaxes(title_text="Date", row=row, col=col)
+            fig.update_yaxes(title_text="Value", row=row, col=col)
+    fig.update_layout(
+        showlegend=False,
+        height=1800,
+        width=1200
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    hedge_eye_inflation_pct
+
+def plot_hedge_eye_factors_with_spx(start, end, **kwargs):
+    spx_monthly_pct
+
+
+
+
 
 
 
