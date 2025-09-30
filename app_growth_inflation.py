@@ -92,9 +92,7 @@ def plot_growth_inflation(start, end, **kwargs):
     growth_inflation_df['bonds_pct'] = growth_inflation_df['bonds'].pct_change()
     growth_inflation_df = growth_inflation_df.dropna()
 
-    ### ---------------------------------------------------------------------------------------------------------- ###
     ### ------------------------------------------------ ANALYSIS ------------------------------------------------ ###
-    ### ---------------------------------------------------------------------------------------------------------- ###
 
     reflation_regime = growth_inflation_df[
         (growth_inflation_df['inflation_roc'] > 0) &
@@ -169,10 +167,7 @@ def plot_growth_inflation(start, end, **kwargs):
     ]
     gi_2_factor_results['% of Occurrences'] = (gi_2_factor_results['% of Occurrences'] * 100)
 
-
-    ### ---------------------------------------------------------------------------------------------------------- ###
     ### ------------------------------------------------- PLOTS -------------------------------------------------- ###
-    ### ---------------------------------------------------------------------------------------------------------- ###
 
     ### PLOT ###
     st.title("Growth and Inflation Inputs")
@@ -442,9 +437,7 @@ def plot_growth_inflation(start, end, **kwargs):
     fig.show()
     st.plotly_chart(fig, use_container_width=True)
 
-    ### ---------------------------------------------------------------------------------------------------------- ###
     ### ------------------------------------------------ SECTORS ------------------------------------------------- ###
-    ### ---------------------------------------------------------------------------------------------------------- ###
 
     spx_sector_pct = spx_sectors_merge.resample('ME').last().pct_change()
     spx_sector_pct.columns = ['comm_serv','cons_disc', 'cons_stap', 'energy',
@@ -588,6 +581,47 @@ def plot_growth_inflation(start, end, **kwargs):
         st.write(style_percent(deflation_factor_averages), unsafe_allow_html=True)
     with cols[3]:
         st.write(style_percent(stagflation_factor_averages), unsafe_allow_html=True)
+
+### ---------------------------------------------------------------------------------------------------------- ###
+### ------------------------------------------------ DATA PULL ----------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
+def plot_hedge_eye_factors(start,end,**kwargs):
+    growth_dict = {
+        'USALOLITOAASTSAM': 'cli_amplitude_adjusted',
+        'INDPRO': 'industrial_production',
+        'BOPGSTB': 'trade_balance_goods_and_services',
+        'RSXFS': 'advanced_retail_sales_retail_trade',
+        'TLMFGCONS': 'manufacturing_spending',
+        'PAYEMS': 'all_employees_total_nonfarm',
+        'USGOOD': 'goods_producing_employment',
+        'MANEMP': 'all_employees_manufacturing',
+        'CES0500000011': 'avg_earnings_all_private_employees',
+        'PCEC96': 'real_personal_consumption_expenditures',
+        'RRSFS': 'real_retail_food_services_sales',
+        'TOTALSA': 'total_vehicle_sales'
+    }
+    inflation_dict = {
+        'CPIAUCSL': 'cpi_all_items',
+        'CPILFESL': 'cpi_less_food_energy',
+        'PPIACO': 'ppi_all_commodities',
+        'CPIUFDSL': 'cpi_food',
+        'CPIENGSL': 'cpi_energy',
+        'CUSR0000SAH3': 'cpi_household_furnishings',
+        'CPIAPPSL': 'cpi_apparel',
+        'CPIMEDSL': 'cpi_medical_care',
+        'CPITRNSL': 'cpi_transportation',
+        'CUSR0000SAF116': 'cpi_alcohol',
+        'CUSR0000SETB': 'cpi_motor_fuel',
+        'CUSR0000SASLE': 'cpi_services_less_energy'
+    }
+    with open(Path(DATA_DIR) / 'hedge_eye_growth_variables.csv', 'rb') as file:
+        hedge_eye_growth_variables = pd.read_csv(file)
+    with open(Path(DATA_DIR) / 'hedge_eye_inflation_variables.csv', 'rb') as file:
+        hedge_eye_inflation_variables = pd.read_csv(file)
+    hedge_eye_growth_pct = hedge_eye_growth_variables.pct_change().dropna()
+    hedge_eye_growth_pct.columns = growth_dict.keys()
+    hedge_eye_inflation_pct = hedge_eye_inflation_variables.pct_change().dropna()
 
 
 
