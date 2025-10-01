@@ -441,8 +441,11 @@ def plot_growth_inflation(start, end, **kwargs):
     fig.show()
     st.plotly_chart(fig, use_container_width=True)
 
-    ### ------------------------------------------------ SECTORS ------------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+### ------------------------------------------------ SECTORS ------------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
 
+def plot_spx_sector_regimes(start,end,**kwargs):
     spx_sector_pct = spx_sectors_merge.resample('ME').last().pct_change()
     spx_sector_pct.columns = ['comm_serv','cons_disc', 'cons_stap', 'energy',
                             'financials', 'healthcare', 'industrial', 'materials',
