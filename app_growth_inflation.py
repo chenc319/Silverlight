@@ -87,7 +87,7 @@ for each_factor in list(spx_sectors.keys()):
     spx_sectors_merge = merge_dfs([spx_sectors_merge, df])
 
 ### GROWTH INFLATION DATA ###
-growth_inflation_df = merge_dfs([growth,inflation,sp500,agg]).dropna()
+growth_inflation_df = merge_dfs([growth,inflation,spx_monthly,agg]).dropna()
 growth_inflation_df.columns = ['growth','inflation','sp500','bonds']
 growth_inflation_df['growth_roc'] = growth_inflation_df['growth'].diff()
 growth_inflation_df['growth_roc_2'] = growth_inflation_df['growth_roc'].diff()
