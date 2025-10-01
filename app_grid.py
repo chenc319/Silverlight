@@ -228,9 +228,10 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
     df = grid_growth_inflation_spx.copy()
     df = df.dropna(subset=['regime_code']).copy()
     df = df[~df.index.duplicated(keep='first')]
+    df['regime_code'] = df.apply(regime_label, axis=1)
     df['regime_code'] = df['regime_code'].astype(int)
     df['regime_color'] = df['regime_code'].map(regime_colors)
-    df['regime_label'] = df.apply(regime_labels, axis=1)
+    df['regime_label'] = df['regime_code'].map(regime_labels)
 
 
     reflation_mean_return = reflation_regime[['spx']].mean(axis=0) * 100
