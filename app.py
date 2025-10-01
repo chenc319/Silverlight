@@ -69,7 +69,7 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 menu = st.sidebar.radio(
     "Go to section:",
     ['Growth & Inflation Model',
-     'GRID Model'
+     'GRID Model',
      'Yield Curve Regimes',
      'Barra Factor Model',
      'Tail Hedge Portfolio']
