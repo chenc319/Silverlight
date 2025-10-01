@@ -7,6 +7,7 @@ import streamlit as st
 import pandas as pd
 import functools as ft
 import app_growth_inflation
+import app_grid
 import app_firv_regime
 import app_barra_factors
 import app_tail_hedge
