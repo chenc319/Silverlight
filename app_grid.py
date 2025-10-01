@@ -294,7 +294,7 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
     }) \
         .set_properties(
         subset=['Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk', 'Win Ratio'],
-        **{'width': '80px'}
+        **{'width': '120px'}
     ) \
         .background_gradient(cmap=cmap, subset=[
         'Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk', 'Win Ratio'
