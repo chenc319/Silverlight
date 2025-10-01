@@ -168,8 +168,8 @@ def plot_grid_factors(start,end,**kwargs):
             fig.update_yaxes(title_text="Value", row=row, col=col)
     fig.update_layout(
         showlegend=False,
-        height=1200,
-        width=1200
+        height=1000,
+        width=1400
     )
     st.plotly_chart(fig, use_container_width=True)
 
