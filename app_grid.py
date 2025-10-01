@@ -93,14 +93,14 @@ spx_monthly.columns = ['spx']
 spx_monthly_pct = spx_monthly.pct_change().dropna()
 
 ### GROWTH AND INFLATION ###
-with open(Path(DATA_DIR) / 'hedge_eye_growth_variables.pkl', 'rb') as file:
-    hedge_eye_growth_variables = pd.read_pickle(file)
-with open(Path(DATA_DIR) / 'hedge_eye_inflation_variables.pkl', 'rb') as file:
-    hedge_eye_inflation_variables = pd.read_pickle(file)
-hedge_eye_growth_pct = hedge_eye_growth_variables.pct_change().dropna()
-hedge_eye_growth_pct.columns = growth_dict.keys()
-hedge_eye_inflation_pct = hedge_eye_inflation_variables.pct_change().dropna()
-hedge_eye_inflation_pct.columns = inflation_dict.keys()
+with open(Path(DATA_DIR) / 'grid_growth_variables.pkl', 'rb') as file:
+    grid_growth_variables = pd.read_pickle(file)
+with open(Path(DATA_DIR) / 'grid_inflation_variables.pkl', 'rb') as file:
+    grid_inflation_variables = pd.read_pickle(file)
+grid_growth_pct = grid_growth_variables.pct_change().dropna()
+grid_growth_pct.columns = growth_dict.keys()
+grid_inflation_pct = grid_inflation_variables.pct_change().dropna()
+grid_inflation_pct.columns = inflation_dict.keys()
 
 def plot_grid_factors(start,end,**kwargs):
     palette = [
@@ -119,8 +119,8 @@ def plot_grid_factors(start,end,**kwargs):
     ]
     ### PLOT ###
     st.title('GRID Growth Factors')
-    df = hedge_eye_growth_pct.copy().resample('ME').last()
-    columns_to_plot = hedge_eye_growth_pct.columns
+    df = grid_growth_pct.copy().resample('ME').last()
+    columns_to_plot = grid_growth_pct.columns
     fig = sp.make_subplots(rows=4, cols=3, subplot_titles=columns_to_plot)
     for i, col in enumerate(columns_to_plot):
         row = i // 3 + 1
@@ -149,8 +149,8 @@ def plot_grid_factors(start,end,**kwargs):
 
     ### PLOT ###
     st.title('GRID Inflation Factors')
-    df = hedge_eye_inflation_pct.copy().resample('ME').last()
-    columns_to_plot = hedge_eye_inflation_pct.columns
+    df = grid_inflation_pct.copy().resample('ME').last()
+    columns_to_plot = grid_inflation_pct.columns
     fig = sp.make_subplots(rows=4, cols=3, subplot_titles=columns_to_plot)
     for i, col in enumerate(columns_to_plot):
         row = i // 3 + 1
@@ -176,7 +176,10 @@ def plot_grid_factors(start,end,**kwargs):
         width=1200
     )
     st.plotly_chart(fig, use_container_width=True)
-    hedge_eye_inflation_pct
 
-def plot_grid_factors_with_spx(start, end, **kwargs):
-    spx_monthly_pct
+def plot_grid_factors_z_scores(start, end, **kwargs):
+    
+    grid_inflation_mean = grid_inflation_pct.rolling(12).mean()
+    grid_inflation_std = grid_inflation_pct.rolling(12).std()
+    (grid_inflation_pct - grid_inflation_mean) / grid_inflation_std
+

@@ -96,13 +96,13 @@ def refresh_data(start,end,**kwargs):
     real_retail_food_services_sails = pdr.DataReader('RRSFS', 'fred', start, end)
     total_vehicle_sales = pdr.DataReader('TOTALSA', 'fred', start, end)
 
-    hedge_eye_growth_variables = merge_dfs([cli_admplitude_adjusted,industrial_production,trade_balance_payments_basis,
+    grid_growth_variables = merge_dfs([cli_admplitude_adjusted,industrial_production,trade_balance_payments_basis,
                                             advanced_retail_sales_retail_trade,manufacturing_spending,all_employees_total_nonfarm,
                                             goods_producing_employment,all_employees_manufacturing,avg_earnings_all_private_employees,
                                             reaL_personal_expenditures,real_retail_food_services_sails,total_vehicle_sales]).resample('ME').last().shift(1).dropna()
-    hedge_eye_growth_variables.index = pd.to_datetime(hedge_eye_growth_variables.index).values
-    with open(Path(DATA_DIR) / 'hedge_eye_growth_variables.pkl', 'wb') as file:
-        pickle.dump(hedge_eye_growth_variables, file)
+    grid_growth_variables.index = pd.to_datetime(grid_growth_variables.index).values
+    with open(Path(DATA_DIR) / 'grid_growth_variables.pkl', 'wb') as file:
+        pickle.dump(grid_growth_variables, file)
 
     ### INFLATION VARIABLES ###
     cpi_total = pdr.DataReader('CPIAUCSL', 'fred', start, end)
@@ -119,15 +119,15 @@ def refresh_data(start,end,**kwargs):
     cpi_services_less_energy = pdr.DataReader('CUSR0000SASLE', 'fred', start, end)
 
 
-    hedge_eye_inflation_variables = merge_dfs(
+    grid_inflation_variables = merge_dfs(
         [cpi_total, cpi_less_foodenergy, ppi_total,
          cpi_food,cpi_energy,cpi_household_furnishings,
          cpi_apparel, cpi_medical_care, cpi_transportation,
          cpi_alcohol, cpi_motor_fuel,cpi_services_less_energy]).resample('ME').last().shift(
         1).dropna()
-    hedge_eye_inflation_variables.index = pd.to_datetime(hedge_eye_inflation_variables.index).values
-    with open(Path(DATA_DIR) / 'hedge_eye_inflation_variables.pkl', 'wb') as file:
-        pickle.dump(hedge_eye_inflation_variables, file)
+    grid_inflation_variables.index = pd.to_datetime(grid_inflation_variables.index).values
+    with open(Path(DATA_DIR) / 'grid_inflation_variables.pkl', 'wb') as file:
+        pickle.dump(grid_inflation_variables, file)
 
 
 
