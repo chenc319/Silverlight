@@ -117,10 +117,10 @@ def plot_grid_factors(start,end,**kwargs):
     st.title('GRID Growth Factors')
     df = grid_growth_pct.copy().resample('ME').last()
     columns_to_plot = grid_growth_pct.columns
-    fig = sp.make_subplots(rows=4, cols=3, subplot_titles=columns_to_plot)
+    fig = sp.make_subplots(rows=3, cols=4, subplot_titles=columns_to_plot)
     for i, col in enumerate(columns_to_plot):
-        row = i // 3 + 1
-        col_pos = i % 3 + 1
+        row = i // 4 + 1
+        col_pos = i % 4 + 1
         fig.add_trace(
             go.Scatter(
                 x=df.index,
@@ -147,10 +147,10 @@ def plot_grid_factors(start,end,**kwargs):
     st.title('GRID Inflation Factors')
     df = grid_inflation_pct.copy().resample('ME').last()
     columns_to_plot = grid_inflation_pct.columns
-    fig = sp.make_subplots(rows=4, cols=3, subplot_titles=columns_to_plot)
+    fig = sp.make_subplots(rows=3, cols=4, subplot_titles=columns_to_plot)
     for i, col in enumerate(columns_to_plot):
-        row = i // 3 + 1
-        col_pos = i % 3 + 1
+        row = i // 4 + 1
+        col_pos = i % 4 + 1
         fig.add_trace(
             go.Scatter(
                 x=df.index,
