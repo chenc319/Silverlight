@@ -218,8 +218,6 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
         2: 'Goldilocks',
         3: 'Deflation'
     }
-    grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regime_labels, axis=1)
-
     regime_colors = {
         0: '#E74C3C',  # Reflation (red)
         1: '#F1C40F',  # Stagflation (yellow)
@@ -232,6 +230,8 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
     df = df[~df.index.duplicated(keep='first')]
     df['regime_code'] = df['regime_code'].astype(int)
     df['regime_color'] = df['regime_code'].map(regime_colors)
+    df['regime_label'] = df.apply(regime_labels, axis=1)
+
 
     reflation_mean_return = reflation_regime[['spx']].mean(axis=0) * 100
     stagflation_mean_return = stagflation_regime[['spx']].mean(axis=0) * 100
