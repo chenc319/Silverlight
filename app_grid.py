@@ -144,8 +144,8 @@ def plot_grid_factors(start,end,**kwargs):
 
     ### PLOT ###
     st.title('GRID Inflation Factors')
-    df = grid_inflation_pct.copy().resample('ME').last()
-    columns_to_plot = grid_inflation_pct.columns
+    df = grid_inflation_variables.copy().resample('ME').last()
+    columns_to_plot = grid_inflation_variables.columns
     fig = sp.make_subplots(rows=4, cols=3, subplot_titles=columns_to_plot)
     for i, col in enumerate(columns_to_plot):
         row = i // 3 + 1
@@ -220,7 +220,10 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
     positive_inflation = grid_growth_inflation_spx[grid_growth_inflation_spx['inflation']>0]
     len(positive_inflation[positive_inflation['spx']>0]) / len(positive_inflation)
 
-    plt.plot()
+    len(grid_growth_inflation_spx[grid_growth_inflation_spx['spx']>0]) / len(grid_growth_inflation_spx)
+    (grid_growth_inflation_spx['spx'].mean() * 12) / (grid_growth_inflation_spx['spx'].std() * 12**0.5)
+    plt.plot(grid_growth_inflation_spx['spx'])
+    plt.show()
 
     regime_colors = {
         0: '#E74C3C',  # Reflation (red)
@@ -235,38 +238,59 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
     df['regime_code'] = df['regime_code'].astype(int)
     df['regime_color'] = df['regime_code'].map(regime_colors)
 
-    reflation_averages = reflation_regime[['spx']].mean(axis=0) * 100
-    stagflation_averages = stagflation_regime[['spx']].mean(axis=0) * 100
-    goldilocks_averages = goldilocks_regime[['spx']].mean(axis=0) * 100
-    deflation_averages = deflation_regime[['spx']].mean(axis=0) * 100
+    reflation_mean_return = reflation_regime[['spx']].mean(axis=0) * 100
+    stagflation_mean_return = stagflation_regime[['spx']].mean(axis=0) * 100
+    goldilocks_mean_return = goldilocks_regime[['spx']].mean(axis=0) * 100
+    deflation_mean_return = deflation_regime[['spx']].mean(axis=0) * 100
 
-    len(reflation_regime[reflation_regime['spx']>0]) / len(reflation_regime)
-    len(reflation_regime[reflation_regime['spx']>0]) / len(reflation_regime)
-    len(goldilocks_regime[goldilocks_regime['spx']>0]) / len(goldilocks_regime)
-    len(deflation_regime[deflation_regime['spx']>0]) / len(deflation_regime)
+    reflation_ann_return = reflation_regime[['spx']].mean(axis=0) * 12 * 100
+    stagflation_ann_return = stagflation_regime[['spx']].mean(axis=0) * 12 * 100
+    goldilocks_ann_return = goldilocks_regime[['spx']].mean(axis=0) * 12 * 100
+    deflation_ann_return = deflation_regime[['spx']].mean(axis=0) * 12 * 100
 
-    gi_2_factor_results = pd.DataFrame()
-    gi_2_factor_results['Regime'] = [
+    reflation_volatility = reflation_regime[['spx']].std(axis=0) * (12**0.5) * 100
+    stagflation_volatility = stagflation_regime[['spx']].std(axis=0) * (12**0.5) * 100
+    goldilocks_volatility = goldilocks_regime[['spx']].std(axis=0) * (12**0.5) * 100
+    deflation_volatility = deflation_regime[['spx']].std(axis=0) * (12**0.5) * 100
+
+    reflation_win_ratio = len(reflation_regime[reflation_regime['spx']>0]) / len(reflation_regime) * 100
+    stagflation_win_ratio = len(stagflation_regime[stagflation_regime['spx']>0]) / len(stagflation_regime) * 100
+    goldilocks_win_ratio = len(goldilocks_regime[goldilocks_regime['spx']>0]) / len(goldilocks_regime) * 100
+    deflation_win_ratio = len(deflation_regime[deflation_regime['spx']>0]) / len(deflation_regime) * 100
+
+    grid_results = pd.DataFrame()
+    grid_results['Regime'] = [
         'Goldilocks (I-G+)',
         'Reflation (I+G+)',
         'Deflation (I-G-)',
         'Stagflation (I+G-)',
     ]
-    gi_2_factor_results['Equities'] = [goldilocks_averages[0],
-                                       reflation_averages[0],
-                                       deflation_averages[0],
-                                       stagflation_averages[0]]
-
-
-
+    grid_results['Mean Monthly Returns'] = [goldilocks_mean_return[0],
+                                            reflation_mean_return[0],
+                                            deflation_mean_return[0],
+                                            stagflation_mean_return[0]]
+    grid_results['Ann. Returns'] = [goldilocks_ann_return[0],
+                                    reflation_ann_return[0],
+                                    deflation_ann_return[0],
+                                    stagflation_ann_return[0]]
+    grid_results['Ann. Volatility'] = [goldilocks_volatility[0],
+                                       reflation_volatility[0],
+                                       deflation_volatility[0],
+                                       stagflation_volatility[0]]
+    grid_results['Return/Risk'] = grid_results['Ann. Returns'] / grid_results['Ann. Volatility']
+    grid_results['Win Ratio'] = [goldilocks_win_ratio,
+                                 reflation_win_ratio,
+                                 deflation_win_ratio,
+                                 stagflation_win_ratio]
+    grid_results['Win Ratio'] = round(grid_results['Win Ratio'])
     total_rows = len(goldilocks_regime) + len(reflation_regime) + len(deflation_regime) + len(stagflation_regime)
-    gi_2_factor_results['% of Occurrences'] = [
+    grid_results['% of Occurrences'] = [
         len(goldilocks_regime) / total_rows,
         len(reflation_regime) / total_rows,
         len(deflation_regime) / total_rows,
         len(stagflation_regime) / total_rows
     ]
-    gi_2_factor_results['% of Occurrences'] = (gi_2_factor_results['% of Occurrences'] * 100)
+    grid_results['% of Occurrences'] = round((grid_results['% of Occurrences'] * 100))
 
 
 def grid_z_score_corr_backtest(start, end, **kwargs):
