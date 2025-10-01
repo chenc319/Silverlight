@@ -212,7 +212,13 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
         (grid_growth_inflation_spx['inflation'] < 0) &
         (grid_growth_inflation_spx['growth'] < 0)
     ]
-    grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regime_label, axis=1)
+    regime_labels = {
+        0: 'Reflation',
+        1: 'Stagflation',
+        2: 'Goldilocks',
+        3: 'Deflation'
+    }
+    grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regime_labels, axis=1)
 
     regime_colors = {
         0: '#E74C3C',  # Reflation (red)
