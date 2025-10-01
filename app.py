@@ -90,6 +90,7 @@ if menu == 'Growth & Inflation Model':
 
 elif menu == 'GRID Model':
     app_grid.plot_grid_factors(start_date, end_date)
+    app_grid.plot_grid_factors_z_score_backtest(start_date, end_date)
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ------------------------------- YIELD CURVE REGIME MODEL ------------------------------- ###

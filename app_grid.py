@@ -66,6 +66,7 @@ inflation_dict = {
     'CUSR0000SETB': 'cpi_motor_fuel',
     'CUSR0000SASLE': 'cpi_services_less_energy'
 }
+
 ### SPX DATA ###
 with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
     sp500 = pd.read_csv(file)
@@ -222,8 +223,6 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
 
     len(grid_growth_inflation_spx[grid_growth_inflation_spx['spx']>0]) / len(grid_growth_inflation_spx)
     (grid_growth_inflation_spx['spx'].mean() * 12) / (grid_growth_inflation_spx['spx'].std() * 12**0.5)
-    plt.plot(grid_growth_inflation_spx['spx'])
-    plt.show()
 
     regime_colors = {
         0: '#E74C3C',  # Reflation (red)
@@ -282,7 +281,6 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
                                  reflation_win_ratio,
                                  deflation_win_ratio,
                                  stagflation_win_ratio]
-    grid_results['Win Ratio'] = round(grid_results['Win Ratio'])
     total_rows = len(goldilocks_regime) + len(reflation_regime) + len(deflation_regime) + len(stagflation_regime)
     grid_results['% of Occurrences'] = [
         len(goldilocks_regime) / total_rows,
@@ -290,7 +288,81 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
         len(deflation_regime) / total_rows,
         len(stagflation_regime) / total_rows
     ]
-    grid_results['% of Occurrences'] = round((grid_results['% of Occurrences'] * 100))
+    grid_results['% of Occurrences'] = grid_results['% of Occurrences'] * 100
+    grid_results.columns
+    ### TABLE ###
+    st.title("Growth and Inflation Historical Performance")
+    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
+    styled = grid_results.style \
+        .format({'Mean Monthly Returns': "{:.2f}%",
+                 'Ann. Returns': "{:.2f}%",
+                 'Ann. Volatility': "{:.2f}%",
+                 'Return/Risk': "{:.2f}",
+                 'Win Ratio': "{:.2f}%",
+                 '% of Occurrences': "{:.2f}%"}) \
+        .set_properties(subset=['Mean Monthly Returns',
+                                'Ann. Returns',
+                                'Ann. Volatility',
+                                'Return/Risk',
+                                'Win Ratio'], **{'width': '80px'}) \
+        .background_gradient(cmap=cmap, subset=['Mean Monthly Returns',
+                                                'Ann. Returns',
+                                                'Ann. Volatility',
+                                                'Return/Risk',
+                                                'Win Ratio'])
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.write(styled, unsafe_allow_html=True)
+
+    ### BONDS RETURN DISTRIBUTION ###
+    st.title("Equity Return Distributions")
+    regimes = [
+        'Reflation',
+        'Stagflation',
+        'Goldilocks',
+        'Deflation'
+    ]
+    regime_colors = {
+        "Reflation": "#27AE60",
+        "Stagflation": "#E74C3C",
+        "Goldilocks": "#F1C40F",
+        "Deflation": "#2980B9"
+    }
+    fig = sp.make_subplots(
+        rows=2, cols=2,
+        subplot_titles=regimes
+    )
+    min_bound = df['spx'].min()
+    max_bound = df['spx'].max()
+    for i, regime in enumerate(regimes):
+        row = i // 2 + 1
+        col = i % 2 + 1
+        subdata = df[df['regime_label'] == regime]
+        fig.add_trace(
+            go.Histogram(
+                x=subdata['spx'].dropna(),
+                name=regime,
+                marker_color=regime_colors.get(regime, "#AAAAAA"),
+                opacity=0.8,
+                nbinsx=30,
+                xbins=dict(
+                    start=min_bound,
+                    end=max_bound
+                )
+            ),
+            row=row,
+            col=col
+        )
+    for row in [1, 2]:
+        for col in [1, 2]:
+            fig.update_xaxes(title_text="Equity % Return", row=row, col=col, range=[min_bound, max_bound])
+            fig.update_yaxes(title_text="Count", row=row, col=col)
+    fig.update_layout(
+        showlegend=False,
+        height=600
+    )
+    fig.show()
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def grid_z_score_corr_backtest(start, end, **kwargs):
