@@ -29,23 +29,6 @@ spx_sectors = {
     "XLU": "utilities"
 }
 
-quad_regime_factors = {
-    "SPHB": "high_beta",
-    "SPLV": "low_beta",
-    "IWM": "small_caps",
-    "IWR": "mid_caps",
-    "MGK": "mega_cap_growth",
-    "IYT": "cyclicals", # or IWN
-    "DEF": "defensives",
-    "OEF": "size",
-    "QUAL": "quality",
-    "SPHD": "dividends",
-    "MTUM": "momentum",
-    "IWD": "value",
-    "IWF": "equity_growth",
-    "IWB": "large_caps"
-}
-
 def merge_dfs(array_of_dfs):
     return ft.reduce(lambda left, right: pd.merge(left, right,
                                                   left_index=True,
@@ -101,6 +84,18 @@ grid_growth_pct = grid_growth_variables.pct_change().dropna()
 grid_growth_pct.columns = growth_dict.keys()
 grid_inflation_pct = grid_inflation_variables.pct_change().dropna()
 grid_inflation_pct.columns = inflation_dict.keys()
+
+### GROWTH Z SCORED ###
+grid_growth_mean = grid_growth_pct.rolling(12).mean()
+grid_growth_std = grid_growth_pct.rolling(12).std()
+grid_growth_z = (grid_growth_pct - grid_growth_mean) / grid_growth_std
+grid_growth_z.columns = growth_dict.values()
+
+### INFLATION Z SCORED ###
+grid_inflation_mean = grid_inflation_pct.rolling(12).mean()
+grid_inflation_std = grid_inflation_pct.rolling(12).std()
+grid_inflation_z = (grid_inflation_pct - grid_inflation_mean) / grid_inflation_std
+grid_inflation_z.columns = inflation_dict.values()
 
 def plot_grid_factors(start,end,**kwargs):
     palette = [
@@ -177,9 +172,115 @@ def plot_grid_factors(start,end,**kwargs):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-def plot_grid_factors_z_scores(start, end, **kwargs):
-    
-    grid_inflation_mean = grid_inflation_pct.rolling(12).mean()
-    grid_inflation_std = grid_inflation_pct.rolling(12).std()
-    (grid_inflation_pct - grid_inflation_mean) / grid_inflation_std
+def plot_grid_factors_z_score_backtest(start, end, **kwargs):
+    ### CALCULATION ###
+    grid_growth_cross_mean_z = pd.DataFrame(grid_growth_z.mean(axis=1))
+    grid_inflation_cross_mean_z = pd.DataFrame(grid_inflation_z.mean(axis=1))
+    grid_growth_inflation_spx = merge_dfs([grid_growth_cross_mean_z,
+                                           grid_inflation_cross_mean_z,
+                                           spx_monthly_pct.shift(-1)]).dropna()
+    grid_growth_inflation_spx.columns = ['growth','inflation','spx']
+
+    ### REGIME FUNCTION ###
+    def regime_label(row):
+        if row['inflation'] > 0 and row['growth'] > 0:
+            return 0  # Reflation
+        elif row['inflation'] > 0 and row['growth'] < 0:
+            return 1  # Stagflation
+        elif row['inflation'] < 0 and row['growth'] > 0:
+            return 2  # Goldilocks
+        elif row['inflation'] < 0 and row['growth'] < 0:
+            return 3  # Deflation
+        else:
+            return np.nan
+
+    ### REGIME CLASSIFICATION ###
+    reflation_regime = grid_growth_inflation_spx[
+        (grid_growth_inflation_spx['inflation'] > 0) &
+        (grid_growth_inflation_spx['growth'] > 0)
+    ]
+    stagflation_regime = grid_growth_inflation_spx[
+        (grid_growth_inflation_spx['inflation'] > 0) &
+        (grid_growth_inflation_spx['growth'] < 0)
+    ]
+    goldilocks_regime = grid_growth_inflation_spx[
+        (grid_growth_inflation_spx['inflation'] < 0) &
+        (grid_growth_inflation_spx['growth'] > 0)
+    ]
+    deflation_regime = grid_growth_inflation_spx[
+        (grid_growth_inflation_spx['inflation'] < 0) &
+        (grid_growth_inflation_spx['growth'] < 0)
+    ]
+    grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regime_label, axis=1)
+
+    grid_growth_inflation_spx[grid_growth_inflation_spx['spx']]
+
+    positive_growth = grid_growth_inflation_spx[grid_growth_inflation_spx['growth']>0]
+    len(positive_growth[positive_growth['spx']>0]) / len(positive_growth)
+    positive_inflation = grid_growth_inflation_spx[grid_growth_inflation_spx['inflation']>0]
+    len(positive_inflation[positive_inflation['spx']>0]) / len(positive_inflation)
+
+    plt.plot()
+
+    regime_colors = {
+        0: '#E74C3C',  # Reflation (red)
+        1: '#F1C40F',  # Stagflation (yellow)
+        2: '#27AE60',  # Goldilocks (green)
+        3: '#2980B9'  # Deflation (blue)
+    }
+
+    df = grid_growth_inflation_spx.copy()
+    df = df.dropna(subset=['regime_code']).copy()
+    df = df[~df.index.duplicated(keep='first')]
+    df['regime_code'] = df['regime_code'].astype(int)
+    df['regime_color'] = df['regime_code'].map(regime_colors)
+
+    reflation_averages = reflation_regime[['spx']].mean(axis=0) * 100
+    stagflation_averages = stagflation_regime[['spx']].mean(axis=0) * 100
+    goldilocks_averages = goldilocks_regime[['spx']].mean(axis=0) * 100
+    deflation_averages = deflation_regime[['spx']].mean(axis=0) * 100
+
+    len(reflation_regime[reflation_regime['spx']>0]) / len(reflation_regime)
+    len(reflation_regime[reflation_regime['spx']>0]) / len(reflation_regime)
+    len(goldilocks_regime[goldilocks_regime['spx']>0]) / len(goldilocks_regime)
+    len(deflation_regime[deflation_regime['spx']>0]) / len(deflation_regime)
+
+    gi_2_factor_results = pd.DataFrame()
+    gi_2_factor_results['Regime'] = [
+        'Goldilocks (I-G+)',
+        'Reflation (I+G+)',
+        'Deflation (I-G-)',
+        'Stagflation (I+G-)',
+    ]
+    gi_2_factor_results['Equities'] = [goldilocks_averages[0],
+                                       reflation_averages[0],
+                                       deflation_averages[0],
+                                       stagflation_averages[0]]
+
+
+
+    total_rows = len(goldilocks_regime) + len(reflation_regime) + len(deflation_regime) + len(stagflation_regime)
+    gi_2_factor_results['% of Occurrences'] = [
+        len(goldilocks_regime) / total_rows,
+        len(reflation_regime) / total_rows,
+        len(deflation_regime) / total_rows,
+        len(stagflation_regime) / total_rows
+    ]
+    gi_2_factor_results['% of Occurrences'] = (gi_2_factor_results['% of Occurrences'] * 100)
+
+
+def grid_z_score_corr_backtest(start, end, **kwargs):
+    grid_growth_mean = grid_growth_pct.rolling(12).mean()
+    grid_growth_std = grid_growth_pct.rolling(12).std()
+    grid_growth_z = (grid_growth_pct - grid_growth_mean) / grid_growth_std
+    grid_growth_z.columns = growth_dict.values()
+    grid_growth_z_spx_merge = merge_dfs([grid_growth_z,spx_monthly_pct])
+
+    reference_growth_col = grid_growth_z_spx_merge.columns[-1]
+    grid_growth_rolling_corr = pd.DataFrame({
+        col: grid_growth_z_spx_merge[col].rolling(12).corr(grid_growth_z_spx_merge[reference_growth_col])
+        for col in grid_growth_z_spx_merge.columns[:-1]
+    })
+
+
 
