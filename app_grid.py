@@ -114,7 +114,7 @@ def plot_grid_factors(start,end,**kwargs):
     ]
     ### PLOT ###
     st.title('GRID Growth Factors')
-    df = grid_growth_variables().resample('ME').last()
+    df = grid_growth_variables.resample('ME').last()
     columns_to_plot = grid_growth_variables.columns
     fig = sp.make_subplots(rows=4, cols=3, subplot_titles=columns_to_plot)
     for i, col in enumerate(columns_to_plot):
