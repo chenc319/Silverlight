@@ -80,6 +80,7 @@ menu = st.sidebar.radio(
 
 if menu == 'Growth & Inflation Model':
     app_growth_inflation.plot_growth_inflation(start_date, end_date)
+    app_growth_inflation.plot_spx_sector_regimes(start_date, end_date)
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ------------------------------- YIELD CURVE REGIME MODEL ------------------------------- ###
