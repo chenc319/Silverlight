@@ -214,16 +214,6 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
     ]
     grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regime_label, axis=1)
 
-    grid_growth_inflation_spx[grid_growth_inflation_spx['spx']]
-
-    positive_growth = grid_growth_inflation_spx[grid_growth_inflation_spx['growth']>0]
-    len(positive_growth[positive_growth['spx']>0]) / len(positive_growth)
-    positive_inflation = grid_growth_inflation_spx[grid_growth_inflation_spx['inflation']>0]
-    len(positive_inflation[positive_inflation['spx']>0]) / len(positive_inflation)
-
-    len(grid_growth_inflation_spx[grid_growth_inflation_spx['spx']>0]) / len(grid_growth_inflation_spx)
-    (grid_growth_inflation_spx['spx'].mean() * 12) / (grid_growth_inflation_spx['spx'].std() * 12**0.5)
-
     regime_colors = {
         0: '#E74C3C',  # Reflation (red)
         1: '#F1C40F',  # Stagflation (yellow)
