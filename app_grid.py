@@ -80,9 +80,9 @@ with open(Path(DATA_DIR) / 'grid_growth_variables.pkl', 'rb') as file:
     grid_growth_variables = pd.read_pickle(file)
 with open(Path(DATA_DIR) / 'grid_inflation_variables.pkl', 'rb') as file:
     grid_inflation_variables = pd.read_pickle(file)
-grid_growth_pct = grid_growth_variables.pct_change().dropna()
+grid_growth_pct = grid_growth_variables.diff().dropna()
 grid_growth_pct.columns = growth_dict.keys()
-grid_inflation_pct = grid_inflation_variables.pct_change().dropna()
+grid_inflation_pct = grid_inflation_variables.diff().dropna()
 grid_inflation_pct.columns = inflation_dict.keys()
 
 ### GROWTH Z SCORED ###
@@ -114,8 +114,8 @@ def plot_grid_factors(start,end,**kwargs):
     ]
     ### PLOT ###
     st.title('GRID Growth Factors')
-    df = grid_growth_variables.resample('ME').last()
-    columns_to_plot = grid_growth_variables.columns
+    df = grid_growth_pct.copy().resample('ME').last()
+    columns_to_plot = grid_growth_pct.columns
     fig = sp.make_subplots(rows=4, cols=3, subplot_titles=columns_to_plot)
     for i, col in enumerate(columns_to_plot):
         row = i // 3 + 1
