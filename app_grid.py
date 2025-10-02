@@ -370,13 +370,13 @@ def grid_z_score_backtest(start, end, **kwargs):
 
     def grid_backtest(row):
         if row['regime_label']== 'Goldilocks':
-            return 2
-        elif row['regime_label']== 'Reflation':
-            return 1.5
-        elif row['regime_label']== 'Deflation':
             return 1
+        elif row['regime_label']== 'Reflation':
+            return 0.75
+        elif row['regime_label']== 'Deflation':
+            return 0.50
         elif row['regime_label']== 'Stagflation':
-            return 0.5
+            return 0.25
         else:
             return np.nan
 
@@ -410,44 +410,10 @@ def grid_z_score_backtest(start, end, **kwargs):
     grid_backtest_results['Return/Risk'] = grid_backtest_results['Ann. Returns'] / grid_backtest_results['Ann. Volatility']
 
     ### PLOT ###
-    asset_colors = {
-        'securities_outright': '#5FB3FF',  # Vivid sky blue (QE, stable)
-        'lending_portfolio': '#2DCDB2',  # Bright teal/mint (portfolio)
-        'treasuries': '#FFC145',  # Sun gold (Treasury)
-        'mbs': '#FF6969',  # Approachable coral (MBS)
-        'permanent_lending': '#54C6EB',  # Aqua blue (permanent lending)
-        'temporary_lending': '#FFD166',  # Citrus yellow-orange (temp lending)
-        'srf': '#6FE7DD',  # Lively turquoise (repo facility)
-        'discount_window': '#8D8DFF',  # Periwinkle (DW lending)
-        'fx_swap_line': '#A685E2',  # Pleasant purple (FX swaps)
-        'ppp': '#FF8FAB',  # Bright pink (PPP)
-        'ms': '#FFA952',  # Peach (Main Street)
-    }
-    fig = go.Figure()
-    cols = ['cumsum_bt', 'cumsum_spx']
-    labels = [
-        'GRID',
-        'SPX',
-    ]
-    colors = ['#5FB3FF', '#2DCDB2']
-    for col, color, label in zip(cols, colors, labels):
-        fig.add_trace(go.Scatter(x=grid_growth_inflation_spx.index, y=grid_growth_inflation_spx[col],
-                                 mode='lines',
-                                 name=label,
-                                 line=dict(color=color)))
-    fig.update_layout(
-        title="GRID Z-Score Backtest",
-        yaxis_title="Dollars",
-        hovermode='x unified'
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
     labels = ['GRID', 'SPX']
     draw_cols = ['drawdown_bt', 'drawdown_spx']
-
     line_colors = ['rgba(95,179,255,1)', 'rgba(45,205,178,1)']
     fill_colors = ['rgba(95,179,255,0.3)', 'rgba(45,205,178,0.3)']
-
     fig = go.Figure()
     for col, line, fill, label in zip(draw_cols, line_colors, fill_colors, labels):
         fig.add_trace(go.Scatter(
@@ -461,7 +427,6 @@ def grid_z_score_backtest(start, end, **kwargs):
             hovertemplate=f"{label}<br>Date: %{{x|%Y-%m-%d}}<br>Drawdown: %{{y:.2%}}<extra></extra>",
             showlegend=True
         ))
-
     fig.update_layout(
         title="Drawdown Analysis: GRID vs SPX",
         yaxis_title="Drawdown (%)",
@@ -477,8 +442,29 @@ def grid_z_score_backtest(start, end, **kwargs):
         margin=dict(l=40, r=40, t=70, b=40),
         plot_bgcolor='#f9f9f9'
     )
-
     st.plotly_chart(fig, use_container_width=True)
+
+    ### TABLE ###
+    st.title("GRID Backtest Results")
+    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
+    styled = grid_backtest_results.style \
+        .format({
+        'Mean Monthly Returns': "{:.2f}%",
+        'Ann. Returns': "{:.2f}%",
+        'Ann. Volatility': "{:.2f}%",
+        'Return/Risk': "{:.2f}",
+    }) \
+        .set_properties(
+        subset=['Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk'],
+        **{'width': '500px'}
+    ) \
+        .background_gradient(cmap=cmap, subset=[
+        'Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk'
+    ])
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.write(styled, unsafe_allow_html=True)
 
 
 
