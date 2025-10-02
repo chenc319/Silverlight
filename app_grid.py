@@ -459,8 +459,8 @@ def plot_grid_factors_regime_performance(start, end, **kwargs):
     st.plotly_chart(fig, use_container_width=True)
 
 def grid_z_score_backtest(start, end, **kwargs):
-    grid_growth_cross_mean_z = pd.DataFrame(grid_growth_z.mean(axis=1))
-    grid_inflation_cross_mean_z = pd.DataFrame(grid_inflation_z.mean(axis=1))
+    grid_growth_cross_mean_z = pd.DataFrame(grid_growth_z * grid_growth_corr_spx).mean(axis=1)
+    grid_inflation_cross_mean_z = pd.DataFrame(grid_inflation_z* grid_inflation_corr_spx).mean(axis=1)
     grid_growth_inflation_spx = pd.concat([
         grid_growth_cross_mean_z,
         grid_inflation_cross_mean_z,
@@ -621,8 +621,8 @@ def grid_pca_regime_performance(start, end, **kwargs):
         return pc_series
 
     grid_growth_inflation_spx = pd.concat([
-        rolling_pca(grid_growth_pct),
-        rolling_pca(grid_inflation_pct),
+        rolling_pca(grid_growth_pct * grid_growth_corr_spx),
+        rolling_pca(grid_inflation_pct * grid_inflation_corr_spx),
         spx_monthly_pct.shift(-1)
     ], axis=1).dropna()
     grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
