@@ -295,8 +295,8 @@ def plot_factor_correlation_to_lagged_spx(start,end,**kwargs):
     st.plotly_chart(fig, use_container_width=True)
 
 def plot_grid_factors_regime_performance(start, end, **kwargs):
-    grid_growth_cross_mean_z = pd.DataFrame(grid_growth_z.mean(axis=1))
-    grid_inflation_cross_mean_z = pd.DataFrame(grid_inflation_z.mean(axis=1))
+    grid_growth_cross_mean_z = pd.DataFrame(grid_growth_z * grid_growth_corr_spx.mean(axis=1))
+    grid_inflation_cross_mean_z = pd.DataFrame(grid_inflation_z * grid_inflation_corr_spx.mean(axis=1))
     grid_growth_inflation_spx = pd.concat([
         grid_growth_cross_mean_z,
         grid_inflation_cross_mean_z,
