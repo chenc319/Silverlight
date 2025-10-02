@@ -370,13 +370,13 @@ def grid_z_score_backtest(start, end, **kwargs):
 
     def grid_backtest(row):
         if row['regime_label']== 'Goldilocks':
-            return 1
+            return 2
         elif row['regime_label']== 'Reflation':
-            return 0.75
+            return 1.5
         elif row['regime_label']== 'Deflation':
-            return 0.5
+            return 1
         elif row['regime_label']== 'Stagflation':
-            return 0.25
+            return 0.5
         else:
             return np.nan
 
