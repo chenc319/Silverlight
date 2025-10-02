@@ -12,4 +12,4 @@ beautifulsoup4
 requests
 pandas-datareader
 fredapi
-sklearn
+scikit-learn
