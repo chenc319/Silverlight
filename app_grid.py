@@ -66,6 +66,19 @@ inflation_dict = {
     'CUSR0000SETB': 'cpi_motor_fuel',
     'CUSR0000SASLE': 'cpi_services_less_energy'
 }
+spx_sectors = {
+    "XLC": "Comm Services",
+    "XLY": "Cons Disc",
+    "XLP": "Cons Stap",
+    "XLE": "Energy",
+    "XLF": "Financial",
+    "XLV": "Healthcare",
+    "XLI": "Industrial",
+    "XLB": "Materials",
+    "XLRE": "Real Estate",
+    "XLK": "Tech",
+    "XLU": "utilities"
+}
 
 ### SPX DATA ###
 with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
@@ -97,6 +110,16 @@ grid_inflation_mean = grid_inflation_pct.rolling(12).mean()
 grid_inflation_std = grid_inflation_pct.rolling(12).std()
 grid_inflation_z = (grid_inflation_pct - grid_inflation_mean) / grid_inflation_std
 grid_inflation_z.columns = inflation_dict.values()
+
+### SECTOR DATA ###
+spx_sectors_merge = pd.DataFrame()
+for each_factor in list(spx_sectors.keys()):
+    with open(Path(DATA_DIR) / (each_factor + '.csv'), 'rb') as file:
+        df = pd.read_csv(file)
+    df.index = pd.to_datetime(df['Date']).values
+    df = pd.DataFrame(df['Close'])
+    df.columns = [spx_sectors[each_factor]]
+    spx_sectors_merge = merge_dfs([spx_sectors_merge, df])
 
 def plot_grid_factors(start,end,**kwargs):
     palette = [
@@ -349,13 +372,13 @@ def grid_z_score_backtest(start, end, **kwargs):
     grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
 
     def regime_label(row):
-        if row['inflation'] > 0 and row['growth'] > 0:
+        if row['inflation'] > 0.5 and row['growth'] > 0.5:
             return 0  # Reflation
-        elif row['inflation'] > 0 and row['growth'] < 0:
+        elif row['inflation'] > 0.5 and row['growth'] < 0.5:
             return 1  # Stagflation
-        elif row['inflation'] < 0 and row['growth'] > 0:
+        elif row['inflation'] < 0.5 and row['growth'] > 0.5:
             return 2  # Goldilocks
-        elif row['inflation'] < 0 and row['growth'] < 0:
+        elif row['inflation'] < 0.5 and row['growth'] < 0.5:
             return 3  # Deflation
         else:
             return np.nan
@@ -486,7 +509,23 @@ def grid_z_score_backtest(start, end, **kwargs):
     with col2:
         st.write(styled, unsafe_allow_html=True)
 
+def grid_sector_performance(start, end, **kwargs):
+    grid_growth_cross_mean_z = pd.DataFrame(grid_growth_z.mean(axis=1))
+    grid_inflation_cross_mean_z = pd.DataFrame(grid_inflation_z.mean(axis=1))
+    grid_growth_inflation_sectors = pd.concat([
+        grid_growth_cross_mean_z,
+        grid_inflation_cross_mean_z,
+        spx_sectors_merge
+    ], axis=1).dropna()
 
+def grid_sector_backtest(start, end, **kwargs):
+    grid_growth_cross_mean_z = pd.DataFrame(grid_growth_z.mean(axis=1))
+    grid_inflation_cross_mean_z = pd.DataFrame(grid_inflation_z.mean(axis=1))
+    grid_growth_inflation_sectors = pd.concat([
+        grid_growth_cross_mean_z,
+        grid_inflation_cross_mean_z,
+        spx_sectors_merge
+    ], axis=1).dropna()
 
 
 
