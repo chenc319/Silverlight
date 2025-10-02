@@ -410,6 +410,26 @@ def grid_z_score_backtest(start, end, **kwargs):
     grid_backtest_results['Return/Risk'] = grid_backtest_results['Ann. Returns'] / grid_backtest_results['Ann. Volatility']
 
     ### PLOT ###
+    fig = go.Figure()
+    cols = ['cumsum_bt', 'cumsum_spx']
+    labels = [
+        'GRID',
+        'SPX',
+    ]
+    colors = ['#5FB3FF', '#2DCDB2']
+    for col, color, label in zip(cols, colors, labels):
+        fig.add_trace(go.Scatter(x=grid_growth_inflation_spx.index, y=grid_growth_inflation_spx[col],
+                                 mode='lines',
+                                 name=label,
+                                 line=dict(color=color)))
+    fig.update_layout(
+        title="GRID Z-Score Backtest",
+        yaxis_title="Dollars",
+        hovermode='x unified'
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    ### PLOT ###
     labels = ['GRID', 'SPX']
     draw_cols = ['drawdown_bt', 'drawdown_spx']
     line_colors = ['rgba(95,179,255,1)', 'rgba(45,205,178,1)']
