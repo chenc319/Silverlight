@@ -222,9 +222,8 @@ def plot_factor_correlation_to_lagged_spx(start,end,**kwargs):
     grid_inflation_corr_spx
     cols = grid_growth_corr_spx.columns
     n = len(cols)
-    rows = (n + 2) // 3  # 3 wide grid, adjust for aesthetics
-    cols_per_row = 3
-
+    rows = (n + 2) // 4  # 3 wide grid, adjust for aesthetics
+    cols_per_row = 4
     fig = sp.make_subplots(
         rows=rows, cols=cols_per_row,
         subplot_titles=cols,
@@ -232,10 +231,10 @@ def plot_factor_correlation_to_lagged_spx(start,end,**kwargs):
         vertical_spacing=0.08,
         horizontal_spacing=0.05
     )
-
-    color_cycle = ['#27ae60', '#2675b9', '#fa983a', '#8e44ad', '#b33771', '#f9ca24', '#e84118', '#00b894', '#636e72',
+    color_cycle = ['#27ae60', '#2675b9', '#fa983a',
+                   '#8e44ad', '#b33771', '#f9ca24',
+                   '#e84118', '#00b894', '#636e72',
                    '#d35400', '#6c5ce7', '#00cec9']
-
     for i, col in enumerate(cols):
         row = i // cols_per_row + 1
         colpos = i % cols_per_row + 1
@@ -247,7 +246,6 @@ def plot_factor_correlation_to_lagged_spx(start,end,**kwargs):
             line=dict(color=color_cycle[i % len(color_cycle)], width=2),
             hovertemplate=f"{col}<br>Date: %{{x}}<br>Rolling Corr: %{{y:.2f}}<extra></extra>"
         ), row=row, col=colpos)
-
     fig.update_layout(
         height=320 * rows,
         showlegend=False,
@@ -255,11 +253,9 @@ def plot_factor_correlation_to_lagged_spx(start,end,**kwargs):
         title=f"Rolling {12}-Month Correlation to SPX",
         margin=dict(l=40, r=30, t=75, b=40)
     )
-    # Adjust y axis limits for all charts for comparability
     for i in range(1, rows + 1):
         for j in range(1, cols_per_row + 1):
             fig.update_yaxes(range=[-1, 1], row=i, col=j)
-
     st.plotly_chart(fig, use_container_width=True)
 
 def plot_grid_factors_regime_performance(start, end, **kwargs):
