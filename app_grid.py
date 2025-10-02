@@ -382,8 +382,8 @@ def grid_z_score_backtest(start, end, **kwargs):
 
     grid_growth_inflation_spx['weights'] = grid_growth_inflation_spx.apply(grid_backtest, axis=1)
     grid_growth_inflation_spx['bt_returns'] = grid_growth_inflation_spx['weights'] * grid_growth_inflation_spx['spx']
-    grid_growth_inflation_spx['cumsum_spx'] = grid_growth_inflation_spx['spx'].cumsum()
-    grid_growth_inflation_spx['cumsum_bt'] = grid_growth_inflation_spx['bt_returns'].cumsum()
+    grid_growth_inflation_spx['cumsum_spx'] = (1+grid_growth_inflation_spx['spx']).cumprod()
+    grid_growth_inflation_spx['cumsum_bt'] = (1+grid_growth_inflation_spx['bt_returns']).cumprod()
 
     ### DRAWDOWN ###
     def compute_drawdown(cumret):
