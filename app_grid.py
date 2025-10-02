@@ -621,8 +621,8 @@ def grid_pca_regime_performance(start, end, **kwargs):
         return pc_series
 
     grid_growth_inflation_spx = pd.concat([
-        rolling_pca(grid_growth_pct * grid_growth_corr_spx),
-        rolling_pca(grid_inflation_pct * grid_inflation_corr_spx),
+        rolling_pca(grid_growth_pct * grid_growth_corr_spx.dropna()),
+        rolling_pca(grid_inflation_pct * grid_inflation_corr_spx.dropna()),
         spx_monthly_pct.shift(-1)
     ], axis=1).dropna()
     grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
