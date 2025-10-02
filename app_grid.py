@@ -442,64 +442,42 @@ def grid_z_score_backtest(start, end, **kwargs):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    ### PLOT DRAWDOWN ###
-    fig = go.Figure()
     labels = ['GRID', 'SPX']
-    cols = ['drawdown_bt', 'drawdown_spx']
-    colors = ['#5FB3FF', '#2DCDB2']
+    draw_cols = ['drawdown_bt', 'drawdown_spx']
 
-    for col, color, label in zip(cols, colors, labels):
+    line_colors = ['rgba(95,179,255,1)', 'rgba(45,205,178,1)']
+    fill_colors = ['rgba(95,179,255,0.3)', 'rgba(45,205,178,0.3)']
+
+    fig = go.Figure()
+    for col, line, fill, label in zip(draw_cols, line_colors, fill_colors, labels):
         fig.add_trace(go.Scatter(
             x=grid_growth_inflation_spx.index,
             y=grid_growth_inflation_spx[col],
             mode='lines',
             name=label,
-            line=dict(color=color),
+            line=dict(color=line, width=2),
             fill='tozeroy',
-            fillcolor=color + '44',  # add some transparency
-            hovertemplate=f"{label}<br>Date: %{{x}}<br>Drawdown: %{{y:.2%}}<extra></extra>",
+            fillcolor=fill,
+            hovertemplate=f"{label}<br>Date: %{{x|%Y-%m-%d}}<br>Drawdown: %{{y:.2%}}<extra></extra>",
+            showlegend=True
         ))
 
     fig.update_layout(
         title="Drawdown Analysis: GRID vs SPX",
         yaxis_title="Drawdown (%)",
-        yaxis_tickformat=".0%",
-        hovermode="x unified",
+        yaxis_tickformat='.0%',
+        hovermode='x unified',
+        template='plotly_white',
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="center",
-            x=0.5,
+            yanchor='bottom', y=1.02,
+            xanchor='center', x=0.5,
             title=None
         ),
-        template="plotly_white",
-        plot_bgcolor="#f8f9fa",
-        margin=dict(l=40, r=40, t=70, b=40)
+        margin=dict(l=40, r=40, t=70, b=40),
+        plot_bgcolor='#f9f9f9'
     )
 
-    # Highlight min drawdown for each series (optional, makes more interactive)
-    for col, color, label in zip(cols, colors, labels):
-        min_dd = grid_growth_inflation_spx[col].min()
-        min_idx = grid_growth_inflation_spx[col].idxmin()
-        fig.add_shape(
-            type='line',
-            x0=min_idx, x1=min_idx,
-            y0=0, y1=min_dd,
-            line=dict(color=color, dash='dot'),
-            opacity=0.5
-        )
-        fig.add_trace(go.Scatter(
-            x=[min_idx],
-            y=[min_dd],
-            mode='markers+text',
-            marker=dict(color=color, size=9),
-            text=[f"Max DD<br>{min_dd:.1%}"],
-            textposition='bottom center',
-            showlegend=False
-        ))
-
-    # Show in Streamlit
     st.plotly_chart(fig, use_container_width=True)
 
 
