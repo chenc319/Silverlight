@@ -619,10 +619,13 @@ def grid_pca_regime_performance(start, end, **kwargs):
             # Use last row's score for this time point
             pc_series.iloc[i] = pc[-1, 0]  # first principal component only
         return pc_series
-
+    pca_growth_correlation = grid_growth_corr_spx.copy().dropna()
+    pca_growth_correlation.columns = grid_growth_pct.columns
+    pca_inflation_correlation = grid_inflation_corr_spx.copy().dropna()
+    pca_inflation_correlation.columns = grid_inflation_pct.columns
     grid_growth_inflation_spx = pd.concat([
-        rolling_pca(grid_growth_pct * grid_growth_corr_spx.dropna()),
-        rolling_pca(grid_inflation_pct * grid_inflation_corr_spx.dropna()),
+        rolling_pca((grid_growth_pct * pca_growth_correlation).dropna()),
+        rolling_pca((grid_inflation_pct * pca_inflation_correlation).dropna()),
         spx_monthly_pct.shift(-1)
     ], axis=1).dropna()
     grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
