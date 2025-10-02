@@ -173,7 +173,7 @@ def plot_grid_factors(start,end,**kwargs):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-def plot_grid_factors_z_score_backtest(start, end, **kwargs):
+def plot_grid_factors_regime_performance(start, end, **kwargs):
     grid_growth_cross_mean_z = pd.DataFrame(grid_growth_z.mean(axis=1))
     grid_inflation_cross_mean_z = pd.DataFrame(grid_inflation_z.mean(axis=1))
     grid_growth_inflation_spx = pd.concat([
@@ -281,7 +281,7 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
         stagflation_regime.shape[0] / total_rows * 100
     ]
 
-    st.title("Growth and Inflation Historical Performance")
+    st.title("GRID Regime Performance")
     cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
     styled = grid_results.style \
         .format({
@@ -305,7 +305,7 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
         st.write(styled, unsafe_allow_html=True)
 
     # --- Bonds Return Distribution ---
-    st.title("Equity Return Distributions")
+    st.title("GRID Return Distributions")
     regimes = ['Reflation', 'Stagflation', 'Goldilocks', 'Deflation']
     regime_colors_plotly = {
         "Reflation": "#E74C3C",
@@ -338,18 +338,172 @@ def plot_grid_factors_z_score_backtest(start, end, **kwargs):
     st.plotly_chart(fig, use_container_width=True)
 
 
-def grid_z_score_corr_backtest(start, end, **kwargs):
-    grid_growth_mean = grid_growth_pct.rolling(12).mean()
-    grid_growth_std = grid_growth_pct.rolling(12).std()
-    grid_growth_z = (grid_growth_pct - grid_growth_mean) / grid_growth_std
-    grid_growth_z.columns = growth_dict.values()
-    grid_growth_z_spx_merge = merge_dfs([grid_growth_z,spx_monthly_pct])
+def grid_z_score_backtest(start, end, **kwargs):
+    grid_growth_cross_mean_z = pd.DataFrame(grid_growth_z.mean(axis=1))
+    grid_inflation_cross_mean_z = pd.DataFrame(grid_inflation_z.mean(axis=1))
+    grid_growth_inflation_spx = pd.concat([
+        grid_growth_cross_mean_z,
+        grid_inflation_cross_mean_z,
+        spx_monthly_pct.shift(-1)
+    ], axis=1).dropna()
+    grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
 
-    reference_growth_col = grid_growth_z_spx_merge.columns[-1]
-    grid_growth_rolling_corr = pd.DataFrame({
-        col: grid_growth_z_spx_merge[col].rolling(12).corr(grid_growth_z_spx_merge[reference_growth_col])
-        for col in grid_growth_z_spx_merge.columns[:-1]
-    })
+    def regime_label(row):
+        if row['inflation'] > 0 and row['growth'] > 0:
+            return 0  # Reflation
+        elif row['inflation'] > 0 and row['growth'] < 0:
+            return 1  # Stagflation
+        elif row['inflation'] < 0 and row['growth'] > 0:
+            return 2  # Goldilocks
+        elif row['inflation'] < 0 and row['growth'] < 0:
+            return 3  # Deflation
+        else:
+            return np.nan
+    regime_labels = {
+        0: 'Reflation',
+        1: 'Stagflation',
+        2: 'Goldilocks',
+        3: 'Deflation'
+    }
+    grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regime_label, axis=1)
+    grid_growth_inflation_spx['regime_label'] = grid_growth_inflation_spx['regime_code'].map(regime_labels)
+
+    def grid_backtest(row):
+        if row['regime_label']== 'Goldilocks':
+            return 1
+        elif row['regime_label']== 'Reflation':
+            return 0.75
+        elif row['regime_label']== 'Deflation':
+            return 0.5
+        elif row['regime_label']== 'Stagflation':
+            return 0.25
+        else:
+            return np.nan
+
+    grid_growth_inflation_spx['weights'] = grid_growth_inflation_spx.apply(grid_backtest, axis=1)
+    grid_growth_inflation_spx['bt_returns'] = grid_growth_inflation_spx['weights'] * grid_growth_inflation_spx['spx']
+    grid_growth_inflation_spx['cumsum_spx'] = grid_growth_inflation_spx['spx'].cumsum()
+    grid_growth_inflation_spx['cumsum_bt'] = grid_growth_inflation_spx['bt_returns'].cumsum()
+
+    ### DRAWDOWN ###
+    def compute_drawdown(cumret):
+        roll_max = cumret.cummax()
+        drawdown = (cumret - roll_max) / roll_max
+        return drawdown
+
+    # Calculate drawdown series
+    grid_growth_inflation_spx['drawdown_bt'] = compute_drawdown(grid_growth_inflation_spx['cumsum_bt'])
+    grid_growth_inflation_spx['drawdown_spx'] = compute_drawdown(grid_growth_inflation_spx['cumsum_spx'])
+
+    ### TABLE OF RESULTS ###
+    grid_backtest_results = pd.DataFrame()
+    grid_backtest_results['Strategy'] = ['GRID Model','SPX']
+    grid_backtest_results['Mean Monthly Returns'] = [
+        grid_growth_inflation_spx['bt_returns'].mean() * 100,
+        grid_growth_inflation_spx['spx'].mean() * 100,
+    ]
+    grid_backtest_results['Ann. Returns'] = grid_backtest_results['Mean Monthly Returns'] * 12
+    grid_backtest_results['Ann. Volatility'] = [
+        (grid_growth_inflation_spx['bt_returns'].std() * 12**0.5) * 100,
+        (grid_growth_inflation_spx['spx'].std() * 12**0.5) * 100,
+    ]
+    grid_backtest_results['Return/Risk'] = grid_backtest_results['Ann. Returns'] / grid_backtest_results['Ann. Volatility']
+
+    ### PLOT ###
+    asset_colors = {
+        'securities_outright': '#5FB3FF',  # Vivid sky blue (QE, stable)
+        'lending_portfolio': '#2DCDB2',  # Bright teal/mint (portfolio)
+        'treasuries': '#FFC145',  # Sun gold (Treasury)
+        'mbs': '#FF6969',  # Approachable coral (MBS)
+        'permanent_lending': '#54C6EB',  # Aqua blue (permanent lending)
+        'temporary_lending': '#FFD166',  # Citrus yellow-orange (temp lending)
+        'srf': '#6FE7DD',  # Lively turquoise (repo facility)
+        'discount_window': '#8D8DFF',  # Periwinkle (DW lending)
+        'fx_swap_line': '#A685E2',  # Pleasant purple (FX swaps)
+        'ppp': '#FF8FAB',  # Bright pink (PPP)
+        'ms': '#FFA952',  # Peach (Main Street)
+    }
+    fig = go.Figure()
+    cols = ['cumsum_bt', 'cumsum_spx']
+    labels = [
+        'GRID',
+        'SPX',
+    ]
+    colors = ['#5FB3FF', '#2DCDB2']
+    for col, color, label in zip(cols, colors, labels):
+        fig.add_trace(go.Scatter(x=grid_growth_inflation_spx.index, y=grid_growth_inflation_spx[col],
+                                 mode='lines',
+                                 name=label,
+                                 line=dict(color=color)))
+    fig.update_layout(
+        title="GRID Z-Score Backtest",
+        yaxis_title="Dollars",
+        hovermode='x unified'
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    ### PLOT DRAWDOWN ###
+    fig = go.Figure()
+    labels = ['GRID', 'SPX']
+    cols = ['drawdown_bt', 'drawdown_spx']
+    colors = ['#5FB3FF', '#2DCDB2']
+
+    for col, color, label in zip(cols, colors, labels):
+        fig.add_trace(go.Scatter(
+            x=grid_growth_inflation_spx.index,
+            y=grid_growth_inflation_spx[col],
+            mode='lines',
+            name=label,
+            line=dict(color=color),
+            fill='tozeroy',
+            fillcolor=color + '44',  # add some transparency
+            hovertemplate=f"{label}<br>Date: %{{x}}<br>Drawdown: %{{y:.2%}}<extra></extra>",
+        ))
+
+    fig.update_layout(
+        title="Drawdown Analysis: GRID vs SPX",
+        yaxis_title="Drawdown (%)",
+        yaxis_tickformat=".0%",
+        hovermode="x unified",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            title=None
+        ),
+        template="plotly_white",
+        plot_bgcolor="#f8f9fa",
+        margin=dict(l=40, r=40, t=70, b=40)
+    )
+
+    # Highlight min drawdown for each series (optional, makes more interactive)
+    for col, color, label in zip(cols, colors, labels):
+        min_dd = grid_growth_inflation_spx[col].min()
+        min_idx = grid_growth_inflation_spx[col].idxmin()
+        fig.add_shape(
+            type='line',
+            x0=min_idx, x1=min_idx,
+            y0=0, y1=min_dd,
+            line=dict(color=color, dash='dot'),
+            opacity=0.5
+        )
+        fig.add_trace(go.Scatter(
+            x=[min_idx],
+            y=[min_dd],
+            mode='markers+text',
+            marker=dict(color=color, size=9),
+            text=[f"Max DD<br>{min_dd:.1%}"],
+            textposition='bottom center',
+            showlegend=False
+        ))
+
+    # Show in Streamlit
+    st.plotly_chart(fig, use_container_width=True)
+
+
+
 
 
 
