@@ -509,7 +509,7 @@ def grid_z_score_backtest(start, end, **kwargs):
     with col2:
         st.write(styled, unsafe_allow_html=True)
 
-def grid_pca_backtest(start, end, **kwargs):
+def grid_pca_regime_performance(start, end, **kwargs):
     ### PCA ANALYSIS ###
     def rolling_pca(df, n_components=1, window=24):
         """Returns leading PC time series (length = original, nan at start) from rolling PCA on the columns of df."""
@@ -628,7 +628,7 @@ def grid_pca_backtest(start, end, **kwargs):
         stagflation_regime.shape[0] / total_rows * 100
     ]
 
-    st.title("GRID Regime Performance")
+    st.title("GRID PCA Regime Performance")
     cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
     styled = grid_results.style \
         .format({
@@ -652,7 +652,7 @@ def grid_pca_backtest(start, end, **kwargs):
         st.write(styled, unsafe_allow_html=True)
 
     # --- Bonds Return Distribution ---
-    st.title("GRID Return Distributions")
+    st.title("GRID PCA Return Distributions")
     regimes = ['Reflation', 'Stagflation', 'Goldilocks', 'Deflation']
     regime_colors_plotly = {
         "Reflation": "#E74C3C",
