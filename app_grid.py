@@ -513,6 +513,10 @@ def grid_z_score_backtest(start, end, **kwargs):
         roll_max = cumret.cummax()
         drawdown = (cumret - roll_max) / roll_max
         return drawdown
+    def calculate_beta(strategy_returns, benchmark_returns):
+        cov = np.cov(strategy_returns, benchmark_returns)[0, 1]
+        var = np.var(benchmark_returns)
+        return cov / var
 
     # Calculate drawdown series
     grid_growth_inflation_spx['drawdown_bt'] = compute_drawdown(grid_growth_inflation_spx['cumsum_bt'])
@@ -531,6 +535,10 @@ def grid_z_score_backtest(start, end, **kwargs):
         (grid_growth_inflation_spx['spx'].std() * 12**0.5) * 100,
     ]
     grid_backtest_results['Return/Risk'] = grid_backtest_results['Ann. Returns'] / grid_backtest_results['Ann. Volatility']
+    grid_beta = calculate_beta(grid_growth_inflation_spx['bt_returns'], grid_growth_inflation_spx['spx'])
+    spx_beta = 1.0  # Self-benchmarking
+
+    grid_backtest_results['Beta'] = [grid_beta, spx_beta]
 
     ### PLOT ###
     fig = go.Figure()
@@ -595,13 +603,14 @@ def grid_z_score_backtest(start, end, **kwargs):
         'Ann. Returns': "{:.2f}%",
         'Ann. Volatility': "{:.2f}%",
         'Return/Risk': "{:.2f}",
+        'Beta': "{:.2f}",
     }) \
         .set_properties(
-        subset=['Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk'],
+        subset=['Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk','Beta'],
         **{'width': '500px'}
     ) \
         .background_gradient(cmap=cmap, subset=[
-        'Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk'
+        'Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk'.'Beta'
     ])
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
