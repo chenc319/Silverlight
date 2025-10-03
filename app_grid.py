@@ -610,7 +610,7 @@ def grid_z_score_backtest(start, end, **kwargs):
         **{'width': '500px'}
     ) \
         .background_gradient(cmap=cmap, subset=[
-        'Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk'.'Beta'
+        'Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk','Beta'
     ])
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
