@@ -1,5 +1,5 @@
 ### ---------------------------------------------------------------------------------------------------------- ###
-### ---------------------------------------- GROWTH INFLATION MODEL ------------------------------------------ ###
+### -------------------------------------------------- GRID -------------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 ### PACKAGES ###
@@ -36,7 +36,7 @@ def merge_dfs(array_of_dfs):
                                                   right_index=True, how='outer'), array_of_dfs)
 
 ### ---------------------------------------------------------------------------------------------------------- ###
-### --------------------------------- ADVANCED GROWTH AND INFLATION FACTORS ---------------------------------- ###
+### -------------------------------------------------- GRID -------------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 growth_dict = {
@@ -141,6 +141,10 @@ for each_factor in list(spx_sectors.keys()):
     df = pd.DataFrame(df['Close'])
     df.columns = [spx_sectors[each_factor]]
     spx_sectors_merge = merge_dfs([spx_sectors_merge, df])
+
+### ---------------------------------------------------------------------------------------------------------- ###
+### -------------------------------------------------- GRID -------------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
 
 def plot_grid_factors(start,end,**kwargs):
     palette = [
@@ -601,188 +605,21 @@ def grid_z_score_backtest(start, end, **kwargs):
         .background_gradient(cmap=cmap, subset=[
         'Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk'
     ])
-
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.write(styled, unsafe_allow_html=True)
 
-def grid_pca_regime_performance(start, end, **kwargs):
-    ### PCA ANALYSIS ###
-    def rolling_pca(df, n_components=1, window=24):
-        """Returns leading PC time series (length = original, nan at start) from rolling PCA on the columns of df."""
-        pc_series = pd.Series(np.nan, index=df.index)
-        for i in range(window - 1, len(df)):
-            window_df = df.iloc[i - window + 1:i + 1]
-            window_df = (window_df - window_df.mean()) / window_df.std()  # normalize
-            pca = PCA(n_components=n_components)
-            pc = pca.fit_transform(window_df.values)
-            # Use last row's score for this time point
-            pc_series.iloc[i] = pc[-1, 0]  # first principal component only
-        return pc_series
-    pca_growth_correlation = grid_growth_corr_spx.copy().dropna()
-    pca_growth_correlation.columns = grid_growth_pct.columns
-    pca_inflation_correlation = grid_inflation_corr_spx.copy().dropna()
-    pca_inflation_correlation.columns = grid_inflation_pct.columns
-    grid_growth_inflation_spx = pd.concat([
-        rolling_pca((grid_growth_pct * pca_growth_correlation).dropna()),
-        rolling_pca((grid_inflation_pct * pca_inflation_correlation).dropna()),
-        spx_monthly_pct.shift(-1)
-    ], axis=1).dropna()
-    grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
 
-    def regime_label(row):
-        if row['inflation'] > 0 and row['growth'] > 0:
-            return 0  # Reflation
-        elif row['inflation'] > 0 and row['growth'] < 0:
-            return 1  # Stagflation
-        elif row['inflation'] < 0 and row['growth'] > 0:
-            return 2  # Goldilocks
-        elif row['inflation'] < 0 and row['growth'] < 0:
-            return 3  # Deflation
-        else:
-            return np.nan
 
-    df = grid_growth_inflation_spx.copy()
-    df['regime_code'] = df.apply(regime_label, axis=1)
-    df = df.dropna(subset=['regime_code']).copy()
-    df['regime_code'] = df['regime_code'].astype(int)
-    regime_labels = {
-        0: 'Reflation',
-        1: 'Stagflation',
-        2: 'Goldilocks',
-        3: 'Deflation'
-    }
-    regime_colors = {
-        0: '#E74C3C',  # Reflation (red)
-        1: '#F1C40F',  # Stagflation (yellow)
-        2: '#27AE60',  # Goldilocks (green)
-        3: '#2980B9'  # Deflation (blue)
-    }
-    df['regime_color'] = df['regime_code'].map(regime_colors)
-    df['regime_label'] = df['regime_code'].map(regime_labels)
 
-    reflation_regime = df[df['regime_label'] == 'Reflation']
-    stagflation_regime = df[df['regime_label'] == 'Stagflation']
-    goldilocks_regime = df[df['regime_label'] == 'Goldilocks']
-    deflation_regime = df[df['regime_label'] == 'Deflation']
 
-    reflation_mean_return = reflation_regime['spx'].mean() * 100
-    stagflation_mean_return = stagflation_regime['spx'].mean() * 100
-    goldilocks_mean_return = goldilocks_regime['spx'].mean() * 100
-    deflation_mean_return = deflation_regime['spx'].mean() * 100
 
-    reflation_ann_return = reflation_regime['spx'].mean() * 12 * 100
-    stagflation_ann_return = stagflation_regime['spx'].mean() * 12 * 100
-    goldilocks_ann_return = goldilocks_regime['spx'].mean() * 12 * 100
-    deflation_ann_return = deflation_regime['spx'].mean() * 12 * 100
 
-    reflation_volatility = reflation_regime['spx'].std() * (12 ** 0.5) * 100
-    stagflation_volatility = stagflation_regime['spx'].std() * (12 ** 0.5) * 100
-    goldilocks_volatility = goldilocks_regime['spx'].std() * (12 ** 0.5) * 100
-    deflation_volatility = deflation_regime['spx'].std() * (12 ** 0.5) * 100
 
-    reflation_win_ratio = reflation_regime[reflation_regime['spx'] > 0].shape[0] / reflation_regime.shape[0] * 100
-    stagflation_win_ratio = stagflation_regime[stagflation_regime['spx'] > 0].shape[0] / stagflation_regime.shape[
-        0] * 100
-    goldilocks_win_ratio = goldilocks_regime[goldilocks_regime['spx'] > 0].shape[0] / goldilocks_regime.shape[0] * 100
-    deflation_win_ratio = deflation_regime[deflation_regime['spx'] > 0].shape[0] / deflation_regime.shape[0] * 100
 
-    total_rows = sum(
-        [goldilocks_regime.shape[0], reflation_regime.shape[0], deflation_regime.shape[0], stagflation_regime.shape[0]])
-    grid_results = pd.DataFrame()
-    grid_results['Regime'] = [
-        'Goldilocks (I-G+)',
-        'Reflation (I+G+)',
-        'Deflation (I-G-)',
-        'Stagflation (I+G-)',
-    ]
-    grid_results['Mean Monthly Returns'] = [
-        goldilocks_mean_return,
-        reflation_mean_return,
-        deflation_mean_return,
-        stagflation_mean_return
-    ]
-    grid_results['Ann. Returns'] = [
-        goldilocks_ann_return,
-        reflation_ann_return,
-        deflation_ann_return,
-        stagflation_ann_return
-    ]
-    grid_results['Ann. Volatility'] = [
-        goldilocks_volatility,
-        reflation_volatility,
-        deflation_volatility,
-        stagflation_volatility
-    ]
-    grid_results['Return/Risk'] = grid_results['Ann. Returns'] / grid_results['Ann. Volatility']
-    grid_results['Win Ratio'] = [
-        goldilocks_win_ratio,
-        reflation_win_ratio,
-        deflation_win_ratio,
-        stagflation_win_ratio
-    ]
-    grid_results['% of Occurrences'] = [
-        goldilocks_regime.shape[0] / total_rows * 100,
-        reflation_regime.shape[0] / total_rows * 100,
-        deflation_regime.shape[0] / total_rows * 100,
-        stagflation_regime.shape[0] / total_rows * 100
-    ]
 
-    st.title("GRID PCA Regime Performance")
-    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
-    styled = grid_results.style \
-        .format({
-        'Mean Monthly Returns': "{:.2f}%",
-        'Ann. Returns': "{:.2f}%",
-        'Ann. Volatility': "{:.2f}%",
-        'Return/Risk': "{:.2f}",
-        'Win Ratio': "{:.2f}%",
-        '% of Occurrences': "{:.2f}%"
-    }) \
-        .set_properties(
-        subset=['Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk', 'Win Ratio'],
-        **{'width': '500px'}
-    ) \
-        .background_gradient(cmap=cmap, subset=[
-        'Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk', 'Win Ratio'
-    ])
 
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.write(styled, unsafe_allow_html=True)
 
-    # --- Bonds Return Distribution ---
-    st.title("GRID PCA Return Distributions")
-    regimes = ['Reflation', 'Stagflation', 'Goldilocks', 'Deflation']
-    regime_colors_plotly = {
-        "Reflation": "#E74C3C",
-        "Stagflation": "#F1C40F",
-        "Goldilocks": "#27AE60",
-        "Deflation": "#2980B9"
-    }
-
-    fig = make_subplots(rows=2, cols=2, subplot_titles=regimes)
-    min_bound = df['spx'].min()
-    max_bound = df['spx'].max()
-    for i, regime in enumerate(regimes):
-        row = i // 2 + 1
-        col = i % 2 + 1
-        subdata = df[df['regime_label'] == regime]
-        fig.add_trace(
-            go.Histogram(
-                x=subdata['spx'].dropna(),
-                name=regime,
-                marker_color=regime_colors_plotly.get(regime, "#AAAAAA"),
-                opacity=0.8,
-                nbinsx=30
-            ),
-            row=row,
-            col=col
-        )
-        fig.update_xaxes(title_text="Equity % Return", row=row, col=col, range=[min_bound, max_bound])
-        fig.update_yaxes(title_text="Count", row=row, col=col)
-    fig.update_layout(showlegend=False, height=600)
-    st.plotly_chart(fig, use_container_width=True)
 
 def grid_sector_performance(start, end, **kwargs):
     grid_growth_cross_mean_z = pd.DataFrame(grid_growth_z.mean(axis=1))
