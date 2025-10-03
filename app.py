@@ -89,11 +89,12 @@ if menu == 'Growth & Inflation Model':
 ### ---------------------------------------------------------------------------------------- ###
 
 elif menu == 'GRID Model':
+    st.title('GRID Factors')
     app_grid.plot_grid_factors(start_date, end_date)
     st.title('Factor Correlations to SPX+1')
     app_grid.plot_factor_correlation_to_lagged_spx(start_date, end_date)
+    st.title('Grid Regime Historical Performance')
     app_grid.plot_grid_factors_regime_performance(start_date, end_date)
-    app_grid.grid_pca_regime_performance(start_date, end_date)
     st.title('GRID Model Backtest')
     app_grid.grid_z_score_backtest(start_date, end_date)
 

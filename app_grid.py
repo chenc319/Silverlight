@@ -162,7 +162,6 @@ def plot_grid_factors(start,end,**kwargs):
         "#78b4a4",  # Soft Sage Green
     ]
     ### PLOT ###
-    st.title('GRID Growth Factors')
     df = grid_growth_pct.copy().resample('ME').last()
     columns_to_plot = grid_growth_pct.columns
     fig = sp.make_subplots(rows=3, cols=4, subplot_titles=columns_to_plot)
@@ -185,6 +184,7 @@ def plot_grid_factors(start,end,**kwargs):
             fig.update_xaxes(title_text="Date", row=row, col=col)
             fig.update_yaxes(title_text="Value", row=row, col=col)
     fig.update_layout(
+        title = 'Growth Factors',
         showlegend=False,
         height=800,
         width=1400
@@ -192,7 +192,6 @@ def plot_grid_factors(start,end,**kwargs):
     st.plotly_chart(fig, use_container_width=True)
 
     ### PLOT ###
-    st.title('GRID Inflation Factors')
     df = grid_inflation_pct.copy().resample('ME').last()
     columns_to_plot = grid_inflation_pct.columns
     fig = sp.make_subplots(rows=3, cols=4, subplot_titles=columns_to_plot)
@@ -215,6 +214,7 @@ def plot_grid_factors(start,end,**kwargs):
             fig.update_xaxes(title_text="Date", row=row, col=col)
             fig.update_yaxes(title_text="Value", row=row, col=col)
     fig.update_layout(
+        title = 'Inflation Factors',
         showlegend=False,
         height=800,
         width=1400
@@ -406,7 +406,7 @@ def plot_grid_factors_regime_performance(start, end, **kwargs):
         stagflation_regime.shape[0] / total_rows * 100
     ]
 
-    st.title("GRID Regime Performance")
+    ### PLOT ###
     cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
     styled = grid_results.style \
         .format({
@@ -429,8 +429,7 @@ def plot_grid_factors_regime_performance(start, end, **kwargs):
     with col2:
         st.write(styled, unsafe_allow_html=True)
 
-    # --- Bonds Return Distribution ---
-    st.title("GRID Return Distributions")
+    ### GRID RETURN DISTRIBUTION ###
     regimes = ['Reflation', 'Stagflation', 'Goldilocks', 'Deflation']
     regime_colors_plotly = {
         "Reflation": "#E74C3C",
@@ -589,7 +588,6 @@ def grid_z_score_backtest(start, end, **kwargs):
     st.plotly_chart(fig, use_container_width=True)
 
     ### TABLE ###
-    st.title("GRID Backtest Results")
     cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
     styled = grid_backtest_results.style \
         .format({
