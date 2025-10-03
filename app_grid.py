@@ -304,7 +304,7 @@ def plot_grid_factors_regime_performance(start, end, **kwargs):
     grid_growth_inflation_spx = pd.concat([
         grid_growth_cross_mean_z,
         grid_inflation_cross_mean_z,
-        spx_monthly_pct.shift(0)
+        spx_monthly_pct.shift(-1)
     ], axis=1).dropna()
     grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
 
