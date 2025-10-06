@@ -15,7 +15,7 @@ from sklearn.metrics import mean_squared_error
 
 
 
-def render_real_pce_bridge_nowcast(DATA_DIR='data', window=12, alpha=1):
+def render_real_pce_bridge_nowcast(DATA_DIR='data', window=60, alpha=1):
 
 
     ### ------------------------------------ HELPERS ------------------------------------ ###
