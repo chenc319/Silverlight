@@ -59,6 +59,7 @@ def growth_inflation_model():
         df[f"{col}_zscore12"] = (df[col] - df[col].rolling(60).mean()) / df[col].rolling(12).std()
 
     merge_df = merge_dfs([growth, df]).dropna()
+    
     X = merge_df.iloc[:, 1:]
     y = merge_df.iloc[:, 0]
     window = 12
