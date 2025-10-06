@@ -1,7 +1,3 @@
-### ---------------------------------------------------------------------------------------------------------- ###
-### ------------------------------------------ GROWTH PCE PREDICTOR ------------------------------------------ ###
-### ---------------------------------------------------------------------------------------------------------- ###
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -9,7 +5,6 @@ from pathlib import Path
 import os
 from sklearn.linear_model import LinearRegression
 import plotly.graph_objs as go
-from plotly.subplots import make_subplots
 
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
@@ -46,10 +41,23 @@ def plot_growth_predictor():
     df_factor = pd.DataFrame(result_factor, index=target_feature_df.index[window:])
     errors = df_factor['prediction'] - df_factor['actual']
 
-    # --- Upside/Downside Case ---
-    std_err = errors.std()
-    df_factor['upside'] = df_factor['prediction'] + std_err
-    df_factor['downside'] = df_factor['prediction'] - std_err
+    # --- Dynamic Conditional Upside/Downside Case (Rolling Quantiles) ---
+    rolling_err_window = 24  # history length for scenarios
+    upside = []
+    downside = []
+    for i in range(len(df_factor)):
+        if i == 0:
+            upside.append(df_factor['prediction'].iloc[i])
+            downside.append(df_factor['prediction'].iloc[i])
+        else:
+            hist_e = (df_factor['prediction'].iloc[max(0, i - rolling_err_window):i]
+                      - df_factor['actual'].iloc[max(0, i - rolling_err_window):i])
+            q_up = np.quantile(hist_e, 0.90) if len(hist_e) > 0 else 0
+            q_dn = np.quantile(hist_e, 0.10) if len(hist_e) > 0 else 0
+            upside.append(df_factor['prediction'].iloc[i] + q_up)
+            downside.append(df_factor['prediction'].iloc[i] + q_dn)
+    df_factor['upside'] = upside
+    df_factor['downside'] = downside
 
     # --- Metrics ---
     tracking_error = np.mean(np.abs(errors)) * 1e4  # bp
@@ -60,10 +68,9 @@ def plot_growth_predictor():
     target_std = df_factor['actual'].std()
     rmse_improvement = (1 - rmse / target_std) if target_std > 0 else np.nan
 
-    ### PLOTS ###
-    st.title("Real PCE Growth: Factor Model Backtest")
+    st.title("Real PCE Growth: Factor Model Backtest (Dynamic Scenarios)")
 
-    # Prediction visual: Actual vs Predicted (+/– error bands)
+    # --- Main Chart: Actual vs Predicted and Dynamic Scenarios ---
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=df_factor.index,
@@ -82,14 +89,14 @@ def plot_growth_predictor():
     fig.add_trace(go.Scatter(
         x=df_factor.index,
         y=df_factor['upside'],
-        name='Upside (1 stdev error)',
+        name='Upside (90th percentile error)',
         mode='lines',
         line=dict(color='#6AC47E', dash='dot')
     ))
     fig.add_trace(go.Scatter(
         x=df_factor.index,
         y=df_factor['downside'],
-        name='Downside (1 stdev error)',
+        name='Downside (10th percentile error)',
         mode='lines',
         line=dict(color='#E74C3C', dash='dot')
     ))
@@ -98,9 +105,28 @@ def plot_growth_predictor():
         hovermode='x unified',
         legend=dict(title='Legend', orientation='h', y=-0.25),
         margin=dict(t=30, b=30),
-        title="PCE Growth: Actual vs Predicted and Scenarios"
+        title="PCE Growth: Actual vs Predicted and Conditional Scenarios"
     )
     st.plotly_chart(fig, use_container_width=True)
+
+    # --- Tracking Error Chart ---
+    tracking_errors_history = np.abs(df_factor['prediction'] - df_factor['actual']) * 1e4  # in bps
+    fig_error = go.Figure()
+    fig_error.add_trace(go.Scatter(
+        x=df_factor.index,
+        y=tracking_errors_history,
+        name='Tracking Error (bp)',
+        mode='lines',
+        line=dict(color='#F1C40F', width=2)
+    ))
+    fig_error.update_layout(
+        height=300,
+        hovermode='x unified',
+        legend=dict(title='Legend', orientation='h', y=-0.25),
+        margin=dict(t=30, b=30),
+        title='Historical Tracking Error (basis points)'
+    )
+    st.plotly_chart(fig_error, use_container_width=True)
 
     # --- Metrics Table ---
     st.title("Prediction Performance Metrics")
@@ -120,7 +146,6 @@ def plot_growth_predictor():
             f"{100*rmse_improvement:.2f}"
         ]
     })
-
     st.table(metrics)
 
     # --- RMSE Validity Alert ---
