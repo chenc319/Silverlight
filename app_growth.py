@@ -68,7 +68,7 @@ def growth_inflation_model():
     X = merge_df.iloc[:, 1:]
     y = merge_df.iloc[:, 0]
     window = 12
-    n_components = 2
+    n_components = 3
 
     base, up, down = [], [], []
 
