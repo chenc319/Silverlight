@@ -7,6 +7,7 @@ import streamlit as st
 import pandas as pd
 import functools as ft
 import app_growth_inflation
+import app_growth
 import app_grid
 import app_firv_regime
 import app_barra_factors
@@ -56,8 +57,7 @@ st.markdown("""
         padding: 4px 8px;
         border-radius: 4px;
         display: inline-block;
-        margin-right: 10px;
-        font-size: 12px;
+        margin-right: 10px;a
     }
     </style>
 """, unsafe_allow_html=True)
@@ -73,6 +73,7 @@ menu = st.sidebar.radio(
      'GRID Model',
      'Yield Curve Regimes',
      'Barra Factor Model',
+     'Equity Positioning',
      'Tail Hedge Portfolio']
 )
 
@@ -83,6 +84,13 @@ menu = st.sidebar.radio(
 if menu == 'Growth & Inflation Model':
     app_growth_inflation.plot_growth_inflation(start_date, end_date)
     app_growth_inflation.plot_spx_sector_regimes(start_date, end_date)
+
+### ---------------------------------------------------------------------------------------- ###
+### ---------------------------------------- GROWTH ---------------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
+
+if menu == 'Growth Predictor':
+    app_growth.growth_inflation_model()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------- GROWTH AND INFLATION --------------------------------- ###
