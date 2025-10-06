@@ -1,18 +1,22 @@
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- REAL PCE BRIDGE NOWCAST ----------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
+### PACKAGES ###
+import pandas as pd
+import streamlit as st
+import plotly.graph_objs as go
+from plotly.subplots import make_subplots
+from pathlib import Path
+import os
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Ridge
+from sklearn.metrics import mean_squared_error
+
+
+
 def render_real_pce_bridge_nowcast(DATA_DIR='data', window=36, alpha=0.5):
-    ### PACKAGES ###
-    import pandas as pd
-    import streamlit as st
-    import plotly.graph_objs as go
-    from plotly.subplots import make_subplots
-    from pathlib import Path
-    import os
-    import numpy as np
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.linear_model import Ridge
-    from sklearn.metrics import mean_squared_error
+
 
     ### ------------------------------------ HELPERS ------------------------------------ ###
     def monthly_eom(df):
