@@ -7,6 +7,8 @@ from sklearn.linear_model import Ridge, LinearRegression
 from sklearn.preprocessing import StandardScaler
 from itertools import combinations
 import plotly.graph_objs as go
+from sklearn.metrics import mean_squared_error
+
 
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
