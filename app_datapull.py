@@ -5,11 +5,9 @@
 import pandas as pd
 import functools as ft
 from pandas_datareader import data as pdr
-import matplotlib.pyplot as plt
 from pathlib import Path
 import os
 import pickle
-from plotly.subplots import make_subplots
 import numpy as np
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
@@ -28,9 +26,21 @@ def refresh_data(start,end,**kwargs):
     growth = pdr.DataReader('USALOLITOAASTSAM',
                             'fred',
                             start,
-                            end).resample('ME').last()
+                            end).resample('ME').last().shift(1)
     with open(Path(DATA_DIR) / 'growth.pkl', 'wb') as file:
         pickle.dump(growth, file)
+    real_pce = pdr.DataReader('PCEC96',
+                            'fred',
+                            start,
+                            end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'real_pce.pkl', 'wb') as file:
+        pickle.dump(real_pce, file)
+    gdp = pdr.DataReader('GDPC1',
+                            'fred',
+                            start,
+                            end).resample('ME').last()
+    with open(Path(DATA_DIR) / 'gdp.pkl', 'wb') as file:
+        pickle.dump(gdp, file)
     inflation = pdr.DataReader('CPIAUCSL',
                                'fred',
                                start,

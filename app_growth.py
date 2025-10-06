@@ -1,3 +1,7 @@
+### ---------------------------------------------------------------------------------------------------------- ###
+### ------------------------------------------------- GROWTH ------------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
 import functools as ft
 import streamlit as st
 import plotly.graph_objs as go
@@ -24,12 +28,13 @@ def growth_inflation_model():
     spx_monthly = pd.DataFrame(sp500['Close']).resample('ME').last()
     spx_monthly.columns = ['spx']
 
-    with open(Path(DATA_DIR) / 'growth.pkl', 'rb') as file:
-        growth = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'real_pce.pkl', 'rb') as file:
+        real_pce = pd.read_pickle(file)
     with open(Path(DATA_DIR) / 'grid_growth_variables.pkl', 'rb') as file:
         grid_growth_variables = pd.read_pickle(file)
 
     chosen_growth_dict = {
+        'USALOLITOAASTSAM': 'cli',
         'INDPRO': 'industrial_production',
         'RSXFS': 'advanced_retail_sales_retail_trade',
         'TLMFGCONS': 'manufacturing_spending',
@@ -58,7 +63,7 @@ def growth_inflation_model():
         df[f"{col}_max6"] = df[col].rolling(6).max()
         df[f"{col}_zscore12"] = (df[col] - df[col].rolling(60).mean()) / df[col].rolling(12).std()
 
-    merge_df = merge_dfs([growth.diff().shift(-1), df]).dropna()
+    merge_df = merge_dfs([real_pce_pct.shift(-1), df]).dropna()
 
     X = merge_df.iloc[:, 1:]
     y = merge_df.iloc[:, 0]
@@ -133,4 +138,9 @@ def growth_inflation_model():
 
     st.dataframe(results.tail(12))
 
-# In your Streamlit app run: growth_inflation_model()
+with open(Path(DATA_DIR) / 'real_pce.pkl', 'rb') as file:
+    real_pce = pd.read_pickle(file)
+
+real_pce_pct = real_pce.pct_change()
+
+
