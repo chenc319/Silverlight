@@ -70,6 +70,7 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 menu = st.sidebar.radio(
     "Go to section:",
     ['Growth & Inflation Model',
+     'Growth Predictor',
      'GRID Model',
      'Yield Curve Regimes',
      'Barra Factor Model',
@@ -89,7 +90,7 @@ if menu == 'Growth & Inflation Model':
 ### ---------------------------------------- GROWTH ---------------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-if menu == 'Growth Predictor':
+elif menu == 'Growth Predictor':
     app_growth.growth_inflation_model()
 
 ### ---------------------------------------------------------------------------------------- ###
