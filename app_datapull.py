@@ -29,12 +29,59 @@ def refresh_data(start,end,**kwargs):
                             end).resample('ME').last().shift(1)
     with open(Path(DATA_DIR) / 'growth.pkl', 'wb') as file:
         pickle.dump(growth, file)
-    real_pce = pdr.DataReader('PCEC96',
-                            'fred',
-                            start,
-                            end).resample('ME').last().shift(1)
+
+    ### GROWTH VARIABLES ###
+    real_pce = pdr.DataReader('PCEC96','fred',start,end).resample('ME').last().shift(1)
     with open(Path(DATA_DIR) / 'real_pce.pkl', 'wb') as file:
         pickle.dump(real_pce, file)
+    retail_sales = pdr.DataReader('RETAILSMSA','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'retail_sales.pkl', 'wb') as file:
+        pickle.dump(retail_sales, file)
+    advanced_retail_sales = pdr.DataReader('RSXFS','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'advanced_retail_sales.pkl', 'wb') as file:
+        pickle.dump(advanced_retail_sales, file)
+    ind_prod_total_index = pdr.DataReader('INDPRO','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'ind_prod_total_index.pkl', 'wb') as file:
+        pickle.dump(ind_prod_total_index, file)
+    indu_prod_manufacturing_idx = pdr.DataReader('IPMAN','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'indu_prod_manufacturing_idx.pkl', 'wb') as file:
+        pickle.dump(indu_prod_manufacturing_idx, file)
+    ind_prod_cons_goods = pdr.DataReader('IPCONGD','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'ind_prod_cons_goods.pkl', 'wb') as file:
+        pickle.dump(ind_prod_cons_goods, file)
+    total_nonfarm_payrolls = pdr.DataReader('PAYEMS','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'total_nonfarm_payrolls.pkl', 'wb') as file:
+        pickle.dump(total_nonfarm_payrolls, file)
+    unemployment_rate = pdr.DataReader('UNRATE','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'unemployment_rate.pkl', 'wb') as file:
+        pickle.dump(unemployment_rate, file)
+    retail_trade_employment = pdr.DataReader('CES0600000007','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'retail_trade_employment.pkl', 'wb') as file:
+        pickle.dump(retail_trade_employment, file)
+    pce_total = pdr.DataReader('PCEC','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'pce_total.pkl', 'wb') as file:
+        pickle.dump(pce_total, file)
+    pce_chain = pdr.DataReader('PCECA','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'pce_chain.pkl', 'wb') as file:
+        pickle.dump(pce_chain, file)
+    pce_goods = pdr.DataReader('pce_goods','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'pce_goods.pkl', 'wb') as file:
+        pickle.dump(pce_goods, file)
+    pce_durable_goods = pdr.DataReader('PCEDG','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'pce_durable_goods.pkl', 'wb') as file:
+        pickle.dump(pce_durable_goods, file)
+
+    growth_variables_merge = merge_dfs([
+        real_pce, growth, retail_sales, advanced_retail_sales, ind_prod_total_index,
+        indu_prod_manufacturing_idx, ind_prod_cons_goods, total_nonfarm_payrolls,
+        unemployment_rate, retail_trade_employment, pce_goods, pce_durable_goods
+    ]).dropna()
+    with open(Path(DATA_DIR) / 'growth_variables_merge.pkl', 'wb') as file:
+        pickle.dump(growth_variables_merge, file)
+
+
+    ### INFLATION VARIABLES ###
+
     gdp = pdr.DataReader('GDPC1',
                             'fred',
                             start,

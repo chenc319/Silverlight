@@ -91,7 +91,7 @@ if menu == 'Growth & Inflation Model':
 ### ---------------------------------------------------------------------------------------- ###
 
 elif menu == 'Growth Predictor':
-    app_growth.render_real_pce_bridge_nowcast()
+    app_growth.plot_growth_predictor()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------- GROWTH AND INFLATION --------------------------------- ###
