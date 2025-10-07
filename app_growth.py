@@ -54,8 +54,15 @@ def plot_growth_predictor():
 
 
     for i in range(window, len(target_feature_df)):
+        ### WEIGHTED CORRELATION ##
+
         train = target_feature_df.iloc[i - window:i]
+        corr_weights = train.corr()['PCEC96'][1:]
+        train.iloc[1:] = corr_weights * train.iloc[1:]
         test = target_feature_df.iloc[i:i + 1]
+        test.iloc[1:] = corr_weights * test.iloc[1:]
+
+
 
         # Simple factor: average of features
         factor_train = train[factor_features].mean(axis=1)
