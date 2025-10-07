@@ -43,7 +43,7 @@ def plot_growth_predictor():
     result_factor = []
     window = 36  # Rolling window
     factor_features = ['RSXFS', 'INDPRO', 'IPCONGD',
-       'PAYEMS', 'CES0600000007', 'pce_goods', 'PCEDG', 'TOTRESNS',
+       'PAYEMS', 'pce_goods', 'PCEDG', 'TOTRESNS',
        'M2SL']
 
 
