@@ -6,6 +6,7 @@ import os
 import functools as ft
 from sklearn.linear_model import LinearRegression
 import plotly.graph_objs as go
+
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 def merge_dfs(array_of_dfs):
@@ -21,35 +22,72 @@ def plot_growth_predictor():
         di_reserves = pd.read_pickle(file)
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
         m2_money_supply = pd.read_pickle(file)
-    growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply])
-    target_feature_df = growth_variables_merge.pct_change(1)
-    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
-    target_feature_df = target_feature_df.dropna()
+    growth_variables_merge = merge_dfs([growth_variables_merge, di_reserves, m2_money_supply])
 
-    target_feature_df.columns
-    # --- Model Setup ---
+    #-----------------------#
+    # Backtest prep
+    #-----------------------#
+    raw_df = growth_variables_merge.dropna()
+    factor_features = ['RETAILSMSA', 'PAYEMS', 'USALOLITOAASTSAM', 'INDPRO', 'CES0600000007', 'TOTRESNS', 'M2SL']
+    lags = [1, 3, 6, 12]  # in months
+    window = 36  # rolling training window
+
     result_factor = []
-    window = 36  # Rolling window
-    factor_features = ['RETAILSMSA', 'PAYEMS', 'USALOLITOAASTSAM', 'INDPRO', 'CES0600000007','TOTRESNS','M2SL']
+    feature_choice_history = []
 
-    for i in range(window, len(target_feature_df)):
-        train = target_feature_df.iloc[i - window:i]
-        test = target_feature_df.iloc[i:i + 1]
+    for i in range(window, len(raw_df)-1):
+        # Rolling window: use only data up to time i (no leakage)
+        window_df = raw_df.iloc[i - window:i+1]  # i+1 so we can lag into test
+        target_df = window_df.pct_change(1)  # always use 1m forward target
+        target_df['PCEC96'] = target_df['PCEC96'].shift(-1)
+        target_df = target_df.dropna()
 
-        # Simple factor: average of features
-        factor_train = train[factor_features].mean(axis=1)
-        factor_test = test[factor_features].mean(axis=1)
+        # Build all lagged candidate features in this window
+        lagged_features = {}
+        for feat in factor_features:
+            for lag in lags:
+                lagged_feat_name = f"{feat}_lag{lag}"
+                lagged_features[lagged_feat_name] = window_df[feat].pct_change(lag)
+        lagged_df = pd.DataFrame(lagged_features, index=window_df.index)
+        lagged_df = lagged_df.loc[target_df.index]  # align index
+        X_full = lagged_df.iloc[:-1] # use up to last window row for fitting
+        y_full = target_df['PCEC96'].iloc[:-1]
 
+        # Evaluate 1-step ahead RMSE for each lagged series (within window)
+        feat_errors = {}
+        for col in X_full.columns:
+            # Must dropna or align on non-null observations for rolling OLS (avoid artificial errors)
+            valid = (~X_full[col].isna()) & (~y_full.isna())
+            if valid.sum() < 6:
+                continue
+            model = LinearRegression().fit(X_full[col][valid].values.reshape(-1, 1), y_full[valid].values)
+            pred = model.predict(X_full[col][valid].values.reshape(-1, 1))
+            err = np.sqrt(np.mean((y_full[valid].values - pred) ** 2))
+            feat_errors[col] = err
+        # Select best N lagged features
+        best_feats = sorted(feat_errors, key=feat_errors.get)[:5]
+        feature_choice_history.append(best_feats)
+
+        # Prepare test sample (last row in rolling window), get those lagged values for the actual prediction
+        test_row = lagged_df.iloc[[-1]][best_feats]
+        # If any feature is nan (due to short lag), fallback to most recent available
+        test_row = test_row.fillna(method='bfill', axis=1).fillna(method='ffill', axis=1)
+        X_test = test_row.mean(axis=1).values.reshape(-1, 1)
+        X_train = X_full[best_feats].mean(axis=1).values.reshape(-1, 1)
+        y_train = y_full.values
+
+        # Fit on the selected best features, and forecast
         model = LinearRegression()
-        model.fit(factor_train.values.reshape(-1, 1), train['PCEC96'].values)
-        pred = model.predict(factor_test.values.reshape(-1, 1))[0]
-        true = test['PCEC96'].values[0]
+        model.fit(X_train, y_train)
+        pred = model.predict(X_test)[0]
+        true = target_df['PCEC96'].iloc[-1]
         result_factor.append({
             'prediction': pred,
             'actual': true
         })
-
-    df_factor = pd.DataFrame(result_factor, index=target_feature_df.index[window:])
+    # Make results DataFrame
+    idx = raw_df.index[window+1:]
+    df_factor = pd.DataFrame(result_factor, index=idx)
     errors = df_factor['prediction'] - df_factor['actual']
 
     # --- Dynamic Conditional Upside/Downside Case (Rolling Quantiles) ---
@@ -79,7 +117,7 @@ def plot_growth_predictor():
     target_std = df_factor['actual'].std()
     rmse_improvement = (1 - rmse / target_std) if target_std > 0 else np.nan
 
-    st.title("Real PCE Growth: Factor Model Backtest (Dynamic Scenarios)")
+    st.title("Real PCE Growth: Rolling Forward-Looking Factor/Lag Optimization")
 
     # --- Main Chart: Actual vs Predicted and Dynamic Scenarios ---
     fig = go.Figure()
