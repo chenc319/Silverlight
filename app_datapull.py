@@ -31,7 +31,10 @@ def refresh_data(start,end,**kwargs):
         pickle.dump(growth, file)
 
     ### GROWTH VARIABLES ###
-    real_pce = pdr.DataReader('PCEC96','fred',start,end).resample('ME').last().shift(1)
+    di_reserves = pdr.DataReader('TOTRESNS','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'di_reserves.pkl', 'wb') as file:
+        pickle.dump(di_reserves, file)
+    real_pce = pdr.DataReader('PCEC96', 'fred', start, end).resample('ME').last().shift(1)
     with open(Path(DATA_DIR) / 'real_pce.pkl', 'wb') as file:
         pickle.dump(real_pce, file)
     retail_sales = pdr.DataReader('RETAILSMSA','fred',start,end).resample('ME').last().shift(1)

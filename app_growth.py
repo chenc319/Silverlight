@@ -3,15 +3,23 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import os
+import functools as ft
 from sklearn.linear_model import LinearRegression
 import plotly.graph_objs as go
-
 DATA_DIR = os.getenv('DATA_DIR', 'data')
+
+def merge_dfs(array_of_dfs):
+    return ft.reduce(lambda left, right: pd.merge(left, right,
+                                                  left_index=True,
+                                                  right_index=True, how='outer'), array_of_dfs)
 
 def plot_growth_predictor():
     # --- Load Data ---
     with open(Path(DATA_DIR) / 'growth_variables_merge.pkl', 'rb') as file:
         growth_variables_merge = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
+        di_reserves = pd.read_pickle(file)
+    growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves])
     target_feature_df = growth_variables_merge.pct_change()
     target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
     target_feature_df = target_feature_df.dropna()
@@ -19,7 +27,7 @@ def plot_growth_predictor():
     # --- Model Setup ---
     result_factor = []
     window = 36  # Rolling window
-    factor_features = ['RETAILSMSA', 'USALOLITOAASTSAM', 'INDPRO', 'CES0600000007']
+    factor_features = ['RETAILSMSA', 'USALOLITOAASTSAM', 'INDPRO', 'CES0600000007','TOTRESNS']
 
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]

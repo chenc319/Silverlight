@@ -10,7 +10,7 @@ import app_growth_inflation
 import app_growth
 import app_grid
 import app_firv_regime
-import app_barra_factors
+import app_barra
 import app_tail_hedge
 
 import time
@@ -71,6 +71,7 @@ menu = st.sidebar.radio(
     "Go to section:",
     ['Growth & Inflation Model',
      'Growth Predictor',
+     'Inflation Predictor',
      'GRID Model',
      'Yield Curve Regimes',
      'Barra Factor Model',
@@ -92,6 +93,13 @@ if menu == 'Growth & Inflation Model':
 
 elif menu == 'Growth Predictor':
     app_growth.plot_growth_predictor()
+
+### ---------------------------------------------------------------------------------------- ###
+### ---------------------------------------- INFLATION ---------------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif menu == 'Inflation Predictor':
+    app_growth.plot_inflation_predictor()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------- GROWTH AND INFLATION --------------------------------- ###
