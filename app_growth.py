@@ -46,8 +46,12 @@ def plot_growth_predictor():
 
 
     for i in range(window, len(target_feature_df)):
-        train = target_feature_df.iloc[i - window:i]
-        test = target_feature_df.iloc[i:i + 1]
+        target_feature_df_mean = target_feature_df.iloc[i - window:i+1].mean(axis=0)
+        target_feature_df_std = target_feature_df.iloc[i - window:i+1].std(axis=0)
+        normalized_df = (target_feature_df.iloc[i - window:i+1]-target_feature_df_mean) / target_feature_df_std
+        normalized_df['PCEC96'] = target_feature_df.iloc[i - window:i+1]['PCEC96']
+        train = normalized_df.iloc[i - window:i]
+        test = normalized_df.iloc[i:i + 1]
 
         # Simple factor: average of features
         factor_train = train[factor_features].mean(axis=1)
