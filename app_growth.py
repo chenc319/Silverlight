@@ -63,7 +63,6 @@ def plot_growth_predictor():
         test.iloc[1:] = corr_weights * test.iloc[1:]
 
 
-
         # Simple factor: average of features
         factor_train = train[factor_features].mean(axis=1)
         factor_test = test[factor_features].mean(axis=1)
