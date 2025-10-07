@@ -48,9 +48,19 @@ def plot_growth_predictor():
     # --- Model Setup ---
     result_factor = []
     window = 36  # Rolling window
-    factor_features = ['USALOLITOAASTSAM', 'RETAILSMSA', 'RSXFS', 'INDPRO', 'IPMAN',
-       'PAYEMS', 'UNRATE', 'pce_goods', 'PCEDG', 'TOTRESNS',
-       'ICSA']
+    factor_features = [
+        'USALOLITOAASTSAM',
+        'RETAILSMSA',
+        'RSXFS',
+        'INDPRO',
+        'IPMAN',
+        'IPCONGD',
+        'PAYEMS',
+        'UNRATE',
+        'pce_goods',
+        'PCEDG',
+        'TOTRESNS',
+        'ICSA']
 
 
     for i in range(window, len(target_feature_df)):
