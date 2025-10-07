@@ -12,6 +12,18 @@ def merge_dfs(array_of_dfs):
     return ft.reduce(lambda left, right: pd.merge(left, right,
                                                   left_index=True,
                                                   right_index=True, how='outer'), array_of_dfs)
+def add_monthly_pct_change_features(df):
+    """
+    Adds 1, 3, 6 month percent change features for every column, including UNRATE.
+    Assumes df has monthly frequency.
+    Returns expanded DataFrame.
+    """
+    lags = [1, 3, 6, 12]
+    out = df.copy()
+    for col in df.columns:
+        for lag in lags:
+            out[f"{col}_pct{lag}"] = df[col].pct_change(lag)
+    return out
 
 def plot_growth_predictor():
     # --- Load Data ---
@@ -22,15 +34,32 @@ def plot_growth_predictor():
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
         m2_money_supply = pd.read_pickle(file)
     growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply])
-    target_feature_df = growth_variables_merge.pct_change(1)
-    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
+    target_feature_df = add_monthly_pct_change_features(growth_variables_merge).dropna()
+    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].pct_change().shift(-1)
     target_feature_df = target_feature_df.dropna()
 
     target_feature_df.columns
     # --- Model Setup ---
     result_factor = []
     window = 36  # Rolling window
-    factor_features = ['RETAILSMSA', 'PAYEMS', 'USALOLITOAASTSAM', 'INDPRO', 'CES0600000007','TOTRESNS','M2SL']
+    factor_features = [
+        'PCEC96', 'USALOLITOAASTSAM', 'RETAILSMSA', 'RSXFS', 'INDPRO', 'IPMAN',
+        'IPCONGD', 'PAYEMS', 'UNRATE', 'CES0600000007', 'pce_goods', 'PCEDG',
+        'TOTRESNS', 'M2SL', 'PCEC96_pct1', 'PCEC96_pct3', 'PCEC96_pct6',
+       'PCEC96_pct12', 'USALOLITOAASTSAM_pct1', 'USALOLITOAASTSAM_pct3',
+       'USALOLITOAASTSAM_pct6', 'USALOLITOAASTSAM_pct12', 'RETAILSMSA_pct1',
+       'RETAILSMSA_pct3', 'RETAILSMSA_pct6', 'RETAILSMSA_pct12', 'RSXFS_pct1',
+       'RSXFS_pct3', 'RSXFS_pct6', 'RSXFS_pct12', 'INDPRO_pct1', 'INDPRO_pct3',
+       'INDPRO_pct6', 'INDPRO_pct12', 'IPMAN_pct1', 'IPMAN_pct3', 'IPMAN_pct6',
+       'IPMAN_pct12', 'IPCONGD_pct1', 'IPCONGD_pct3', 'IPCONGD_pct6',
+       'IPCONGD_pct12', 'PAYEMS_pct1', 'PAYEMS_pct3', 'PAYEMS_pct6',
+       'PAYEMS_pct12', 'UNRATE_pct1', 'UNRATE_pct3', 'UNRATE_pct6',
+       'UNRATE_pct12', 'CES0600000007_pct1', 'CES0600000007_pct3',
+       'CES0600000007_pct6', 'CES0600000007_pct12', 'pce_goods_pct1',
+       'pce_goods_pct3', 'pce_goods_pct6', 'pce_goods_pct12', 'PCEDG_pct1',
+       'PCEDG_pct3', 'PCEDG_pct6', 'PCEDG_pct12', 'TOTRESNS_pct1',
+       'TOTRESNS_pct3', 'TOTRESNS_pct6', 'TOTRESNS_pct12', 'M2SL_pct1',
+       'M2SL_pct3', 'M2SL_pct6', 'M2SL_pct12']
 
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]
