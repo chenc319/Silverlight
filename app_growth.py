@@ -181,8 +181,8 @@ def plot_growth_predictor():
     st.table(metrics)
 
     # --- RMSE Validity Alert ---
-    if rmse_improvement >= 0.20:
-        st.success(f"RMSE is at least 20% lower than the standard deviation of the target (Improvement: {100*rmse_improvement:.2f}%)")
+    if rmse_improvement >= 0.10:
+        st.success(f"RMSE is at least 10% lower than the standard deviation of the target (Improvement: {100*rmse_improvement:.2f}%)")
     else:
         st.warning(f"RMSE improvement is only {100*rmse_improvement:.2f}%. Recommend model tuning.")
 
