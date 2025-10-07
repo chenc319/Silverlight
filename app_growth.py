@@ -5,7 +5,6 @@ from pathlib import Path
 import os
 import functools as ft
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor
 import plotly.graph_objs as go
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
@@ -43,27 +42,24 @@ def plot_growth_predictor():
     # --- Model Setup ---
     result_factor = []
     window = 36  # Rolling window
-    factor_features = ['RETAILSMSA', 'USALOLITOAASTSAM', 'INDPRO', 'PCEDG','TOTRESNS','M2SL']
+    factor_features = target_feature_df.columns[1:]
+
 
     for i in range(window, len(target_feature_df)):
-        # Calculate means and std for normalization
-        target_feature_df_mean = target_feature_df.iloc[i - window:i + 1].mean(axis=0)
-        target_feature_df_std = target_feature_df.iloc[i - window:i + 1].std(axis=0)
-        normalized_df = (target_feature_df.iloc[i - window:i + 1] - target_feature_df_mean) / target_feature_df_std
-        normalized_df['PCEC96'] = target_feature_df.iloc[i - window:i + 1]['PCEC96']
+        target_feature_df_mean = target_feature_df.iloc[i - window:i+1].mean(axis=0)
+        target_feature_df_std = target_feature_df.iloc[i - window:i+1].std(axis=0)
+        normalized_df = (target_feature_df.iloc[i - window:i+1]-target_feature_df_mean) / target_feature_df_std
+        normalized_df['PCEC96'] =target_feature_df.iloc[i - window:i+1]['PCEC96']
+        train = normalized_df.iloc[i - window:i]
+        test = normalized_df.iloc[i:i + 1]
 
-        train = normalized_df.iloc[:len(normalized_df) - 1]
-        test = normalized_df.iloc[len(normalized_df) - 1:len(normalized_df)]
+        # Simple factor: average of features
+        factor_train = train[factor_features].mean(axis=1)
+        factor_test = test[factor_features].mean(axis=1)
 
-        # Use all factor features as input for RF, not just the mean
-        X_train = train[factor_features].values
-        y_train = train['PCEC96'].values
-        X_test = test[factor_features].values
-
-        # Set random_state for determinism if desired
-        rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
-        rf_model.fit(X_train, y_train)
-        pred = rf_model.predict(X_test)[0]
+        model = LinearRegression()
+        model.fit(factor_train.values.reshape(-1, 1), train['PCEC96'].values)
+        pred = model.predict(factor_test.values.reshape(-1, 1))[0]
         true = test['PCEC96'].values[0]
         result_factor.append({
             'prediction': pred,
