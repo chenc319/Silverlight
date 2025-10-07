@@ -37,10 +37,10 @@ def plot_growth_predictor():
         initial_claims = pd.read_pickle(file)
     growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply,initial_claims])
     target_feature_df = growth_variables_merge.pct_change()
-    # target_feature_df['UNRATE'] = target_feature_df['UNRATE'] * -1
-    # target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
-    # target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
-    # target_feature_df['ICSA'] = target_feature_df['ICSA'] * -1
+    target_feature_df['UNRATE'] = target_feature_df['UNRATE'] * -1
+    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
+    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
+    target_feature_df['ICSA'] = target_feature_df['ICSA'] * -1
     target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
@@ -58,7 +58,7 @@ def plot_growth_predictor():
         test = target_feature_df.iloc[i:i + 1].copy()
 
         # Get correlations with the target for all features except 'PCEC96' itself
-        corr_weights = train.corr()['PCEC96'].drop('PCEC96')
+        corr_weights = abs(train.corr()['PCEC96'].drop('PCEC96'))
 
         # Only apply weights to the feature columns (not the target column itself)
         train_features = train[corr_weights.index] * corr_weights
