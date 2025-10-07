@@ -34,24 +34,15 @@ def plot_growth_predictor():
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
         m2_money_supply = pd.read_pickle(file)
     growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply])
-    target_feature_df = add_monthly_pct_change_features(growth_variables_merge).dropna()
-    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].pct_change().shift(-1)
+    target_feature_df = growth_variables_merge.pct_change()
+    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
     target_feature_df.columns
     # --- Model Setup ---
     result_factor = []
     window = 36  # Rolling window
-    factor_features = [
-        'USALOLITOAASTSAM_pct1',
-        'RETAILSMSA_pct1',
-        'RSXFS_pct1',
-        'INDPRO_pct1',
-        'PAYEMS_pct1',
-        'CES0600000007_pct1',
-        'PCEDG_pct1',
-        'TOTRESNS_pct1',
-        'M2SL_pct1']
+    factor_features = ['RETAILSMSA', 'PAYEMS', 'USALOLITOAASTSAM', 'INDPRO', 'CES0600000007','TOTRESNS','M2SL']
 
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]
