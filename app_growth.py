@@ -47,7 +47,7 @@ def plot_growth_predictor():
     target_feature_df.columns
     # --- Model Setup ---
     result_factor = []
-    window = 36  # Rolling window
+    window = 24  # Rolling window
     factor_features = ['USALOLITOAASTSAM', 'RETAILSMSA', 'RSXFS', 'INDPRO', 'IPMAN', 'IPCONGD',
        'PAYEMS', 'UNRATE', 'pce_goods', 'PCEDG', 'TOTRESNS',
        'ICSA']
@@ -186,5 +186,3 @@ def plot_growth_predictor():
     else:
         st.warning(f"RMSE improvement is only {100*rmse_improvement:.2f}%. Recommend model tuning.")
 
-# In app.py use:
-# plot_growth_predictor()
