@@ -68,12 +68,16 @@ def plot_growth_predictor():
         best_feats = sorted(feat_errors, key=feat_errors.get)[:5]
         feature_choice_history.append(best_feats)
 
-        # Prepare test sample (last row in rolling window), get those lagged values for the actual prediction
+        # ... rest as before ...
         test_row = lagged_df.iloc[[-1]][best_feats]
-        # If any feature is nan (due to short lag), fallback to most recent available
-        test_row = test_row.fillna(method='bfill', axis=1).fillna(method='ffill', axis=1)
+        # Fill NaNs using most recent available value in window (bfill then ffill)
+        test_row = test_row.bfill(axis=1).ffill(axis=1)
+        # If any features are still NaN, drop those columns for this prediction
+        test_row = test_row.dropna(axis=1, how='any')
         X_test = test_row.mean(axis=1).values.reshape(-1, 1)
-        X_train = X_full[best_feats].mean(axis=1).values.reshape(-1, 1)
+        # For X_train (in-window mean of best features), you may need to use only columns that exist in current test_row
+        usable_feats = test_row.columns.tolist()
+        X_train = X_full[usable_feats].mean(axis=1).values.reshape(-1, 1)
         y_train = y_full.values
 
         # Fit on the selected best features, and forecast
