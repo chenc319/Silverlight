@@ -53,7 +53,7 @@ def plot_growth_predictor():
         'CES0600000007_pct1',
         'PCEDG_pct1',
         'TOTRESNS_pct1',
-        'M2SL_pct1']
+        'M2SL_pct3']
 
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]
