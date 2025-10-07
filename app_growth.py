@@ -43,7 +43,6 @@ def plot_growth_predictor():
     result_factor = []
     window = 36  # Rolling window
     factor_features = [
-        'PCEC96',
         'USALOLITOAASTSAM_pct1',
         'RETAILSMSA_pct1',
         'RSXFS_pct1',
