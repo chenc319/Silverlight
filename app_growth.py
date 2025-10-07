@@ -6,18 +6,15 @@ import os
 import functools as ft
 from sklearn.linear_model import LinearRegression
 import plotly.graph_objs as go
+
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 def merge_dfs(array_of_dfs):
     return ft.reduce(lambda left, right: pd.merge(left, right,
                                                   left_index=True,
                                                   right_index=True, how='outer'), array_of_dfs)
+
 def add_monthly_pct_change_features(df):
-    """
-    Adds 1, 3, 6 month percent change features for every column, including UNRATE.
-    Assumes df has monthly frequency.
-    Returns expanded DataFrame.
-    """
     lags = [1, 3, 6, 12]
     out = df.copy()
     for col in df.columns:
@@ -33,55 +30,56 @@ def plot_growth_predictor():
         di_reserves = pd.read_pickle(file)
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
         m2_money_supply = pd.read_pickle(file)
-    growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply])
-    target_feature_df = add_monthly_pct_change_features(growth_variables_merge).dropna()
-    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].pct_change().shift(-1)
-    target_feature_df = target_feature_df.dropna()
+    growth_variables_merge = merge_dfs([growth_variables_merge, di_reserves, m2_money_supply])
+    df = add_monthly_pct_change_features(growth_variables_merge).dropna()
 
-    target_feature_df.columns
+    df['PCEC96'] = df['PCEC96'].pct_change().shift(-1)
+    df = df.dropna()
+
     # --- Model Setup ---
     result_factor = []
     window = 36  # Rolling window
-    factor_features = [
-        'PCEC96','PCEC96_pct1', 'PCEC96_pct3', 'PCEC96_pct6',
-       'PCEC96_pct12', 'USALOLITOAASTSAM_pct1', 'USALOLITOAASTSAM_pct3',
-       'USALOLITOAASTSAM_pct6', 'USALOLITOAASTSAM_pct12', 'RETAILSMSA_pct1',
-       'RETAILSMSA_pct3', 'RETAILSMSA_pct6', 'RETAILSMSA_pct12', 'RSXFS_pct1',
-       'RSXFS_pct3', 'RSXFS_pct6', 'RSXFS_pct12', 'INDPRO_pct1', 'INDPRO_pct3',
-       'INDPRO_pct6', 'INDPRO_pct12', 'IPMAN_pct1', 'IPMAN_pct3', 'IPMAN_pct6',
-       'IPMAN_pct12', 'IPCONGD_pct1', 'IPCONGD_pct3', 'IPCONGD_pct6',
-       'IPCONGD_pct12', 'PAYEMS_pct1', 'PAYEMS_pct3', 'PAYEMS_pct6',
-       'PAYEMS_pct12', 'UNRATE_pct1', 'UNRATE_pct3', 'UNRATE_pct6',
-       'UNRATE_pct12', 'CES0600000007_pct1', 'CES0600000007_pct3',
-       'CES0600000007_pct6', 'CES0600000007_pct12', 'pce_goods_pct1',
-       'pce_goods_pct3', 'pce_goods_pct6', 'pce_goods_pct12', 'PCEDG_pct1',
-       'PCEDG_pct3', 'PCEDG_pct6', 'PCEDG_pct12', 'TOTRESNS_pct1',
-       'TOTRESNS_pct3', 'TOTRESNS_pct6', 'TOTRESNS_pct12', 'M2SL_pct1',
-       'M2SL_pct3', 'M2SL_pct6', 'M2SL_pct12']
+    feature_candidates = [c for c in df.columns if c != "PCEC96"]
 
+    for i in range(window, len(df)):
+        train = df.iloc[i - window:i]
+        test = df.iloc[i:i + 1]
 
-    for i in range(window, len(target_feature_df)):
-        train = target_feature_df.iloc[i - window:i]
-        test = target_feature_df.iloc[i:i + 1]
+        # Calculate best features by rolling OLS RMSE
+        feat_errors = {}
+        for feat in feature_candidates:
+            if train[feat].isna().sum() > 0 or np.isnan(train['PCEC96']).sum() > 0:
+                continue  # Only use features with no NaN in window
+            X = train[feat].values.reshape(-1, 1)
+            y = train['PCEC96'].values
+            if len(np.unique(X)) < 2:  # guard vs constant series
+                continue
+            model = LinearRegression().fit(X, y)
+            y_pred = model.predict(X)
+            err = np.sqrt(np.mean((y - y_pred) ** 2))
+            feat_errors[feat] = err
 
-        # Simple factor: average of features
-        factor_train = train[factor_features].mean(axis=1)
-        factor_test = test[factor_features].mean(axis=1)
+        # Select 5 best available features (lowest train window RMSE)
+        best_feats = sorted(feat_errors, key=feat_errors.get)[:5]
+        # Prepare X for those features (averaged, matching style above)
+        valid_feats = [feat for feat in best_feats if not np.isnan(test[feat].values[0])]
+        if len(valid_feats) == 0:
+            continue
+        X_train = train[valid_feats].mean(axis=1).values.reshape(-1, 1)
+        y_train = train['PCEC96'].values
+        X_test = test[valid_feats].mean(axis=1).values.reshape(-1, 1)
 
         model = LinearRegression()
-        model.fit(factor_train.values.reshape(-1, 1), train['PCEC96'].values)
-        pred = model.predict(factor_test.values.reshape(-1, 1))[0]
+        model.fit(X_train, y_train)
+        pred = model.predict(X_test)[0]
         true = test['PCEC96'].values[0]
-        result_factor.append({
-            'prediction': pred,
-            'actual': true
-        })
+        result_factor.append({'prediction': pred, 'actual': true})
 
-    df_factor = pd.DataFrame(result_factor, index=target_feature_df.index[window:])
+    df_factor = pd.DataFrame(result_factor, index=df.index[window:window + len(result_factor)])
     errors = df_factor['prediction'] - df_factor['actual']
 
-    # --- Dynamic Conditional Upside/Downside Case (Rolling Quantiles) ---
-    rolling_err_window = 24  # history length for scenarios
+    # --- Dynamic Upside/Downside Case (Rolling Quantiles) ---
+    rolling_err_window = 24
     upside = []
     downside = []
     for i in range(len(df_factor)):
@@ -107,7 +105,7 @@ def plot_growth_predictor():
     target_std = df_factor['actual'].std()
     rmse_improvement = (1 - rmse / target_std) if target_std > 0 else np.nan
 
-    st.title("Real PCE Growth: Factor Model Backtest (Dynamic Scenarios)")
+    st.title("Real PCE Growth: Factor Model Backtest (Dynamic Feature Selection)")
 
     # --- Main Chart: Actual vs Predicted and Dynamic Scenarios ---
     fig = go.Figure()
