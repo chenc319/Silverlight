@@ -19,7 +19,9 @@ def plot_growth_predictor():
         growth_variables_merge = pd.read_pickle(file)
     with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
         di_reserves = pd.read_pickle(file)
-    growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves])
+    with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
+        m2_money_supply = pd.read_pickle(file)
+    growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply])
     target_feature_df = growth_variables_merge.pct_change(1)
     target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
     target_feature_df = target_feature_df.dropna()
@@ -28,7 +30,7 @@ def plot_growth_predictor():
     # --- Model Setup ---
     result_factor = []
     window = 36  # Rolling window
-    factor_features = ['RETAILSMSA', 'PAYEMS','USALOLITOAASTSAM', 'INDPRO', 'CES0600000007','PCEDG','TOTRESNS']
+    factor_features = ['RETAILSMSA', 'PAYEMS', 'USALOLITOAASTSAM', 'INDPRO', 'CES0600000007','TOTRESNS','M2SL']
 
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]
