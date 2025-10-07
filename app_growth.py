@@ -52,32 +52,13 @@ def plot_growth_predictor():
        'PAYEMS', 'UNRATE', 'pce_goods', 'PCEDG', 'TOTRESNS',
        'ICSA']
 
-
     for i in range(window, len(target_feature_df)):
-        ### WEIGHTED CORRELATION ##
-
-        train = target_feature_df.iloc[i - window:i].copy()
-        test = target_feature_df.iloc[i:i + 1].copy()
-
-        # Get correlations with the target for all features except 'PCEC96' itself
-        corr_weights = train.corr()['PCEC96'].drop('PCEC96')
-
-        # Only apply weights to the feature columns (not the target column itself)
-        train_features = train[corr_weights.index] * corr_weights
-        test_features = test[corr_weights.index] * corr_weights
-
-        # Reconstruct train/test DataFrames with weighted features and the target
-        train_weighted = train_features.copy()
-        train_weighted['PCEC96'] = train['PCEC96']
-
-        test_weighted = test_features.copy()
-        test_weighted['PCEC96'] = test['PCEC96']
-
-        # Now train_weighted and test_weighted have no NaNs in Y
+        train = target_feature_df.iloc[i - window:i]
+        test = target_feature_df.iloc[i:i + 1]
 
         # Simple factor: average of features
-        factor_train = train_weighted[factor_features].mean(axis=1)
-        factor_test = test_weighted[factor_features].mean(axis=1)
+        factor_train = train[factor_features].mean(axis=1)
+        factor_test = test[factor_features].mean(axis=1)
 
         model = LinearRegression()
         model.fit(factor_train.values.reshape(-1, 1), train['PCEC96'].values)
