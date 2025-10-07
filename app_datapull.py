@@ -31,9 +31,9 @@ def refresh_data(start,end,**kwargs):
         pickle.dump(growth, file)
 
     ### GROWTH VARIABLES ###
-    bbk_leading_index = pdr.DataReader('BBKMLEIX','fred',start,end).resample('ME').last().shift(1)
-    with open(Path(DATA_DIR) / 'bbk_leading_index.pkl', 'wb') as file:
-        pickle.dump(bbk_leading_index, file)
+    initial_claims = pdr.DataReader('ICSA','fred',start,end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'initial_claims.pkl', 'wb') as file:
+        pickle.dump(initial_claims, file)
     di_reserves = pdr.DataReader('TOTRESNS','fred',start,end).resample('ME').last().shift(1)
     with open(Path(DATA_DIR) / 'di_reserves.pkl', 'wb') as file:
         pickle.dump(di_reserves, file)

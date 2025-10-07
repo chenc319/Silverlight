@@ -33,8 +33,14 @@ def plot_growth_predictor():
         di_reserves = pd.read_pickle(file)
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
         m2_money_supply = pd.read_pickle(file)
-    growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply])
+    with open(Path(DATA_DIR) / 'initial_claims.pkl', 'rb') as file:
+        initial_claims = pd.read_pickle(file)
+    growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply,initial_claims])
     target_feature_df = growth_variables_merge.pct_change()
+    target_feature_df['UNRATE'] = target_feature_df['UNRATE'] * -1
+    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
+    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
+    target_feature_df['ICSA'] = target_feature_df['ICSA'] * -1
     target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
