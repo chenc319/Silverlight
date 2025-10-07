@@ -49,8 +49,8 @@ def plot_growth_predictor():
         'RSXFS_pct1',
         'INDPRO_pct1',
         'PAYEMS_pct1',
-        'UNRATE_pct1',
         'CES0600000007_pct1',
+        'PCEDG_pct1',
         'TOTRESNS_pct1',
         'M2SL_pct1']
 
