@@ -24,6 +24,7 @@ def plot_growth_predictor():
     target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-2)
     target_feature_df = target_feature_df.dropna()
 
+
     # --- Model Setup ---
     result_factor = []
     window = 36  # Rolling window
