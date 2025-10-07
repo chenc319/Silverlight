@@ -56,13 +56,13 @@ def plot_growth_predictor():
         # Evaluate 1-step ahead RMSE for each lagged series (within window)
         feat_errors = {}
         for col in X_full.columns:
-            # Must dropna or align on non-null observations for rolling OLS (avoid artificial errors)
-            valid = (~X_full[col].isna()) & (~y_full.isna())
-            if valid.sum() < 6:
+            # Only keep samples where both feature and target are not NaN
+            data = pd.DataFrame({'x': X_full[col], 'y': y_full}).dropna()
+            if len(data) < 6:
                 continue
-            model = LinearRegression().fit(X_full[col][valid].values.reshape(-1, 1), y_full[valid].values)
-            pred = model.predict(X_full[col][valid].values.reshape(-1, 1))
-            err = np.sqrt(np.mean((y_full[valid].values - pred) ** 2))
+            model = LinearRegression().fit(data['x'].values.reshape(-1, 1), data['y'].values)
+            pred = model.predict(data['x'].values.reshape(-1, 1))
+            err = np.sqrt(np.mean((data['y'].values - pred) ** 2))
             feat_errors[col] = err
         # Select best N lagged features
         best_feats = sorted(feat_errors, key=feat_errors.get)[:5]
