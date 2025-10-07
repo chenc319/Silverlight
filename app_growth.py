@@ -20,8 +20,8 @@ def plot_growth_predictor():
     with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
         di_reserves = pd.read_pickle(file)
     growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves])
-    target_feature_df = growth_variables_merge.pct_change()
-    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-2)
+    target_feature_df = growth_variables_merge.pct_change(3)
+    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
 
