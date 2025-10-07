@@ -42,7 +42,7 @@ def plot_growth_predictor():
     # --- Model Setup ---
     result_factor = []
     window = 36  # Rolling window
-    factor_features = ['USALOLITOAASTSAM', 'RETAILSMSA', 'INDPRO', 'IPMAN', 'IPCONGD',
+    factor_features = ['USALOLITOAASTSAM', 'RETAILSMSA', 'RSXFS', 'INDPRO', 'IPCONGD',
        'PAYEMS', 'UNRATE', 'CES0600000007', 'pce_goods', 'PCEDG', 'TOTRESNS',
        'M2SL']
 
