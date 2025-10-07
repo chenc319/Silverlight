@@ -61,6 +61,7 @@ def plot_growth_predictor():
        'TOTRESNS_pct3', 'TOTRESNS_pct6', 'TOTRESNS_pct12', 'M2SL_pct1',
        'M2SL_pct3', 'M2SL_pct6', 'M2SL_pct12']
 
+
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]
         test = target_feature_df.iloc[i:i + 1]
