@@ -46,7 +46,6 @@ def plot_growth_predictor():
        'PAYEMS', 'UNRATE', 'CES0600000007', 'pce_goods', 'PCEDG', 'TOTRESNS',
        'M2SL']
 
-
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]
         test = target_feature_df.iloc[i:i + 1]
