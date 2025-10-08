@@ -99,7 +99,7 @@ elif menu == 'Growth Predictor':
 ### ---------------------------------------------------------------------------------------- ###
 
 elif menu == 'Inflation Predictor':
-    app_growth.plot_inflation_predictor()
+    app_inflation.plot_inflation_predictor()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------- GROWTH AND INFLATION --------------------------------- ###
