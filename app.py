@@ -133,7 +133,8 @@ elif menu == 'Yield Curve Regimes':
 elif menu == 'Barra Factor Model':
     st.title("Barra Factors")
     app_barra.plot_barra_factors(start_date,end_date)
-    st.title("Z-Scored Factors: Average SPX Daily Return")
+    st.title("Barra Factor Prediction")
+    app_barra.plot_barra_predictor()
 
 
 ### ---------------------------------------------------------------------------------------- ###

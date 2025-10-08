@@ -3,16 +3,15 @@
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 ### PACKAGES ###
-import pandas as pd
-import functools as ft
+import plotly.subplots as sp
 import streamlit as st
-import plotly.graph_objs as go
+import pandas as pd
+import numpy as np
 from pathlib import Path
 import os
-from matplotlib.colors import LinearSegmentedColormap
-from plotly.subplots import make_subplots
-import numpy as np
-import plotly.subplots as sp
+import functools as ft
+from sklearn.linear_model import LinearRegression
+import plotly.graph_objs as go
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 barra_factors = {
@@ -50,7 +49,6 @@ sp500.index = pd.to_datetime(sp500['Date']).values
 sp500.drop('Date', axis=1, inplace=True)
 spx_daily = pd.DataFrame(sp500['Close'])
 spx_daily.columns = ['spx']
-spx_daily = spx_daily.resample('ME').last()
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------- BARRA FACTORS ----------------------------------------------- ###
@@ -104,122 +102,162 @@ def plot_barra_factors(start, end, **kwargs):
 ### -------------------------------------------- BARRA FACTORS ----------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-def plot_z_score_barra_factors_spx(start,end,**kwarg):
-    ### CALCULATE FACTOR RETURNS ###
-    barra_factors_pct = barra_factors_df.pct_change().dropna()
-    mean_factor_returns = barra_factors_pct.rolling(63).mean()
-    std_factor_returns = barra_factors_pct.rolling(63).std()
-    barr_factor_z_scores = (barra_factors_pct - mean_factor_returns) / std_factor_returns
-    barr_factor_z_spx_merge = merge_dfs([barr_factor_z_scores, spx_daily.pct_change()])
+def plot_barra_predictor():
+    spx_factor_merge = merge_dfs([
+        spx_daily,
+        barra_factors_df.pct_change(),
+    ])
+    target_feature_df = spx_factor_merge.pct_change()
+    target_feature_df['spx'] = target_feature_df['spx'].shift(-1)
 
-    # replace 'df' with your actual dataframe
-    factor_cols = [col for col in barr_factor_z_spx_merge.columns if col != 'spx']
-    bin_edges = [-np.inf, -2, -1, 1, 2, np.inf]
-    bin_labels = ["<-2", "-2 to -1", "-1 to 1", "1 to 2", ">=2"]
+    target_feature_df.corr()
+    target_feature_df['beta'] = target_feature_df['beta'] * -1
+    target_feature_df['dividend_yield'] = target_feature_df['dividend_yield'] * -1
+    target_feature_df['liquidity'] = target_feature_df['liquidity'] * -1
+    target_feature_df['profitability'] = target_feature_df['profitability'] * -1
+    target_feature_df['residual_volatility'] = target_feature_df['residual_volatility'] * -1
+    target_feature_df['size'] = target_feature_df['size'] * -1
+    target_feature_df = target_feature_df.dropna()
 
-    results = []
-    for factor in factor_cols:
-        bins = pd.cut(barr_factor_z_spx_merge[factor], bins=bin_edges, labels=bin_labels)
-        group = barr_factor_z_spx_merge.groupby(bins)['spx'].mean().reset_index()
-        group["factor"] = factor
-        group.rename(columns={factor: "z_bin"}, inplace=True)
-        results.append(group)
+    result_factor = []
+    window = 63
+    factor_features = target_feature_df.columns[1:]
 
-    panel_df = pd.concat(results, ignore_index=True)
-    panel_df = panel_df[['factor', panel_df.columns[0], 'spx']]
-    panel_df.rename(columns={panel_df.columns[1]: 'z_bin'}, inplace=True)
-    panel_df['spx'] = panel_df['spx'].round(6)
-    ### PLOT ###
-    factors = panel_df['factor'].unique()
-    z_bins = ["<-2", "-2 to -1", "-1 to 1", "1 to 2", ">=2"]
-    fig = make_subplots(
-        rows=4, cols=3,
-        subplot_titles=factors,
-        horizontal_spacing=0.08, vertical_spacing=0.07
-    )
-    for idx, factor in enumerate(factors):
-        row = idx // 3 + 1
-        col = idx % 3 + 1
-        fdata = panel_df[panel_df['factor'] == factor].set_index('z_bin').reindex(z_bins)
-        colors = ['red' if v < 0 else 'green' for v in fdata['spx']]
-        bar = go.Bar(
-            x=z_bins,
-            y=fdata['spx'],
-            marker_color=colors,
-            showlegend=False
-        )
-        fig.add_trace(bar, row=row, col=col)
-        fig.update_yaxes(title_text='Avg SPX Return', row=row, col=col)
+    for i in range(window, len(target_feature_df)):
+        train = target_feature_df.iloc[i - window:i]
+        test = target_feature_df.iloc[i:i + 1]
 
-    fig.update_layout(
-        height=1200, width=1200,
-        title_text='Factor-wise Avg SPX Return by Z-Score Bucket',
-        bargap=0.15,
-    )
-    st.plotly_chart(fig)
+        # Simple factor: average of features
+        factor_train = train[factor_features].mean(axis=1)
+        factor_test = test[factor_features].mean(axis=1)
 
-### ---------------------------------------------------------------------------------------------------------- ###
-### -------------------------------------------- BARRA FACTORS ----------------------------------------------- ###
-### ---------------------------------------------------------------------------------------------------------- ###
-
-def plot_kNN_barra_factor_results(start,end,**kwargs):
-    from sklearn.neighbors import NearestNeighbors
-    ### CALCULATE FACTOR RETURNS ###
-    barra_factors_pct = barra_factors_df.pct_change().dropna()
-    mean_factor_returns = barra_factors_pct.rolling(252).mean()
-    std_factor_returns = barra_factors_pct.rolling(252).std()
-    barr_factor_z_scores = (barra_factors_pct - mean_factor_returns) / std_factor_returns
-    barr_factor_z_spx_merge = merge_dfs([barr_factor_z_scores, spx_daily.pct_change()])
-    barr_factor_z_spx_merge['spx_forward_lag1'] = barr_factor_z_spx_merge['spx'].shift(-1)
-    barr_factor_z_spx_merge = barr_factor_z_spx_merge.dropna()
-    df = barr_factor_z_spx_merge.copy()
-
-    factor_cols = [c for c in df.columns if c not in ['spx', 'spx_forward_lag1']]
-    window_years = 1
-    lookback = window_years * 252  # Approx. trading days in 3 years.
-
-    results = []
-
-    for idx in range(lookback, len(df) - 1):  # can't predict for the very last row
-        now = df.iloc[idx]
-        dt = df.index[idx]
-
-        historical = df.iloc[idx - lookback:idx]
-        # Drop NA and any rows in lookback where a factor is missing
-        historical = historical.dropna(subset=factor_cols + ['spx_forward_lag1'])
-
-        current_factors = now[factor_cols].values.reshape(1, -1)
-        hist_factors = historical[factor_cols].values
-
-        # Use k=5 neighbors
-        if len(historical) < 5:
-            continue  # Not enough data, skip
-        knn = NearestNeighbors(n_neighbors=5, metric='euclidean').fit(hist_factors)
-        dist, indices = knn.kneighbors(current_factors)
-        neighbor_indices = indices[0]
-
-        pred_spx_next = historical.iloc[neighbor_indices]['spx_forward_lag1'].mean()
-        avg_distance = np.mean(dist[0])
-        realized_spx_next = df.iloc[idx + 1]['spx']
-
-        results.append({
-            'date': dt,
-            'knn_pred_spx_avg5': pred_spx_next,
-            'knn_avg_distance': avg_distance,
-            'realized_spx_next': realized_spx_next
+        model = LinearRegression()
+        model.fit(factor_train.values.reshape(-1, 1), train['PCEC96'].values)
+        pred = model.predict(factor_test.values.reshape(-1, 1))[0]
+        true = test['PCEC96'].values[0]
+        result_factor.append({
+            'prediction': pred,
+            'actual': true
         })
 
-    knn_results = pd.DataFrame(results).set_index('date')
+    df_factor = pd.DataFrame(result_factor, index=target_feature_df.index[window:])
+    errors = df_factor['prediction'] - df_factor['actual']
 
-    # Trading logic: long if knn_pred_spx_avg5 > 0, short otherwise
-    knn_results['position'] = np.where(knn_results['knn_pred_spx_avg5'] > 0, 1, -1)
-    knn_results['strategy_return'] = knn_results['position'] * knn_results['realized_spx_next']
+    # --- Dynamic Conditional Upside/Downside Case (Rolling Quantiles) ---
+    rolling_err_window = 21  # history length for scenarios
+    upside = []
+    downside = []
+    for i in range(len(df_factor)):
+        if i == 0:
+            upside.append(df_factor['prediction'].iloc[i])
+            downside.append(df_factor['prediction'].iloc[i])
+        else:
+            hist_e = (df_factor['prediction'].iloc[max(0, i - rolling_err_window):i]
+                      - df_factor['actual'].iloc[max(0, i - rolling_err_window):i])
+            q_up = np.quantile(hist_e, 0.90) if len(hist_e) > 0 else 0
+            q_dn = np.quantile(hist_e, 0.10) if len(hist_e) > 0 else 0
+            upside.append(df_factor['prediction'].iloc[i] + q_up)
+            downside.append(df_factor['prediction'].iloc[i] + q_dn)
+    df_factor['upside'] = upside
+    df_factor['downside'] = downside
 
-    (knn_results['strategy_return'].mean() * 252) / (knn_results['strategy_return'].std() * (252**0.5))
-    (knn_results['realized_spx_next'].mean() * 252) / (knn_results['realized_spx_next'].std() * (252**0.5))
+    # --- Metrics ---
+    tracking_error = np.mean(np.abs(errors)) * 1e4  # bp
+    correct_direction = np.mean(
+        np.sign(df_factor['prediction']) == np.sign(df_factor['actual'])
+    )
+    rmse = np.sqrt(np.mean(errors ** 2))
+    target_std = df_factor['actual'].std()
+    rmse_improvement = (1 - rmse / target_std) if target_std > 0 else np.nan
+
+    st.title("Real PCE Growth: Factor Model Backtest (Dynamic Scenarios)")
+
+    # --- Main Chart: Actual vs Predicted and Dynamic Scenarios ---
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=df_factor.index,
+        y=df_factor['actual'],
+        name='Actual',
+        mode='lines',
+        line=dict(color='#2056AE', width=2)
+    ))
+    fig.add_trace(go.Scatter(
+        x=df_factor.index,
+        y=df_factor['prediction'],
+        name='Predicted',
+        mode='lines',
+        line=dict(color='#F2552C', width=2)
+    ))
+    fig.add_trace(go.Scatter(
+        x=df_factor.index,
+        y=df_factor['upside'],
+        name='Upside (90th percentile error)',
+        mode='lines',
+        line=dict(color='#6AC47E', dash='dot')
+    ))
+    fig.add_trace(go.Scatter(
+        x=df_factor.index,
+        y=df_factor['downside'],
+        name='Downside (10th percentile error)',
+        mode='lines',
+        line=dict(color='#E74C3C', dash='dot')
+    ))
+    fig.update_layout(
+        height=450,
+        hovermode='x unified',
+        legend=dict(title='Legend', orientation='h', y=-0.25),
+        margin=dict(t=30, b=30),
+        title="PCE Growth: Actual vs Predicted and Conditional Scenarios"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    # --- Tracking Error Chart ---
+    tracking_errors_history = np.abs(df_factor['prediction'] - df_factor['actual']) * 1e4  # in bps
+    fig_error = go.Figure()
+    fig_error.add_trace(go.Scatter(
+        x=df_factor.index,
+        y=tracking_errors_history,
+        name='Tracking Error (bp)',
+        mode='lines',
+        line=dict(color='#F1C40F', width=2)
+    ))
+    fig_error.update_layout(
+        height=300,
+        hovermode='x unified',
+        legend=dict(title='Legend', orientation='h', y=-0.25),
+        margin=dict(t=30, b=30),
+        title='Historical Tracking Error (basis points)'
+    )
+    st.plotly_chart(fig_error, use_container_width=True)
+
+    # --- Metrics Table ---
+    st.title("Prediction Performance Metrics")
+    metrics = pd.DataFrame({
+        'Metric': [
+            'Avg Tracking Error (bp)',
+            'Sign Prediction Accuracy (%)',
+            'RMSE',
+            'STD of Target',
+            'RMSE Improvement (%)'
+        ],
+        'Value': [
+            f"{tracking_error:.2f}",
+            f"{100*correct_direction:.2f}",
+            f"{rmse:.6f}",
+            f"{target_std:.6f}",
+            f"{100*rmse_improvement:.2f}"
+        ]
+    })
+    st.table(metrics)
+
+    # --- RMSE Validity Alert ---
+    if rmse_improvement >= 0.10:
+        st.success(f"RMSE is at least 10% lower than the standard deviation of the target (Improvement: {100*rmse_improvement:.2f}%)")
+    else:
+        st.warning(f"RMSE improvement is only {100*rmse_improvement:.2f}%. Recommend model tuning.")
 
 
-    print(knn_results.head(10))
+
 
 
 
