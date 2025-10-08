@@ -132,9 +132,9 @@ def plot_barra_predictor():
         factor_test = test[factor_features].mean(axis=1)
 
         model = LinearRegression()
-        model.fit(factor_train.values.reshape(-1, 1), train['PCEC96'].values)
+        model.fit(factor_train.values.reshape(-1, 1), train['spx'].values)
         pred = model.predict(factor_test.values.reshape(-1, 1))[0]
-        true = test['PCEC96'].values[0]
+        true = test['spx'].values[0]
         result_factor.append({
             'prediction': pred,
             'actual': true
