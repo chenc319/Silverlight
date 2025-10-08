@@ -32,7 +32,19 @@ def plot_inflation_predictor():
     # --- Model Setup ---
     result_factor = []
     window = 36  # Rolling window
-    factor_features = target_feature_df.columns[1:]
+    factor_features = [
+        'CPILFESL',
+        'PPIACO',
+        'CPIUFDSL',
+        'CPIENGSL',
+        'CUSR0000SAH3',
+        'CPIAPPSL',
+        'CPIMEDSL',
+        'CPITRNSL',
+        'CUSR0000SAF116',
+        'CUSR0000SETB',
+        'CUSR0000SASLE',
+    ]
 
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]
