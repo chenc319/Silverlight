@@ -28,7 +28,7 @@ def plot_inflation_predictor():
     target_feature_df.corr()
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
     target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
-    target_feature_df['CURRCIR'] = target_feature_df['CURRCIR'] * -1
+    target_feature_df['CURRCIR'] = target_feature_df['CURRCIR']
     target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
