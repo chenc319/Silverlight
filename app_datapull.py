@@ -90,6 +90,25 @@ def refresh_data(start,end,**kwargs):
 
 
     ### INFLATION VARIABLES ###
+    cpi_total = pdr.DataReader('CPIAUCSL', 'fred', start, end).resample('ME').last().shift(1)
+    cpi_less_foodenergy = pdr.DataReader('CPILFESL', 'fred', start, end).resample('ME').last().shift(1)
+    ppi_total = pdr.DataReader('PPIACO', 'fred', start, end).resample('ME').last().shift(1)
+    cpi_food = pdr.DataReader('CPIUFDSL', 'fred', start, end).resample('ME').last().shift(1)
+    cpi_energy = pdr.DataReader('CPIENGSL', 'fred', start, end).resample('ME').last().shift(1)
+    cpi_household_furnishings = pdr.DataReader('CUSR0000SAH3', 'fred', start, end).resample('ME').last().shift(1)
+    cpi_apparel = pdr.DataReader('CPIAPPSL', 'fred', start, end).resample('ME').last().shift(1)
+    cpi_medical_care = pdr.DataReader('CPIMEDSL', 'fred', start, end).resample('ME').last().shift(1)
+    cpi_transportation = pdr.DataReader('CPITRNSL', 'fred', start, end).resample('ME').last().shift(1)
+    cpi_alcohol = pdr.DataReader('CUSR0000SAF116', 'fred', start, end).resample('ME').last().shift(1)
+    cpi_motor_fuel = pdr.DataReader('CUSR0000SETB', 'fred', start, end).resample('ME').last().shift(1)
+    cpi_services_less_energy = pdr.DataReader('CUSR0000SASLE', 'fred', start, end).resample('ME').last().shift(1)
+    inflation_variables_merge = merge_dfs(
+        [cpi_total, cpi_less_foodenergy, ppi_total,
+         cpi_food, cpi_energy, cpi_household_furnishings,
+         cpi_apparel, cpi_medical_care, cpi_transportation,
+         cpi_alcohol, cpi_motor_fuel, cpi_services_less_energy]).dropna()
+    with open(Path(DATA_DIR) / 'inflation_variables_merge.pkl', 'wb') as file:
+        pickle.dump(inflation_variables_merge, file)
 
     gdp = pdr.DataReader('GDPC1',
                             'fred',
@@ -100,7 +119,7 @@ def refresh_data(start,end,**kwargs):
     inflation = pdr.DataReader('CPIAUCSL',
                                'fred',
                                start,
-                               end).resample('ME').last()
+                               end).resample('ME').last().shift(1)
     with open(Path(DATA_DIR) / 'inflation.pkl', 'wb') as file:
         pickle.dump(inflation, file)
 
