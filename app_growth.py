@@ -1,3 +1,7 @@
+### ---------------------------------------------------------------------------------------------------------- ###
+### ------------------------------------------------- GROWTH ------------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -12,18 +16,10 @@ def merge_dfs(array_of_dfs):
     return ft.reduce(lambda left, right: pd.merge(left, right,
                                                   left_index=True,
                                                   right_index=True, how='outer'), array_of_dfs)
-def add_monthly_pct_change_features(df):
-    """
-    Adds 1, 3, 6 month percent change features for every column, including UNRATE.
-    Assumes df has monthly frequency.
-    Returns expanded DataFrame.
-    """
-    lags = [1, 3, 6, 12]
-    out = df.copy()
-    for col in df.columns:
-        for lag in lags:
-            out[f"{col}_pct{lag}"] = df[col].pct_change(lag)
-    return out
+
+### ---------------------------------------------------------------------------------------------------------- ###
+### ------------------------------------------------- GROWTH ------------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
 
 def plot_growth_predictor():
     # --- Load Data ---
@@ -46,9 +42,8 @@ def plot_growth_predictor():
     target_feature_df = target_feature_df.dropna()
 
     target_feature_df.columns
-    # --- Model Setup ---
     result_factor = []
-    window = 36  # Rolling window
+    window = 36
     factor_features = ['USALOLITOAASTSAM', 'RETAILSMSA', 'RSXFS', 'INDPRO', 'IPMAN', 'IPCONGD',
        'PAYEMS', 'UNRATE', 'pce_goods', 'PCEDG', 'TOTRESNS',
        'ICSA']
