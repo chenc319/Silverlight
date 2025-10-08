@@ -11,6 +11,7 @@ import app_growth
 import app_grid
 import app_firv_regime
 import app_barra
+import app_inflation
 import app_tail_hedge
 
 import time
@@ -131,9 +132,9 @@ elif menu == 'Yield Curve Regimes':
 
 elif menu == 'Barra Factor Model':
     st.title("Barra Factors")
-    app_barra_factors.plot_barra_factors(start_date,end_date)
+    app_barra.plot_barra_factors(start_date,end_date)
     st.title("Z-Scored Factors: Average SPX Daily Return")
-    app_barra_factors.plot_barra_factors(start_date,end_date)
+    app_barra.plot_barra_factors(start_date,end_date)
 
 
 ### ---------------------------------------------------------------------------------------- ###
