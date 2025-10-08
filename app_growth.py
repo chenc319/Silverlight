@@ -35,12 +35,16 @@ def plot_growth_predictor():
         m2_money_supply = pd.read_pickle(file)
     with open(Path(DATA_DIR) / 'initial_claims.pkl', 'rb') as file:
         initial_claims = pd.read_pickle(file)
-    growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply,initial_claims])
+    with open(Path(DATA_DIR) / 'currency_in_circulation.pkl', 'rb') as file:
+        currency_in_circulation = pd.read_pickle(file)
+    growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply,initial_claims,currency_in_circulation])
     target_feature_df = growth_variables_merge.pct_change()
+    target_feature_df.corr()
     target_feature_df['UNRATE'] = target_feature_df['UNRATE'] * -1
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
     target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
     target_feature_df['ICSA'] = target_feature_df['ICSA'] * -1
+    target_feature_df['CURRCIR'] = target_feature_df['CURRCIR'] * -1
     target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
@@ -50,7 +54,7 @@ def plot_growth_predictor():
     window = 36  # Rolling window
     factor_features = ['USALOLITOAASTSAM', 'RETAILSMSA', 'RSXFS', 'INDPRO', 'IPMAN', 'IPCONGD',
        'PAYEMS', 'UNRATE', 'pce_goods', 'PCEDG', 'TOTRESNS',
-       'ICSA']
+       'ICSA','CURRCIR']
 
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]

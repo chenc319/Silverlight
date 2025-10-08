@@ -134,7 +134,6 @@ elif menu == 'Barra Factor Model':
     st.title("Barra Factors")
     app_barra.plot_barra_factors(start_date,end_date)
     st.title("Z-Scored Factors: Average SPX Daily Return")
-    app_barra.plot_barra_factors(start_date,end_date)
 
 
 ### ---------------------------------------------------------------------------------------- ###

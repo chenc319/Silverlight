@@ -37,6 +37,9 @@ def refresh_data(start,end,**kwargs):
     di_reserves = pdr.DataReader('TOTRESNS','fred',start,end).resample('ME').last().shift(1)
     with open(Path(DATA_DIR) / 'di_reserves.pkl', 'wb') as file:
         pickle.dump(di_reserves, file)
+    currency_in_circulation = pdr.DataReader('CURRCIR', 'fred', start, end).resample('ME').last().shift(1)
+    with open(Path(DATA_DIR) / 'currency_in_circulation.pkl', 'wb') as file:
+        pickle.dump(currency_in_circulation, file)
     m2_money_supply = pdr.DataReader('M2SL', 'fred', start, end).resample('ME').last().shift(1)
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'wb') as file:
         pickle.dump(m2_money_supply, file)
