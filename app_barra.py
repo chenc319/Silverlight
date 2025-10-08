@@ -118,6 +118,8 @@ def plot_barra_predictor():
     target_feature_df['residual_volatility'] = target_feature_df['residual_volatility'] * -1
     target_feature_df['size'] = target_feature_df['size'] * -1
     target_feature_df = target_feature_df.dropna()
+    target_feature_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    target_feature_df.dropna(inplace=True)
 
     result_factor = []
     window = 63
