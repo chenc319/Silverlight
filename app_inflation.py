@@ -21,11 +21,14 @@ def plot_inflation_predictor():
         di_reserves = pd.read_pickle(file)
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
         m2_money_supply = pd.read_pickle(file)
-    inflation_variables_merge = merge_dfs([inflation_variables_merge,di_reserves,m2_money_supply])
+    with open(Path(DATA_DIR) / 'currency_in_circulation.pkl', 'rb') as file:
+        currency_in_circulation = pd.read_pickle(file)
+    inflation_variables_merge = merge_dfs([inflation_variables_merge,di_reserves,m2_money_supply,currency_in_circulation])
     target_feature_df = inflation_variables_merge.pct_change()
     target_feature_df.corr()
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
     target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
+    target_feature_df['CURRCIR'] = target_feature_df['CURRCIR'] * -1
     target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
@@ -45,6 +48,7 @@ def plot_inflation_predictor():
         'CUSR0000SAF116',
         'CUSR0000SETB',
         'CUSR0000SASLE',
+        'CURRCIR'
     ]
 
     for i in range(window, len(target_feature_df)):
