@@ -42,7 +42,6 @@ def plot_inflation_predictor():
         'CPIAPPSL',
         'CPIMEDSL',
         'CPITRNSL',
-        'CUSR0000SAF116',
         'CUSR0000SETB',
         'CUSR0000SASLE',
     ]
