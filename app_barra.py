@@ -56,7 +56,7 @@ def plot_barra_predictor():
 
     target_feature_df.columns
     result_factor = []
-    window = 252*3
+    window = 252
     factor_features = ['beta', 'book_to_price', 'dividend_yield', 'earnings_yield',
                        'growth', 'leverage', 'liquidity', 'mid_cap', 'momentum',
                        'profitability', 'residual_volatility', 'size']
@@ -67,7 +67,7 @@ def plot_barra_predictor():
 
         # Simple factor: average of features
         factor_train = train[factor_features].mean(axis=1)
-        factor_test = -test[factor_features].mean(axis=1)
+        factor_test = test[factor_features].mean(axis=1)
 
         model = LinearRegression()
         model.fit(factor_train.values.reshape(-1, 1), train['spx'].values)
