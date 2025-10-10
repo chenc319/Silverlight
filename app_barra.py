@@ -67,7 +67,7 @@ def plot_barra_predictor():
 
         # Simple factor: average of features
         factor_train = train[factor_features].mean(axis=1)
-        factor_test = test[factor_features].mean(axis=1)
+        factor_test = -test[factor_features].mean(axis=1)
 
         model = LinearRegression()
         model.fit(factor_train.values.reshape(-1, 1), train['spx'].values)
