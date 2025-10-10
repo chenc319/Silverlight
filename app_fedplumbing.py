@@ -46,7 +46,7 @@ def plot_liquidity_signal():
     spx_fed_plumbing_merge = spx_fed_plumbing_merge.dropna()
 
     factor_features = spx_fed_plumbing_merge.columns[1:]
-    window = 63
+    window = 252
     spx_fed_plumbing_merge_mean = spx_fed_plumbing_merge.rolling(window=window).mean()
     spx_fed_plumbing_merge_std = spx_fed_plumbing_merge.rolling(window=window).std()
     spx_fed_plumbing_merge_z = (spx_fed_plumbing_merge - spx_fed_plumbing_merge_mean) / spx_fed_plumbing_merge_std
