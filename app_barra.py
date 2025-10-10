@@ -56,7 +56,7 @@ def plot_barra_predictor():
 
     target_feature_df.columns
     result_factor = []
-    window = 252*5
+    window = 126
     factor_features = ['beta', 'book_to_price', 'dividend_yield', 'earnings_yield',
                        'growth', 'leverage', 'liquidity', 'mid_cap', 'momentum',
                        'profitability', 'residual_volatility', 'size']
