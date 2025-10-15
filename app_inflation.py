@@ -245,15 +245,19 @@ def plot_cpi_nowcast():
         line=dict(color='black', width=2)
     ))
 
-    # Model predictions as three distinct points at forecast_date
+    base_pct = f"{100 * pred:.2f}%"
+    upside_pct = f"{100 * upside_pred:.2f}%"
+    downside_pct = f"{100 * downside_pred:.2f}%"
+
+    # Model predictions as three points with labels
     fig.add_trace(go.Scatter(
         x=[forecast_date],
         y=[pred],
         mode='markers+text',
         name='Base Case',
         marker=dict(color='blue', size=12),
-        text=["Base"],
-        textposition='top center'
+        text=[f"Base\n{base_pct}"],
+        textposition='middle right'
     ))
     fig.add_trace(go.Scatter(
         x=[forecast_date],
@@ -261,8 +265,8 @@ def plot_cpi_nowcast():
         mode='markers+text',
         name='Upside',
         marker=dict(color='green', size=12),
-        text=["Upside"],
-        textposition='bottom left'
+        text=[f"Upside\n{upside_pct}"],
+        textposition='top right'
     ))
     fig.add_trace(go.Scatter(
         x=[forecast_date],
@@ -270,7 +274,7 @@ def plot_cpi_nowcast():
         mode='markers+text',
         name='Downside',
         marker=dict(color='red', size=12),
-        text=["Downside"],
+        text=[f"Downside\n{downside_pct}"],
         textposition='bottom right'
     ))
 
