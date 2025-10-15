@@ -187,25 +187,24 @@ def plot_inflation_predictor():
     else:
         st.warning(f"RMSE improvement is only {100*rmse_improvement:.2f}%. Recommend model tuning.")
 
-def plot_current_inflation_prediction():
+def plot_cpi_nowcast():
+    # --- Load Data ---
     with open(Path(DATA_DIR) / 'inflation_variables_merge.pkl', 'rb') as file:
         inflation_variables_merge = pd.read_pickle(file)
     with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
         di_reserves = pd.read_pickle(file)
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
         m2_money_supply = pd.read_pickle(file)
-    inflation_variables_merge = merge_dfs([inflation_variables_merge,di_reserves,m2_money_supply])
+    inflation_variables_merge = merge_dfs([inflation_variables_merge, di_reserves, m2_money_supply])
     target_feature_df = inflation_variables_merge.pct_change(12)
     target_feature_df.index = target_feature_df.index + pd.DateOffset(months=1)
-    target_feature_df.corr()
-    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
-    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
+    target_feature_df['TOTRESNS'] *= -1
+    target_feature_df['M2SL'] *= -1
     target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
     train = target_feature_df.iloc[len(target_feature_df) - 37:len(target_feature_df)-1]
     test = target_feature_df.iloc[len(target_feature_df)-1:len(target_feature_df)]
-
     factor_features = [
         'CPILFESL',
         'PPIACO',
@@ -219,19 +218,71 @@ def plot_current_inflation_prediction():
         'CUSR0000SETB',
         'CUSR0000SASLE'
     ]
-
-    # Simple factor: average of features
     factor_train = train[factor_features].mean(axis=1)
     factor_test = test[factor_features].mean(axis=1)
-
     model = LinearRegression()
     model.fit(factor_train.values.reshape(-1, 1), train['CPIAUCSL'].values)
     pred = model.predict(factor_test.values.reshape(-1, 1))[0]
-
     train_pred = model.predict(factor_train.values.reshape(-1, 1))
     residuals = train['CPIAUCSL'].values - train_pred
     std_dev = np.std(residuals)
-
-    # Upside (best case) and downside (worst case)
     upside_pred = pred + std_dev
     downside_pred = pred - std_dev
+
+    # --- Prepare Data for Chart ---
+    cpi_actual = target_feature_df['CPIAUCSL']
+    history_dates = cpi_actual.index
+    forecast_date = history_dates[-1] + pd.DateOffset(months=1)
+
+    fig = go.Figure()
+
+    # Actual CPI history
+    fig.add_trace(go.Scatter(
+        x=history_dates,
+        y=cpi_actual,
+        mode='lines+markers',
+        name='Actual CPI YoY',
+        line=dict(color='black', width=2)
+    ))
+
+    # Model predictions as three distinct points at forecast_date
+    fig.add_trace(go.Scatter(
+        x=[forecast_date],
+        y=[pred],
+        mode='markers+text',
+        name='Base Case',
+        marker=dict(color='blue', size=12),
+        text=["Base"],
+        textposition='top center'
+    ))
+    fig.add_trace(go.Scatter(
+        x=[forecast_date],
+        y=[upside_pred],
+        mode='markers+text',
+        name='Upside',
+        marker=dict(color='green', size=12),
+        text=["Upside"],
+        textposition='bottom left'
+    ))
+    fig.add_trace(go.Scatter(
+        x=[forecast_date],
+        y=[downside_pred],
+        mode='markers+text',
+        name='Downside',
+        marker=dict(color='red', size=12),
+        text=["Downside"],
+        textposition='bottom right'
+    ))
+
+    fig.update_layout(
+        title="Monthly Headline CPI YoY: History + Nowcast",
+        height=500,
+        hovermode='x unified',
+        legend=dict(title='Legend', orientation='h', y=-0.25),
+        margin=dict(t=30, b=30),
+        xaxis_title="Month",
+        yaxis_title="CPI YoY (%)"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+

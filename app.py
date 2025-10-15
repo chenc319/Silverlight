@@ -101,6 +101,7 @@ elif menu == 'Growth Predictor':
 
 elif menu == 'Inflation Predictor':
     app_inflation.plot_inflation_predictor()
+    app_inflation.plot_cpi_nowcast()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------- GROWTH AND INFLATION --------------------------------- ###
