@@ -201,7 +201,7 @@ def plot_cpi_nowcast():
     target_feature_df['TOTRESNS'] *= -1
     target_feature_df['M2SL'] *= -1
     target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
-    target_feature_df = target_feature_df.dropna()
+    target_feature_df = target_feature_df.ffill().dropna()
 
     train = target_feature_df.iloc[len(target_feature_df) - 37:len(target_feature_df)-1]
     test = target_feature_df.iloc[len(target_feature_df)-1:len(target_feature_df)]

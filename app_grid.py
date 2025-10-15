@@ -13,7 +13,7 @@ import os
 from matplotlib.colors import LinearSegmentedColormap
 from plotly.subplots import make_subplots
 import numpy as np
-from sklearn.decomposition import PCA
+from sklearn.linear_model import LinearRegression
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 spx_sectors = {
@@ -646,6 +646,145 @@ def grid_sector_backtest(start, end, **kwargs):
         spx_sectors_merge
     ], axis=1).dropna()
 
+def plot_enhanced_grid_model():
+    with open(Path(DATA_DIR) / 'growth_variables_merge.pkl', 'rb') as file:
+        growth_variables_merge = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
+        di_reserves = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
+        m2_money_supply = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'initial_claims.pkl', 'rb') as file:
+        initial_claims = pd.read_pickle(file)
+    growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply,initial_claims])
+    target_feature_df = growth_variables_merge.pct_change()
+    target_feature_df.corr()
+    target_feature_df['UNRATE'] = target_feature_df['UNRATE'] * -1
+    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
+    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
+    target_feature_df['ICSA'] = target_feature_df['ICSA'] * -1
+    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
+    target_feature_df = target_feature_df.dropna()
+
+    target_feature_df.columns
+    result_factor = []
+    window = 36
+    factor_features = [
+        'USALOLITOAASTSAM',
+        'RETAILSMSA',
+        'RSXFS',
+        'INDPRO',
+        'IPMAN',
+        'IPCONGD',
+        'PAYEMS',
+        'UNRATE',
+        'pce_goods',
+        'PCEDG',
+        'TOTRESNS',
+        'ICSA']
+
+    for i in range(window, len(target_feature_df)):
+        train = target_feature_df.iloc[i - window:i]
+        test = target_feature_df.iloc[i:i + 1]
+
+        # Simple factor: average of features
+        factor_train = train[factor_features].mean(axis=1)
+        factor_test = test[factor_features].mean(axis=1)
+
+        model = LinearRegression()
+        model.fit(factor_train.values.reshape(-1, 1), train['PCEC96'].values)
+        pred = model.predict(factor_test.values.reshape(-1, 1))[0]
+        true = test['PCEC96'].values[0]
+        result_factor.append({
+            'prediction': pred,
+            'actual': true
+        })
+
+    growth_prediction = pd.DataFrame(result_factor, index=target_feature_df.index[window:])
+
+    # --- Load Data ---
+    factor_features = [
+        'CPILFESL',
+        'PPIACO',
+        'CPIUFDSL',
+        'CPIENGSL',
+        'CUSR0000SAH3',
+        'CPIAPPSL',
+        'CPIMEDSL',
+        'CPITRNSL',
+        'CUSR0000SAF116',
+        'CUSR0000SETB',
+        'CUSR0000SASLE'
+    ]
+    with open(Path(DATA_DIR) / 'inflation_variables_merge.pkl', 'rb') as file:
+        inflation_variables_merge = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
+        di_reserves = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
+        m2_money_supply = pd.read_pickle(file)
+    inflation_variables_merge = merge_dfs([inflation_variables_merge, di_reserves, m2_money_supply])
+    target_feature_df = inflation_variables_merge.copy()
+    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].pct_change(12)
+    target_feature_df[factor_features] = target_feature_df[factor_features].pct_change(12)
+    target_feature_df.index = target_feature_df.index + pd.DateOffset(months=1)
+    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
+    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
+    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
+    target_feature_df = target_feature_df.dropna()
+
+    result_factor = []
+    window = 36
+    for i in range(window, len(target_feature_df)):
+        train = target_feature_df.iloc[i - window:i]
+        test = target_feature_df.iloc[i:i + 1]
+
+        # Simple factor: average of features
+        factor_train = train[factor_features].mean(axis=1)
+        factor_test = test[factor_features].mean(axis=1)
+
+        model = LinearRegression()
+        model.fit(factor_train.values.reshape(-1, 1), train['CPIAUCSL'].values)
+        pred = model.predict(factor_test.values.reshape(-1, 1))[0]
+        true = test['CPIAUCSL'].values[0]
+        result_factor.append({
+            'prediction': pred,
+            'actual': true
+        })
+
+    inflation_prediction = pd.DataFrame(result_factor, index=target_feature_df.index[window:])
+
+    growth_inflation_prediction = merge_dfs([
+        growth_prediction['prediction'].resample('ME').last(),
+        inflation_prediction['prediction'].resample('ME').last().pct_change(),
+        spx_monthly.pct_change().shift(-1)
+    ]).dropna()
+    growth_inflation_prediction.columns = ['growth','inflation','spx']
+
+    growth_inflation_prediction['']
+    def regime_label(row):
+        if row['inflation'] > 0 and row['growth'] > 0:
+            return 0  # Reflation
+        elif row['inflation'] > 0 and row['growth'] < 0:
+            return 1  # Stagflation
+        elif row['inflation'] < 0 and row['growth'] > 0:
+            return 2  # Goldilocks
+        elif row['inflation'] < 0 and row['growth'] < 0:
+            return 3  # Deflation
+        else:
+            return np.nan
 
 
+    from matplotlib import pyplot as plt
+    plt.plot(growth_inflation_prediction['inflation'])
+    growth_inflation_prediction['regime_code'] = growth_inflation_prediction.apply(regime_label, axis=1)
+
+    reflation_averages = growth_inflation_prediction[
+                             growth_inflation_prediction['regime_code'] == 0]['spx'].mean(axis=0) * 100
+    stagflation_averages = growth_inflation_prediction[
+                             growth_inflation_prediction['regime_code'] == 1]['spx'].mean(axis=0) * 100
+    goldilocks_averages = growth_inflation_prediction[
+                             growth_inflation_prediction['regime_code'] == 2]['spx'].mean(axis=0) * 100
+    deflation_averages = growth_inflation_prediction[
+                             growth_inflation_prediction['regime_code'] == 3]['spx'].mean(axis=0) * 100
+
+    plt.show()
 
