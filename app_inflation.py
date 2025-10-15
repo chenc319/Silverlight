@@ -34,7 +34,6 @@ def plot_inflation_predictor():
     target_feature_df.corr()
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
     target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
-    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
     target_feature_df.columns
@@ -188,3 +187,17 @@ def plot_inflation_predictor():
     else:
         st.warning(f"RMSE improvement is only {100*rmse_improvement:.2f}%. Recommend model tuning.")
 
+def plot_current_inflation_prediction():
+    with open(Path(DATA_DIR) / 'inflation_variables_merge.pkl', 'rb') as file:
+        inflation_variables_merge = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
+        di_reserves = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
+        m2_money_supply = pd.read_pickle(file)
+    inflation_variables_merge = merge_dfs([inflation_variables_merge,di_reserves,m2_money_supply])
+    target_feature_df = inflation_variables_merge.pct_change()
+    target_feature_df.corr()
+    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
+    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
+    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
+    target_feature_df = target_feature_df.dropna()
