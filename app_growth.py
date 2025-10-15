@@ -234,7 +234,7 @@ def plot_growth_nowcast():
     train_pred = model.predict(factor_train.values.reshape(-1, 1))
 
     window = 24  # number of months to look back
-    hist_errors = train['CPIAUCSL'].values - train_pred
+    hist_errors = train['PCEC96'].values - train_pred
     recent_errors = hist_errors[-window:] if len(hist_errors) >= window else hist_errors
     upside_shift = np.quantile(recent_errors, 0.90)  # upper 80th percentile error
     downside_shift = np.quantile(recent_errors, 0.10)  # lower 20th percentile error
