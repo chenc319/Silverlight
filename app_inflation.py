@@ -228,8 +228,8 @@ def plot_cpi_nowcast():
     window = 24  # number of months to look back
     hist_errors = train['CPIAUCSL'].values - train_pred
     recent_errors = hist_errors[-window:] if len(hist_errors) >= window else hist_errors
-    upside_shift = np.quantile(recent_errors, 0.80)  # upper 80th percentile error
-    downside_shift = np.quantile(recent_errors, 0.20)  # lower 20th percentile error
+    upside_shift = np.quantile(recent_errors, 0.90)  # upper 80th percentile error
+    downside_shift = np.quantile(recent_errors, 0.10)  # lower 20th percentile error
     upside_pred = pred + upside_shift
     downside_pred = pred + downside_shift
 
