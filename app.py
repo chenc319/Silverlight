@@ -94,6 +94,7 @@ if menu == 'Growth & Inflation Model':
 
 elif menu == 'Growth Predictor':
     app_growth.plot_growth_predictor()
+    app_growth.plot_growth_nowcast()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- INFLATION ---------------------------------------- ###

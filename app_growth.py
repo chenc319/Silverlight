@@ -44,9 +44,19 @@ def plot_growth_predictor():
     target_feature_df.columns
     result_factor = []
     window = 36
-    factor_features = ['USALOLITOAASTSAM', 'RETAILSMSA', 'RSXFS', 'INDPRO', 'IPMAN', 'IPCONGD',
-       'PAYEMS', 'UNRATE', 'pce_goods', 'PCEDG', 'TOTRESNS',
-       'ICSA']
+    factor_features = [
+        'USALOLITOAASTSAM',
+        'RETAILSMSA',
+        'RSXFS',
+        'INDPRO',
+        'IPMAN',
+        'IPCONGD',
+        'PAYEMS',
+        'UNRATE',
+        'pce_goods',
+        'PCEDG',
+        'TOTRESNS',
+        'ICSA']
 
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]
@@ -181,3 +191,108 @@ def plot_growth_predictor():
     else:
         st.warning(f"RMSE improvement is only {100*rmse_improvement:.2f}%. Recommend model tuning.")
 
+def plot_growth_nowcast():
+    with open(Path(DATA_DIR) / 'growth_variables_merge.pkl', 'rb') as file:
+        growth_variables_merge = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
+        di_reserves = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
+        m2_money_supply = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'initial_claims.pkl', 'rb') as file:
+        initial_claims = pd.read_pickle(file)
+    growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply,initial_claims])
+    target_feature_df = growth_variables_merge.pct_change()
+    target_feature_df.index = target_feature_df.index + pd.DateOffset(months=1)
+    target_feature_df['UNRATE'] = target_feature_df['UNRATE'] * -1
+    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
+    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
+    target_feature_df['ICSA'] = target_feature_df['ICSA'] * -1
+    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
+    target_feature_df = target_feature_df.dropna()
+
+
+    train = target_feature_df.iloc[len(target_feature_df) - 37:len(target_feature_df)-1]
+    test = target_feature_df.iloc[len(target_feature_df)-1:len(target_feature_df)]
+    factor_features = [
+        'USALOLITOAASTSAM',
+        'RETAILSMSA',
+        'RSXFS',
+        'INDPRO',
+        'IPMAN',
+        'IPCONGD',
+        'PAYEMS',
+        'UNRATE',
+        'pce_goods',
+        'PCEDG',
+        'TOTRESNS',
+        'ICSA']
+    factor_train = train[factor_features].mean(axis=1)
+    factor_test = test[factor_features].mean(axis=1)
+    model = LinearRegression()
+    model.fit(factor_train.values.reshape(-1, 1), train['PCEC96'].values)
+    pred = model.predict(factor_test.values.reshape(-1, 1))[0]
+    train_pred = model.predict(factor_train.values.reshape(-1, 1))
+    residuals = train['PCEC96'].values - train_pred
+    std_dev = np.std(residuals)
+    upside_pred = pred + std_dev
+    downside_pred = pred - std_dev
+
+    # --- Prepare Data for Chart ---
+    growth_actual = target_feature_df['PCEC96'].iloc[-12:]
+    history_dates = growth_actual.index
+    forecast_date = history_dates[-1] + pd.DateOffset(months=1)
+
+    fig = go.Figure()
+
+    # Actual CPI history
+    fig.add_trace(go.Scatter(
+        x=history_dates,
+        y=growth_actual,
+        mode='lines+markers',
+        name='Actual Growth MoM',
+        line=dict(color='black', width=2)
+    ))
+
+    base_pct = f"{100 * pred:.2f}%"
+    upside_pct = f"{100 * upside_pred:.2f}%"
+    downside_pct = f"{100 * downside_pred:.2f}%"
+
+    # Model predictions as three points with labels
+    fig.add_trace(go.Scatter(
+        x=[forecast_date],
+        y=[pred],
+        mode='markers+text',
+        name='Base Case',
+        marker=dict(color='blue', size=12),
+        text=[f"{base_pct}"],
+        textposition='middle right'
+    ))
+    fig.add_trace(go.Scatter(
+        x=[forecast_date],
+        y=[upside_pred],
+        mode='markers+text',
+        name='Upside',
+        marker=dict(color='green', size=12),
+        text=[f"{upside_pct}"],
+        textposition='top right'
+    ))
+    fig.add_trace(go.Scatter(
+        x=[forecast_date],
+        y=[downside_pred],
+        mode='markers+text',
+        name='Downside',
+        marker=dict(color='red', size=12),
+        text=[f"{downside_pct}"],
+        textposition='bottom right'
+    ))
+
+    fig.update_layout(
+        height=500,
+        hovermode='x unified',
+        legend=dict(title='Legend', orientation='h', y=-0.25),
+        margin=dict(t=30, b=30),
+        xaxis_title="Month",
+        yaxis_title="Growth YoY (%)"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
