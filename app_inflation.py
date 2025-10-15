@@ -207,10 +207,6 @@ def plot_current_inflation_prediction():
     train = target_feature_df.iloc[len(target_feature_df) - 37:len(target_feature_df)-1]
     test = target_feature_df.iloc[len(target_feature_df)-1:len(target_feature_df)]
 
-    # Simple factor: average of features
-    factor_train = train[factor_features].mean(axis=1)
-    factor_test = test[factor_features].mean(axis=1)
-
     factor_features = [
         'CPILFESL',
         'PPIACO',
@@ -225,11 +221,18 @@ def plot_current_inflation_prediction():
         'CUSR0000SASLE'
     ]
 
+    # Simple factor: average of features
+    factor_train = train[factor_features].mean(axis=1)
+    factor_test = test[factor_features].mean(axis=1)
+
     model = LinearRegression()
     model.fit(factor_train.values.reshape(-1, 1), train['CPIAUCSL'].values)
     pred = model.predict(factor_test.values.reshape(-1, 1))[0]
-    true = test['CPIAUCSL'].values[0]
-    result_factor.append({
-        'prediction': pred,
-        'actual': true
-    })
+
+    train_pred = model.predict(factor_train.values.reshape(-1, 1))
+    residuals = train['CPIAUCSL'].values - train_pred
+    std_dev = np.std(residuals)
+
+    # Upside (best case) and downside (worst case)
+    upside_pred = pred + std_dev
+    downside_pred = pred - std_dev
