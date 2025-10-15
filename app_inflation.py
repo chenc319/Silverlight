@@ -230,7 +230,7 @@ def plot_cpi_nowcast():
     downside_pred = pred - std_dev
 
     # --- Prepare Data for Chart ---
-    cpi_actual = target_feature_df['CPIAUCSL'].iloc[-36:]
+    cpi_actual = target_feature_df['CPIAUCSL'].iloc[-12:]
     history_dates = cpi_actual.index
     forecast_date = history_dates[-1] + pd.DateOffset(months=1)
 
