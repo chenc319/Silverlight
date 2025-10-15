@@ -45,7 +45,7 @@ def plot_inflation_predictor():
     inflation_variables_merge = merge_dfs([inflation_variables_merge,di_reserves,m2_money_supply])
     target_feature_df = inflation_variables_merge.copy()
     target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].pct_change(12)
-    target_feature_df[factor_features] = target_feature_df[factor_features].pct_change(3)
+    target_feature_df[factor_features] = target_feature_df[factor_features].pct_change(12)
     target_feature_df.index = target_feature_df.index + pd.DateOffset(months=1)
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
     target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
