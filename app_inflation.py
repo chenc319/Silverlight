@@ -275,7 +275,6 @@ def plot_cpi_nowcast():
     ))
 
     fig.update_layout(
-        title="Monthly Headline CPI YoY: History + Nowcast",
         height=500,
         hovermode='x unified',
         legend=dict(title='Legend', orientation='h', y=-0.25),
