@@ -30,10 +30,11 @@ def plot_inflation_predictor():
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
         m2_money_supply = pd.read_pickle(file)
     inflation_variables_merge = merge_dfs([inflation_variables_merge,di_reserves,m2_money_supply])
-    target_feature_df = inflation_variables_merge.pct_change()
-    target_feature_df.corr()
+    target_feature_df = inflation_variables_merge.pct_change(12)
+    target_feature_df.index = target_feature_df.index + pd.DateOffset(months=1)
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
     target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
+    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
     target_feature_df.columns
@@ -195,9 +196,40 @@ def plot_current_inflation_prediction():
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
         m2_money_supply = pd.read_pickle(file)
     inflation_variables_merge = merge_dfs([inflation_variables_merge,di_reserves,m2_money_supply])
-    target_feature_df = inflation_variables_merge.pct_change()
+    target_feature_df = inflation_variables_merge.pct_change(12)
+    target_feature_df.index = target_feature_df.index + pd.DateOffset(months=1)
     target_feature_df.corr()
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
     target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
     target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
     target_feature_df = target_feature_df.dropna()
+
+    train = target_feature_df.iloc[len(target_feature_df) - 37:len(target_feature_df)-1]
+    test = target_feature_df.iloc[len(target_feature_df)-1:len(target_feature_df)]
+
+    # Simple factor: average of features
+    factor_train = train[factor_features].mean(axis=1)
+    factor_test = test[factor_features].mean(axis=1)
+
+    factor_features = [
+        'CPILFESL',
+        'PPIACO',
+        'CPIUFDSL',
+        'CPIENGSL',
+        'CUSR0000SAH3',
+        'CPIAPPSL',
+        'CPIMEDSL',
+        'CPITRNSL',
+        'CUSR0000SAF116',
+        'CUSR0000SETB',
+        'CUSR0000SASLE'
+    ]
+
+    model = LinearRegression()
+    model.fit(factor_train.values.reshape(-1, 1), train['CPIAUCSL'].values)
+    pred = model.predict(factor_test.values.reshape(-1, 1))[0]
+    true = test['CPIAUCSL'].values[0]
+    result_factor.append({
+        'prediction': pred,
+        'actual': true
+    })
