@@ -256,7 +256,7 @@ def plot_cpi_nowcast():
         mode='markers+text',
         name='Base Case',
         marker=dict(color='blue', size=12),
-        text=[f"Base\n{base_pct}"],
+        text=[f"{base_pct}"],
         textposition='middle right'
     ))
     fig.add_trace(go.Scatter(
@@ -265,7 +265,7 @@ def plot_cpi_nowcast():
         mode='markers+text',
         name='Upside',
         marker=dict(color='green', size=12),
-        text=[f"Upside\n{upside_pct}"],
+        text=[f"{upside_pct}"],
         textposition='top right'
     ))
     fig.add_trace(go.Scatter(
@@ -274,7 +274,7 @@ def plot_cpi_nowcast():
         mode='markers+text',
         name='Downside',
         marker=dict(color='red', size=12),
-        text=[f"Downside\n{downside_pct}"],
+        text=[f"{downside_pct}"],
         textposition='bottom right'
     ))
 
