@@ -23,24 +23,6 @@ def merge_dfs(array_of_dfs):
 
 def plot_inflation_predictor():
     # --- Load Data ---
-    with open(Path(DATA_DIR) / 'inflation_variables_merge.pkl', 'rb') as file:
-        inflation_variables_merge = pd.read_pickle(file)
-    with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
-        di_reserves = pd.read_pickle(file)
-    with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
-        m2_money_supply = pd.read_pickle(file)
-    inflation_variables_merge = merge_dfs([inflation_variables_merge,di_reserves,m2_money_supply])
-    target_feature_df = inflation_variables_merge.pct_change(12)
-    target_feature_df.index = target_feature_df.index + pd.DateOffset(months=1)
-    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
-    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
-    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
-    target_feature_df = target_feature_df.dropna()
-
-    target_feature_df.columns
-    # --- Model Setup ---
-    result_factor = []
-    window = 36  # Rolling window
     factor_features = [
         'CPILFESL',
         'PPIACO',
@@ -54,7 +36,24 @@ def plot_inflation_predictor():
         'CUSR0000SETB',
         'CUSR0000SASLE'
     ]
+    with open(Path(DATA_DIR) / 'inflation_variables_merge.pkl', 'rb') as file:
+        inflation_variables_merge = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
+        di_reserves = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
+        m2_money_supply = pd.read_pickle(file)
+    inflation_variables_merge = merge_dfs([inflation_variables_merge,di_reserves,m2_money_supply])
+    target_feature_df = inflation_variables_merge.copy()
+    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].pct_change(12)
+    target_feature_df[factor_features] = target_feature_df[factor_features].pct_change()
+    target_feature_df.index = target_feature_df.index + pd.DateOffset(months=1)
+    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
+    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
+    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
+    target_feature_df = target_feature_df.dropna()
 
+    result_factor = []
+    window = 36  
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]
         test = target_feature_df.iloc[i:i + 1]
