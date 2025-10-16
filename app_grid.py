@@ -204,6 +204,7 @@ def grid_z_score_backtest():
             return -0.5
         else:
             return np.nan
+        
 
     grid_growth_inflation_spx['weights'] = grid_growth_inflation_spx.apply(grid_backtest, axis=1)
     grid_growth_inflation_spx['bt_returns'] = grid_growth_inflation_spx['weights'] * grid_growth_inflation_spx['spx']
