@@ -46,7 +46,6 @@ def plot_growth_predictor():
     factor_features = [
         'USALOLITOAASTSAM',
         'RETAILSMSA',
-        'RSXFS',
         'INDPRO',
         'IPMAN',
         'IPCONGD',
