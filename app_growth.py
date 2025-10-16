@@ -22,7 +22,19 @@ def merge_dfs(array_of_dfs):
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def plot_growth_predictor():
-    # --- Load Data ---
+    factor_features = [
+        'USALOLITOAASTSAM',
+        'RETAILSMSA',
+        'RSXFS',
+        'INDPRO',
+        'IPMAN',
+        'IPCONGD',
+        'PAYEMS',
+        'UNRATE',
+        'pce_goods',
+        'PCEDG',
+        'TOTRESNS',
+        'ICSA']
     with open(Path(DATA_DIR) / 'growth_variables_merge.pkl', 'rb') as file:
         growth_variables_merge = pd.read_pickle(file)
     with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
@@ -32,7 +44,9 @@ def plot_growth_predictor():
     with open(Path(DATA_DIR) / 'initial_claims.pkl', 'rb') as file:
         initial_claims = pd.read_pickle(file)
     growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply,initial_claims])
-    target_feature_df = growth_variables_merge.pct_change(3)
+    target_feature_df = growth_variables_merge.copy()
+    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].pct_change(3)
+    target_feature_df[factor_features] = target_feature_df[factor_features].pct_change(12)
     target_feature_df.corr()
     target_feature_df['UNRATE'] = target_feature_df['UNRATE'] * -1
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
@@ -43,13 +57,7 @@ def plot_growth_predictor():
     target_feature_df.columns
     result_factor = []
     window = 36
-    factor_features = [
-        'USALOLITOAASTSAM',
-        'INDPRO',
-        'PAYEMS',
-        'pce_goods',
-        'TOTRESNS',
-        'ICSA']
+
 
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]
