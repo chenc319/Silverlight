@@ -495,13 +495,6 @@ def plot_grid_model():
 
 
 
-    goldilocks_regime = pd.DataFrame(
-        growth_inflation_prediction[growth_inflation_prediction['regime_code'] == 2]['spx'])
-    reflation_regime = pd.DataFrame(
-        growth_inflation_prediction[growth_inflation_prediction['regime_code'] == 0]['spx'])
-    deflation_regime = pd.DataFrame(
-        growth_inflation_prediction[growth_inflation_prediction['regime_code'] == 3]['spx'])
-    stagflation_regime = pd.DataFrame(
-        growth_inflation_prediction[growth_inflation_prediction['regime_code'] == 1]['spx'])
+    
 
 
