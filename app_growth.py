@@ -49,7 +49,6 @@ def plot_growth_predictor():
         'PAYEMS',
         'UNRATE',
         'pce_goods',
-        'PCEDG',
         'TOTRESNS',
         'ICSA']
 
