@@ -722,6 +722,7 @@ def plot_enhanced_grid_model():
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
         m2_money_supply = pd.read_pickle(file)
     inflation_variables_merge = merge_dfs([inflation_variables_merge, di_reserves, m2_money_supply])
+    target_feature_df.index = target_feature_df.index + pd.DateOffset(months=1)
     target_feature_df = inflation_variables_merge.copy()
     target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].pct_change(12)
     target_feature_df[factor_features] = target_feature_df[factor_features].pct_change(12)
@@ -754,12 +755,11 @@ def plot_enhanced_grid_model():
 
     growth_inflation_prediction = merge_dfs([
         growth_prediction['prediction'].resample('ME').last(),
-        inflation_prediction['prediction'].resample('ME').last().pct_change(),
+        inflation_prediction['prediction'].resample('ME').last(),
         spx_monthly.pct_change().shift(-1)
     ]).dropna()
     growth_inflation_prediction.columns = ['growth','inflation','spx']
 
-    growth_inflation_prediction['']
     def regime_label(row):
         if row['inflation'] > 0 and row['growth'] > 0:
             return 0  # Reflation
