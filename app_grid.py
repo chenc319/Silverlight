@@ -160,178 +160,6 @@ def plot_grid_factors(start,end,**kwargs):
     inflation_prediction
     cli
 
-
-
-
-
-
-def grid_z_score_backtest():
-    grid_growth_inflation_spx = merge_dfs([
-        cli.pct_change(),
-        inflation_prediction['prediction'].resample('ME').last().diff(),
-        spx_monthly.pct_change().shift(-1)
-    ]).dropna()
-    grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
-
-    def regime_label(row):
-        if row['inflation'] > 0 and row['growth'] > 0:
-            return 0  # Reflation
-        elif row['inflation'] > 0 and row['growth'] < 0:
-            return 1  # Stagflation
-        elif row['inflation'] < 0 and row['growth'] > 0:
-            return 2  # Goldilocks
-        elif row['inflation'] < 0 and row['growth'] < 0:
-            return 3  # Deflation
-        else:
-            return np.nan
-    regime_labels = {
-        0: 'Reflation',
-        1: 'Stagflation',
-        2: 'Goldilocks',
-        3: 'Deflation'
-    }
-    grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regime_label, axis=1)
-    grid_growth_inflation_spx['regime_label'] = grid_growth_inflation_spx['regime_code'].map(regime_labels)
-
-    def grid_backtest(row):
-        if row['regime_label']== 'Goldilocks':
-            return 1
-        elif row['regime_label']== 'Reflation':
-            return 0.75
-        elif row['regime_label']== 'Deflation':
-            return 0.5
-        elif row['regime_label']== 'Stagflation':
-            return -0.5
-        else:
-            return np.nan
-        
-
-    grid_growth_inflation_spx['weights'] = grid_growth_inflation_spx.apply(grid_backtest, axis=1)
-    grid_growth_inflation_spx['bt_returns'] = grid_growth_inflation_spx['weights'] * grid_growth_inflation_spx['spx']
-    grid_growth_inflation_spx['cumsum_spx'] = (1+grid_growth_inflation_spx['spx']).cumprod()
-    grid_growth_inflation_spx['cumsum_bt'] = (1+grid_growth_inflation_spx['bt_returns']).cumprod()
-
-    ### DRAWDOWN ###
-    def compute_drawdown(cumret):
-        roll_max = cumret.cummax()
-        drawdown = (cumret - roll_max) / roll_max
-        return drawdown
-    def calculate_beta(strategy_returns, benchmark_returns):
-        cov = np.cov(strategy_returns, benchmark_returns)[0, 1]
-        var = np.var(benchmark_returns)
-        return cov / var
-
-    # Calculate drawdown series
-    grid_growth_inflation_spx['drawdown_bt'] = compute_drawdown(grid_growth_inflation_spx['cumsum_bt'])
-    grid_growth_inflation_spx['drawdown_spx'] = compute_drawdown(grid_growth_inflation_spx['cumsum_spx'])
-
-    ### TABLE OF RESULTS ###
-    grid_backtest_results = pd.DataFrame()
-    grid_backtest_results['Strategy'] = ['GRID Model','SPX']
-    grid_backtest_results['Mean Monthly Returns'] = [
-        grid_growth_inflation_spx['bt_returns'].mean() * 100,
-        grid_growth_inflation_spx['spx'].mean() * 100,
-    ]
-    grid_backtest_results['Ann. Returns'] = grid_backtest_results['Mean Monthly Returns'] * 12
-    grid_backtest_results['Ann. Volatility'] = [
-        (grid_growth_inflation_spx['bt_returns'].std() * 12**0.5) * 100,
-        (grid_growth_inflation_spx['spx'].std() * 12**0.5) * 100,
-    ]
-    grid_backtest_results['Return/Risk'] = grid_backtest_results['Ann. Returns'] / grid_backtest_results['Ann. Volatility']
-    grid_beta = calculate_beta(grid_growth_inflation_spx['bt_returns'], grid_growth_inflation_spx['spx'])
-    spx_beta = 1.0  # Self-benchmarking
-
-    grid_backtest_results['Beta'] = [grid_beta, spx_beta]
-
-    ### PLOT ###
-    fig = go.Figure()
-    cols = ['cumsum_bt', 'cumsum_spx']
-    labels = [
-        'GRID',
-        'SPX',
-    ]
-    colors = ['#5FB3FF', '#2DCDB2']
-    for col, color, label in zip(cols, colors, labels):
-        fig.add_trace(go.Scatter(x=grid_growth_inflation_spx.index, y=grid_growth_inflation_spx[col],
-                                 mode='lines',
-                                 name=label,
-                                 line=dict(color=color)))
-    fig.update_layout(
-        title="GRID Z-Score Backtest",
-        yaxis_title="Dollars",
-        hovermode='x unified'
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    ### PLOT ###
-    labels = ['GRID', 'SPX']
-    draw_cols = ['drawdown_bt', 'drawdown_spx']
-    line_colors = ['rgba(95,179,255,1)', 'rgba(45,205,178,1)']
-    fill_colors = ['rgba(95,179,255,0.3)', 'rgba(45,205,178,0.3)']
-    fig = go.Figure()
-    for col, line, fill, label in zip(draw_cols, line_colors, fill_colors, labels):
-        fig.add_trace(go.Scatter(
-            x=grid_growth_inflation_spx.index,
-            y=grid_growth_inflation_spx[col],
-            mode='lines',
-            name=label,
-            line=dict(color=line, width=2),
-            fill='tozeroy',
-            fillcolor=fill,
-            hovertemplate=f"{label}<br>Date: %{{x|%Y-%m-%d}}<br>Drawdown: %{{y:.2%}}<extra></extra>",
-            showlegend=True
-        ))
-    fig.update_layout(
-        title="Drawdown Analysis: GRID vs SPX",
-        yaxis_title="Drawdown (%)",
-        yaxis_tickformat='.0%',
-        hovermode='x unified',
-        template='plotly_white',
-        legend=dict(
-            orientation="h",
-            yanchor='bottom', y=1.02,
-            xanchor='center', x=0.5,
-            title=None
-        ),
-        margin=dict(l=40, r=40, t=70, b=40),
-        plot_bgcolor='#f9f9f9'
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    ### TABLE ###
-    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
-    styled = grid_backtest_results.style \
-        .format({
-        'Mean Monthly Returns': "{:.2f}%",
-        'Ann. Returns': "{:.2f}%",
-        'Ann. Volatility': "{:.2f}%",
-        'Return/Risk': "{:.2f}",
-        'Beta': "{:.2f}",
-    }) \
-        .set_properties(
-        subset=['Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk','Beta'],
-        **{'width': '500px'}
-    ) \
-        .background_gradient(cmap=cmap, subset=[
-        'Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk','Beta'
-    ])
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.write(styled, unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def plot_grid_model():
 
     growth_inflation_prediction = merge_dfs([
@@ -340,6 +168,7 @@ def plot_grid_model():
         spx_monthly.pct_change().shift(-1)
     ]).dropna()
     growth_inflation_prediction.columns = ['growth','inflation','spx']
+    growth_inflation_prediction = growth_inflation_prediction['2005-01-01':]
 
     def regime_label(row):
         if row['inflation'] > 0 and row['growth'] > 0:
@@ -495,6 +324,160 @@ def plot_grid_model():
     st.plotly_chart(fig, use_container_width=True)
 
 
+def grid_z_score_backtest():
+    grid_growth_inflation_spx = merge_dfs([
+        cli.pct_change(),
+        inflation_prediction['prediction'].resample('ME').last().diff(),
+        spx_monthly.pct_change().shift(-1)
+    ]).dropna()
+    grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
+    grid_growth_inflation_spx = grid_growth_inflation_spx['2005-01-01':]
+
+    def regime_label(row):
+        if row['inflation'] > 0 and row['growth'] > 0:
+            return 0  # Reflation
+        elif row['inflation'] > 0 and row['growth'] < 0:
+            return 1  # Stagflation
+        elif row['inflation'] < 0 and row['growth'] > 0:
+            return 2  # Goldilocks
+        elif row['inflation'] < 0 and row['growth'] < 0:
+            return 3  # Deflation
+        else:
+            return np.nan
+    regime_labels = {
+        0: 'Reflation',
+        1: 'Stagflation',
+        2: 'Goldilocks',
+        3: 'Deflation'
+    }
+    grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regime_label, axis=1)
+    grid_growth_inflation_spx['regime_label'] = grid_growth_inflation_spx['regime_code'].map(regime_labels)
+
+    def grid_backtest(row):
+        if row['regime_label']== 'Goldilocks':
+            return 1
+        elif row['regime_label']== 'Reflation':
+            return 0.75
+        elif row['regime_label']== 'Deflation':
+            return 0.5
+        elif row['regime_label']== 'Stagflation':
+            return 0.25
+        else:
+            return np.nan
+
+
+    grid_growth_inflation_spx['weights'] = grid_growth_inflation_spx.apply(grid_backtest, axis=1)
+    grid_growth_inflation_spx['bt_returns'] = grid_growth_inflation_spx['weights'] * grid_growth_inflation_spx['spx']
+    grid_growth_inflation_spx['cumsum_spx'] = (1+grid_growth_inflation_spx['spx']).cumprod()
+    grid_growth_inflation_spx['cumsum_bt'] = (1+grid_growth_inflation_spx['bt_returns']).cumprod()
+
+    ### DRAWDOWN ###
+    def compute_drawdown(cumret):
+        roll_max = cumret.cummax()
+        drawdown = (cumret - roll_max) / roll_max
+        return drawdown
+    def calculate_beta(strategy_returns, benchmark_returns):
+        cov = np.cov(strategy_returns, benchmark_returns)[0, 1]
+        var = np.var(benchmark_returns)
+        return cov / var
+
+    # Calculate drawdown series
+    grid_growth_inflation_spx['drawdown_bt'] = compute_drawdown(grid_growth_inflation_spx['cumsum_bt'])
+    grid_growth_inflation_spx['drawdown_spx'] = compute_drawdown(grid_growth_inflation_spx['cumsum_spx'])
+
+    ### TABLE OF RESULTS ###
+    grid_backtest_results = pd.DataFrame()
+    grid_backtest_results['Strategy'] = ['GRID Model','SPX']
+    grid_backtest_results['Mean Monthly Returns'] = [
+        grid_growth_inflation_spx['bt_returns'].mean() * 100,
+        grid_growth_inflation_spx['spx'].mean() * 100,
+    ]
+    grid_backtest_results['Ann. Returns'] = grid_backtest_results['Mean Monthly Returns'] * 12
+    grid_backtest_results['Ann. Volatility'] = [
+        (grid_growth_inflation_spx['bt_returns'].std() * 12**0.5) * 100,
+        (grid_growth_inflation_spx['spx'].std() * 12**0.5) * 100,
+    ]
+    grid_backtest_results['Return/Risk'] = grid_backtest_results['Ann. Returns'] / grid_backtest_results['Ann. Volatility']
+    grid_beta = calculate_beta(grid_growth_inflation_spx['bt_returns'], grid_growth_inflation_spx['spx'])
+    spx_beta = 1.0  # Self-benchmarking
+
+    grid_backtest_results['Beta'] = [grid_beta, spx_beta]
+
+    ### PLOT ###
+    fig = go.Figure()
+    cols = ['cumsum_bt', 'cumsum_spx']
+    labels = [
+        'GRID',
+        'SPX',
+    ]
+    colors = ['#5FB3FF', '#2DCDB2']
+    for col, color, label in zip(cols, colors, labels):
+        fig.add_trace(go.Scatter(x=grid_growth_inflation_spx.index, y=grid_growth_inflation_spx[col],
+                                 mode='lines',
+                                 name=label,
+                                 line=dict(color=color)))
+    fig.update_layout(
+        title="GRID Z-Score Backtest",
+        yaxis_title="Dollars",
+        hovermode='x unified'
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    ### PLOT ###
+    labels = ['GRID', 'SPX']
+    draw_cols = ['drawdown_bt', 'drawdown_spx']
+    line_colors = ['rgba(95,179,255,1)', 'rgba(45,205,178,1)']
+    fill_colors = ['rgba(95,179,255,0.3)', 'rgba(45,205,178,0.3)']
+    fig = go.Figure()
+    for col, line, fill, label in zip(draw_cols, line_colors, fill_colors, labels):
+        fig.add_trace(go.Scatter(
+            x=grid_growth_inflation_spx.index,
+            y=grid_growth_inflation_spx[col],
+            mode='lines',
+            name=label,
+            line=dict(color=line, width=2),
+            fill='tozeroy',
+            fillcolor=fill,
+            hovertemplate=f"{label}<br>Date: %{{x|%Y-%m-%d}}<br>Drawdown: %{{y:.2%}}<extra></extra>",
+            showlegend=True
+        ))
+    fig.update_layout(
+        title="Drawdown Analysis: GRID vs SPX",
+        yaxis_title="Drawdown (%)",
+        yaxis_tickformat='.0%',
+        hovermode='x unified',
+        template='plotly_white',
+        legend=dict(
+            orientation="h",
+            yanchor='bottom', y=1.02,
+            xanchor='center', x=0.5,
+            title=None
+        ),
+        margin=dict(l=40, r=40, t=70, b=40),
+        plot_bgcolor='#f9f9f9'
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    ### TABLE ###
+    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
+    styled = grid_backtest_results.style \
+        .format({
+        'Mean Monthly Returns': "{:.2f}%",
+        'Ann. Returns': "{:.2f}%",
+        'Ann. Volatility': "{:.2f}%",
+        'Return/Risk': "{:.2f}",
+        'Beta': "{:.2f}",
+    }) \
+        .set_properties(
+        subset=['Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk','Beta'],
+        **{'width': '500px'}
+    ) \
+        .background_gradient(cmap=cmap, subset=[
+        'Mean Monthly Returns', 'Ann. Returns', 'Ann. Volatility', 'Return/Risk','Beta'
+    ])
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.write(styled, unsafe_allow_html=True)
 
 
 
