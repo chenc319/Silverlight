@@ -29,6 +29,12 @@ def refresh_data(start,end,**kwargs):
     with open(Path(DATA_DIR) / 'growth.pkl', 'wb') as file:
         pickle.dump(growth, file)
 
+    cli = pdr.DataReader('USALOLITOAASTSAM', 'fred', start, end)
+    cli.index = cli.index + pd.DateOffset(months=1)
+    cli = cli.resample('ME').last()
+    with open(Path(DATA_DIR) / 'cli.pkl', 'wb') as file:
+        pickle.dump(cli, file)
+
     ### GROWTH VARIABLES ###
     initial_claims = pdr.DataReader('ICSA','fred',start,end)
     initial_claims = initial_claims.resample('ME').mean()

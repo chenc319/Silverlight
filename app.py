@@ -111,14 +111,8 @@ elif menu == 'Inflation Predictor':
 
 elif menu == 'GRID Model':
     st.title('GRID Factors')
-    app_grid.plot_grid_factors(start_date, end_date)
-    st.title('Factor Correlations to SPX (T+1)')
-    app_grid.plot_factor_correlation_to_lagged_spx(start_date, end_date)
-    st.title('Grid Regime Historical Performance (SPX T+1)')
-    app_grid.plot_grid_factors_regime_performance(start_date, end_date)
     st.title('GRID Model Backtest')
-    app_grid.grid_z_score_backtest(start_date, end_date)
-
+    app_grid.plot_grid_model(start_date, end_date)
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ------------------------------- YIELD CURVE REGIME MODEL ------------------------------- ###

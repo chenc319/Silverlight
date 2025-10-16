@@ -43,9 +43,7 @@ def plot_inflation_predictor():
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
         m2_money_supply = pd.read_pickle(file)
     inflation_variables_merge = merge_dfs([inflation_variables_merge,di_reserves,m2_money_supply])
-    target_feature_df = inflation_variables_merge.copy()
-    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].pct_change(12)
-    target_feature_df[factor_features] = target_feature_df[factor_features].pct_change(12)
+    target_feature_df = inflation_variables_merge.pct_change(12)
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
     target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
     target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
@@ -196,11 +194,10 @@ def plot_cpi_nowcast():
         m2_money_supply = pd.read_pickle(file)
     inflation_variables_merge = merge_dfs([inflation_variables_merge, di_reserves, m2_money_supply])
     target_feature_df = inflation_variables_merge.pct_change(12)
-    target_feature_df.index = target_feature_df.index + pd.DateOffset(months=1)
-    target_feature_df['TOTRESNS'] *= -1
-    target_feature_df['M2SL'] *= -1
+    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
+    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
     target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
-    target_feature_df = target_feature_df.ffill().dropna()
+    target_feature_df = target_feature_df.dropna()
 
     train = target_feature_df.iloc[len(target_feature_df) - 37:len(target_feature_df)-1]
     test = target_feature_df.iloc[len(target_feature_df)-1:len(target_feature_df)]
