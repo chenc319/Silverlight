@@ -31,7 +31,7 @@ def refresh_data(start,end,**kwargs):
 
     ### GROWTH VARIABLES ###
     initial_claims = pdr.DataReader('ICSA','fred',start,end)
-    initial_claims = initial_claims.resample('ME').last()
+    initial_claims = initial_claims.resample('ME').mean()
     with open(Path(DATA_DIR) / 'initial_claims.pkl', 'wb') as file:
         pickle.dump(initial_claims, file)
 
