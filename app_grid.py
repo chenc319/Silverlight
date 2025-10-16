@@ -165,7 +165,7 @@ def plot_grid_factors(start,end,**kwargs):
 
 
 
-def grid_z_score_backtest(start, end, **kwargs):
+def grid_z_score_backtest():
     grid_growth_inflation_spx = merge_dfs([
         cli.pct_change(),
         inflation_prediction['prediction'].resample('ME').last().diff(),

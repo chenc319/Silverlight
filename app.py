@@ -112,7 +112,7 @@ elif menu == 'Inflation Predictor':
 elif menu == 'GRID Model':
     st.title('GRID Factors')
     st.title('GRID Model Backtest')
-    app_grid.plot_grid_model(start_date, end_date)
+    app_grid.plot_grid_model()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ------------------------------- YIELD CURVE REGIME MODEL ------------------------------- ###
