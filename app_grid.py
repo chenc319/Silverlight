@@ -201,7 +201,7 @@ def grid_z_score_backtest():
         elif row['regime_label']== 'Deflation':
             return 0.5
         elif row['regime_label']== 'Stagflation':
-            return 0.25
+            return -0.5
         else:
             return np.nan
 
