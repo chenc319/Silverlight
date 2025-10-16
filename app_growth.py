@@ -47,7 +47,6 @@ def plot_growth_predictor():
         'USALOLITOAASTSAM',
         'INDPRO',
         'PAYEMS',
-        'UNRATE',
         'pce_goods',
         'TOTRESNS',
         'ICSA']
