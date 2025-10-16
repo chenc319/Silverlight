@@ -37,7 +37,6 @@ def plot_growth_predictor():
     target_feature_df['UNRATE'] = target_feature_df['UNRATE'] * -1
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
     target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
-    target_feature_df['ICSA'] = target_feature_df['ICSA'] * -1
     target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
