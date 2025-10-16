@@ -52,7 +52,7 @@ def refresh_data(start,end,**kwargs):
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'wb') as file:
         pickle.dump(m2_money_supply, file)
 
-    real_pce = pdr.DataReader('PCEC96', 'fred', start, end)
+    real_pce = pdr.DataReader('PCE', 'fred', start, end)
     real_pce.index = real_pce.index + pd.DateOffset(months=1)
     real_pce = real_pce.resample('ME').last()
     with open(Path(DATA_DIR) / 'real_pce.pkl', 'wb') as file:

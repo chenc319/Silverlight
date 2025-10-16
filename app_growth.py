@@ -45,13 +45,13 @@ def plot_growth_predictor():
         initial_claims = pd.read_pickle(file)
     growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply,initial_claims])
     target_feature_df = growth_variables_merge.copy()
-    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].pct_change(3)
+    target_feature_df['PCE'] = target_feature_df['PCE'].pct_change(3)
     target_feature_df[factor_features] = target_feature_df[factor_features].pct_change(12)
     target_feature_df.corr()
     target_feature_df['UNRATE'] = target_feature_df['UNRATE'] * -1
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
     target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
-    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
+    target_feature_df['PCE'] = target_feature_df['PCE'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
     target_feature_df.columns
@@ -68,9 +68,9 @@ def plot_growth_predictor():
         factor_test = test[factor_features].mean(axis=1)
 
         model = LinearRegression()
-        model.fit(factor_train.values.reshape(-1, 1), train['PCEC96'].values)
+        model.fit(factor_train.values.reshape(-1, 1), train['PCE'].values)
         pred = model.predict(factor_test.values.reshape(-1, 1))[0]
-        true = test['PCEC96'].values[0]
+        true = test['PCE'].values[0]
         result_factor.append({
             'prediction': pred,
             'actual': true
@@ -208,7 +208,7 @@ def plot_growth_nowcast():
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
     target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
     target_feature_df['ICSA'] = target_feature_df['ICSA'] * -1
-    target_feature_df['PCEC96'] = target_feature_df['PCEC96'].shift(-1)
+    target_feature_df['PCE'] = target_feature_df['PCE'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
 
@@ -230,12 +230,12 @@ def plot_growth_nowcast():
     factor_train = train[factor_features].mean(axis=1)
     factor_test = test[factor_features].mean(axis=1)
     model = LinearRegression()
-    model.fit(factor_train.values.reshape(-1, 1), train['PCEC96'].values)
+    model.fit(factor_train.values.reshape(-1, 1), train['PCE'].values)
     pred = model.predict(factor_test.values.reshape(-1, 1))[0]
     train_pred = model.predict(factor_train.values.reshape(-1, 1))
 
     window = 24  # number of months to look back
-    hist_errors = train['PCEC96'].values - train_pred
+    hist_errors = train['PCE'].values - train_pred
     recent_errors = hist_errors[-window:] if len(hist_errors) >= window else hist_errors
     upside_shift = np.quantile(recent_errors, 0.90)  # upper 80th percentile error
     downside_shift = np.quantile(recent_errors, 0.10)  # lower 20th percentile error
@@ -243,7 +243,7 @@ def plot_growth_nowcast():
     downside_pred = pred + downside_shift
 
     # --- Prepare Data for Chart ---
-    growth_actual = target_feature_df['PCEC96'].iloc[-12:]
+    growth_actual = target_feature_df['PCE'].iloc[-12:]
     history_dates = growth_actual.index
     forecast_date = history_dates[-1] + pd.DateOffset(months=1)
 
