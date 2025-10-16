@@ -45,7 +45,6 @@ def plot_growth_predictor():
     window = 36
     factor_features = [
         'USALOLITOAASTSAM',
-        'RETAILSMSA',
         'INDPRO',
         'IPMAN',
         'IPCONGD',
