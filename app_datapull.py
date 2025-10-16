@@ -23,36 +23,38 @@ def merge_dfs(array_of_dfs):
 start = '1900-01-01'
 end = pd.to_datetime('today')
 def refresh_data(start,end,**kwargs):
-    growth = pdr.DataReader('USALOLITOAASTSAM',
-                            'fred',
-                            start,
-                            end).resample('ME').last()
-
+    growth = pdr.DataReader('USALOLITOAASTSAM','fred',start,end)
     growth.index = growth.index + pd.DateOffset(months=1)
+    growth = growth.resample('ME').last()
     with open(Path(DATA_DIR) / 'growth.pkl', 'wb') as file:
         pickle.dump(growth, file)
 
     ### GROWTH VARIABLES ###
-    initial_claims = pdr.DataReader('ICSA','fred',start,end).resample('ME').last()
+    initial_claims = pdr.DataReader('ICSA','fred',start,end)
+    initial_claims = initial_claims.resample('ME').last()
     with open(Path(DATA_DIR) / 'initial_claims.pkl', 'wb') as file:
         pickle.dump(initial_claims, file)
 
-    di_reserves = pdr.DataReader('TOTRESNS','fred',start,end).resample('ME').last()
+    di_reserves = pdr.DataReader('TOTRESNS','fred',start,end)
     di_reserves.index = di_reserves.index + pd.DateOffset(months=1)
+    di_reserves = di_reserves.resample('ME').last()
     with open(Path(DATA_DIR) / 'di_reserves.pkl', 'wb') as file:
         pickle.dump(di_reserves, file)
 
-    currency_in_circulation = pdr.DataReader('CURRCIR', 'fred', start, end).resample('ME').last()
+    currency_in_circulation = pdr.DataReader('CURRCIR', 'fred', start, end)
+    currency_in_circulation = currency_in_circulation.resample('ME').last()
     with open(Path(DATA_DIR) / 'currency_in_circulation.pkl', 'wb') as file:
         pickle.dump(currency_in_circulation, file)
 
-    m2_money_supply = pdr.DataReader('M2SL', 'fred', start, end).resample('ME').last()
+    m2_money_supply = pdr.DataReader('M2SL', 'fred', start, end)
     m2_money_supply.index = m2_money_supply.index + pd.DateOffset(months=1)
+    m2_money_supply = m2_money_supply.resample('ME').last()
     with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'wb') as file:
         pickle.dump(m2_money_supply, file)
 
-    real_pce = pdr.DataReader('PCEC96', 'fred', start, end).resample('ME').last()
+    real_pce = pdr.DataReader('PCEC96', 'fred', start, end)
     real_pce.index = real_pce.index + pd.DateOffset(months=1)
+    real_pce = real_pce.resample('ME').last()
     with open(Path(DATA_DIR) / 'real_pce.pkl', 'wb') as file:
         pickle.dump(real_pce, file)
 
@@ -62,49 +64,58 @@ def refresh_data(start,end,**kwargs):
     with open(Path(DATA_DIR) / 'retail_sales.pkl', 'wb') as file:
         pickle.dump(retail_sales, file)
 
-    advanced_retail_sales = pdr.DataReader('RSXFS','fred',start,end).resample('ME').last()
+    advanced_retail_sales = pdr.DataReader('RSXFS','fred',start,end)
     advanced_retail_sales.index = advanced_retail_sales.index + pd.DateOffset(months=1)
+    advanced_retail_sales = advanced_retail_sales.resample('ME').last()
     with open(Path(DATA_DIR) / 'advanced_retail_sales.pkl', 'wb') as file:
         pickle.dump(advanced_retail_sales, file)
 
-    ind_prod_total_index = pdr.DataReader('INDPRO','fred',start,end).resample('ME').last()
+    ind_prod_total_index = pdr.DataReader('INDPRO','fred',start,end)
     ind_prod_total_index.index = ind_prod_total_index.index + pd.DateOffset(months=1)
+    ind_prod_total_index = ind_prod_total_index.resample('ME').last()
     with open(Path(DATA_DIR) / 'ind_prod_total_index.pkl', 'wb') as file:
         pickle.dump(ind_prod_total_index, file)
 
-    indu_prod_manufacturing_idx = pdr.DataReader('IPMAN','fred',start,end).resample('ME').last()
+    indu_prod_manufacturing_idx = pdr.DataReader('IPMAN','fred',start,end)
     indu_prod_manufacturing_idx.index = indu_prod_manufacturing_idx.index + pd.DateOffset(months=1)
+    indu_prod_manufacturing_idx = indu_prod_manufacturing_idx.resample('ME').last()
     with open(Path(DATA_DIR) / 'indu_prod_manufacturing_idx.pkl', 'wb') as file:
         pickle.dump(indu_prod_manufacturing_idx, file)
 
-    ind_prod_cons_goods = pdr.DataReader('IPCONGD','fred',start,end).resample('ME').last()
+    ind_prod_cons_goods = pdr.DataReader('IPCONGD','fred',start,end)
     ind_prod_cons_goods.index = ind_prod_cons_goods.index + pd.DateOffset(months=1)
+    ind_prod_cons_goods = ind_prod_cons_goods.resample('ME').last()
     with open(Path(DATA_DIR) / 'ind_prod_cons_goods.pkl', 'wb') as file:
         pickle.dump(ind_prod_cons_goods, file)
 
-    total_nonfarm_payrolls = pdr.DataReader('PAYEMS','fred',start,end).resample('ME').last()
+    total_nonfarm_payrolls = pdr.DataReader('PAYEMS','fred',start,end)
     total_nonfarm_payrolls.index = total_nonfarm_payrolls.index + pd.DateOffset(months=1)
+    total_nonfarm_payrolls = total_nonfarm_payrolls.resample('ME').last()
     with open(Path(DATA_DIR) / 'total_nonfarm_payrolls.pkl', 'wb') as file:
         pickle.dump(total_nonfarm_payrolls, file)
 
-    unemployment_rate = pdr.DataReader('UNRATE','fred',start,end).resample('ME').last()
+    unemployment_rate = pdr.DataReader('UNRATE','fred',start,end)
     unemployment_rate.index = unemployment_rate.index + pd.DateOffset(months=1)
+    unemployment_rate = unemployment_rate.resample('ME').last()
     with open(Path(DATA_DIR) / 'unemployment_rate.pkl', 'wb') as file:
         pickle.dump(unemployment_rate, file)
 
-    retail_trade_employment = pdr.DataReader('CES0600000007','fred',start,end).resample('ME').last()
+    retail_trade_employment = pdr.DataReader('CES0600000007','fred',start,end)
     retail_trade_employment.index = retail_trade_employment.index + pd.DateOffset(months=1)
+    retail_trade_employment = retail_trade_employment.resample('ME').last()
     with open(Path(DATA_DIR) / 'retail_trade_employment.pkl', 'wb') as file:
         pickle.dump(retail_trade_employment, file)
 
 
-    pce_goods = pdr.DataReader('pce_goods','fred',start,end).resample('ME').last()
+    pce_goods = pdr.DataReader('pce_goods','fred',start,end)
     pce_goods.index = pce_goods.index + pd.DateOffset(months=1)
+    pce_goods = pce_goods.resample('ME').last()
     with open(Path(DATA_DIR) / 'pce_goods.pkl', 'wb') as file:
         pickle.dump(pce_goods, file)
 
-    pce_durable_goods = pdr.DataReader('PCEDG','fred',start,end).resample('ME').last()
+    pce_durable_goods = pdr.DataReader('PCEDG','fred',start,end)
     pce_durable_goods.index = pce_durable_goods.index + pd.DateOffset(months=1)
+    pce_durable_goods = pce_durable_goods.resample('ME').last()
     with open(Path(DATA_DIR) / 'pce_durable_goods.pkl', 'wb') as file:
         pickle.dump(pce_durable_goods, file)
 
@@ -136,6 +147,7 @@ def refresh_data(start,end,**kwargs):
          cpi_apparel, cpi_medical_care, cpi_transportation,
          cpi_alcohol, cpi_motor_fuel, cpi_services_less_energy]).dropna()
     inflation_variables_merge.index = inflation_variables_merge.index + pd.DateOffset(months=1)
+    inflation_variables_merge = inflation_variables_merge.resample('ME').last()
     with open(Path(DATA_DIR) / 'inflation_variables_merge.pkl', 'wb') as file:
         pickle.dump(inflation_variables_merge, file)
 
