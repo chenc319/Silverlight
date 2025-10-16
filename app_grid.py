@@ -162,26 +162,15 @@ def plot_grid_factors(start,end,**kwargs):
 
 
 
-def plot_grid_factors_regime_performance(start, end, **kwargs):
-    grid_growth_cross_mean_z = pd.DataFrame(grid_growth_z * grid_growth_corr_spx.shift(1)).mean(axis=1)
-    grid_inflation_cross_mean_z = pd.DataFrame(grid_inflation_z * grid_inflation_corr_spx.shift(1)).mean(axis=1)
-    grid_growth_inflation_spx = pd.concat([
-        grid_growth_cross_mean_z,
-        grid_inflation_cross_mean_z,
-        spx_monthly_pct.shift(-1)
-    ], axis=1).dropna()
-    grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
 
 
 
 def grid_z_score_backtest(start, end, **kwargs):
-    grid_growth_cross_mean_z = pd.DataFrame(grid_growth_z * grid_growth_corr_spx.shift(1)).mean(axis=1)
-    grid_inflation_cross_mean_z = pd.DataFrame(grid_inflation_z* grid_inflation_corr_spx.shift(1)).mean(axis=1)
-    grid_growth_inflation_spx = pd.concat([
-        grid_growth_cross_mean_z,
-        grid_inflation_cross_mean_z,
-        spx_monthly_pct.shift(-1)
-    ], axis=1).dropna()
+    grid_growth_inflation_spx = merge_dfs([
+        cli.pct_change(),
+        inflation_prediction['prediction'].resample('ME').last().diff(),
+        spx_monthly.pct_change().shift(-1)
+    ]).dropna()
     grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
 
     def regime_label(row):
