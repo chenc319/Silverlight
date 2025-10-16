@@ -46,7 +46,6 @@ def plot_growth_predictor():
     factor_features = [
         'USALOLITOAASTSAM',
         'INDPRO',
-        'IPMAN',
         'PAYEMS',
         'UNRATE',
         'pce_goods',
