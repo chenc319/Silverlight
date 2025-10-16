@@ -45,7 +45,7 @@ def plot_growth_predictor():
         initial_claims = pd.read_pickle(file)
     growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply,initial_claims])
     target_feature_df = growth_variables_merge.copy()
-    target_feature_df['PCE'] = target_feature_df['PCE'].pct_change()
+    target_feature_df['PCE'] = target_feature_df['PCE'].pct_change().pct_change()
     target_feature_df[factor_features] = target_feature_df[factor_features].pct_change()
     target_feature_df.corr()
     target_feature_df['UNRATE'] = target_feature_df['UNRATE'] * -1
