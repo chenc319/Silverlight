@@ -19,6 +19,47 @@ def merge_dfs(array_of_dfs):
                                                   left_index=True,
                                                   right_index=True, how='outer'), array_of_dfs)
 
+def compute_drawdown(cumret):
+    roll_max = cumret.cummax()
+    drawdown = (cumret - roll_max) / roll_max
+    return drawdown
+
+def streamlit_drawdown_plot(df,
+                            graph_labels,
+                            df_columns_to_plot,
+                            line_colors,
+                            fill_colors
+                            ):
+    fig = go.Figure()
+    for col, line, fill, label in zip(df_columns_to_plot, line_colors, fill_colors, graph_labels):
+        fig.add_trace(go.Scatter(
+            x=df.index,
+            y=df[col],
+            mode='lines',
+            name=label,
+            line=dict(color=line, width=2),
+            fill='tozeroy',
+            fillcolor=fill,
+            hovertemplate=f"{label}<br>Date: %{{x|%Y-%m-%d}}<br>Drawdown: %{{y:.2%}}<extra></extra>",
+            showlegend=True
+        ))
+    fig.update_layout(
+        title="Drawdown Analysis",
+        yaxis_title="Drawdown (%)",
+        yaxis_tickformat='.0%',
+        hovermode='x unified',
+        template='plotly_white',
+        legend=dict(
+            orientation="h",
+            yanchor='bottom', y=1.02,
+            xanchor='center', x=0.5,
+            title=None
+        ),
+        margin=dict(l=40, r=40, t=70, b=40),
+        plot_bgcolor='#f9f9f9'
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
 def streamlit_plot(df,columns_array,colors_array,graph_title,y_axis_label):
     fig = go.Figure()
     for name, color in zip(columns_array, colors_array):
@@ -154,25 +195,23 @@ def core_equity_mags_spx():
                    graph_title = 'Monthly Returns',
                    y_axis_label='%')
 
+    drawdown_df = sam_mags_merge.copy()
     ### CORRELATION ###
-    sam_corr_matrix = pd.DataFrame(sam_mags_merge.corr()['SAM'][:8])
-    def highlight_red_green(val):
-        if val < 0:
-            color = 'background-color: #ffcccc'
-        elif val > 0:
-            color = 'background-color: #ccffcc'
-        else:
-            color = ''
-        return color
+    drawdown_df['sam_cumsum'] = sam_mags_merge['SAM'].cumsum()
+    drawdown_df['spx_cumsum'] = sam_mags_merge['SPX'].cumsum()
+    drawdown_df['mags_cumsum'] = sam_mags_merge['MAGS'].cumsum()
+    drawdown_df['sam_drawdown'] = compute_drawdown(drawdown_df['sam_cumsum'])
+    drawdown_df['spx_drawdown'] = compute_drawdown(drawdown_df['spx_cumsum'])
+    drawdown_df['mag_drawdown'] = compute_drawdown(drawdown_df['mags_cumsum'])
 
-    def style_percent(df):
-        col = df.columns[0]
-        return df.style.format({col: "{:.2f}"}) \
-            .applymap(highlight_red_green, subset=[col])
 
-    cols = st.columns(1)
-    with cols[0]:
-        st.write(style_percent(sam_corr_matrix), unsafe_allow_html=True)
+    streamlit_drawdown_plot(df=drawdown_df,
+                            graph_labels=['SAM', 'SPX', 'MAGS'],
+                            df_columns_to_plot=['sam_drawdown', 'spx_drawdown', 'mag_drawdown'],
+                            line_colors = ['rgba(95,179,255,1)','rgba(45,205,178,1)','rgba(13,80,185,1)'],
+                            fill_colors = ['rgba(95,179,255,0.3)','rgba(45,205,178,0.3)','rgba(13,80,185,0.3)']
+                            )
+
 
 def sam_core_equity_rolling_alpha():
     rolling_alpha_to_spx = pd.DataFrame(columns = ['SAM','GOOGL','AMZN','AAPL','MSFT','NVDA','TSLA'],
@@ -205,26 +244,15 @@ def sam_core_equity_rolling_alpha():
                    graph_title='Rolling 12 Month Alpha',
                    y_axis_label='bps')
 
+    streamlit_plot(df=rolling_alpha_to_spx * 10000,
+                   columns_array=['MAGS', 'SAM'],
+                   colors_array=['#2056AE', '#E74C3C'],
+                   graph_title='Rolling 12 Month Alpha',
+                   y_axis_label='bps')
+
+
     ### CORRELATION ###
-    alpha_correlation = pd.DataFrame(rolling_alpha_to_spx.corr()['SAM'][1:])
-    def highlight_red_green(val):
-        if val < 0:
-            color = 'background-color: #ffcccc'  # light red
-        elif val > 0:
-            color = 'background-color: #ccffcc'  # light green
-        else:
-            color = ''  # no highlight for zero
-        return color
 
-    def style_percent(df):
-        col = df.columns[0]
-        return df.style.format({col: "{:.2f}"}) \
-            .applymap(highlight_red_green, subset=[col])
-    cols = st.columns(1)
-    with cols[0]:
-        st.write(style_percent(alpha_correlation), unsafe_allow_html=True)
 
-    ### ALPHA METRICS ###
-    rolling_alpha_to_spx[rolling_alpha_to_spx['MAGS'] < 0]['SAM'].mean(axis=0)
-    rolling_alpha_to_spx[rolling_alpha_to_spx['MAGS'] > 0]['SAM'].mean(axis=0)
+
 
