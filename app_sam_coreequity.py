@@ -132,10 +132,8 @@ def core_equity_mags_spx():
     )
     st.plotly_chart(fig, use_container_width=True)
 
-
-def core_equity_correlation():
-    sam_corr_matrix = sam_mags_merge.corr()['SAM']
-    spx_corr_matrix = sam_mags_merge.corr()['SPX']
+    ### CORRELATION ###
+    sam_corr_matrix = pd.DataFrame(sam_mags_merge.corr()['SAM'][:8])
     def highlight_red_green(val):
         if val < 0:
             color = 'background-color: #ffcccc'
@@ -145,27 +143,16 @@ def core_equity_correlation():
             color = ''
         return color
 
-    styled_df = spx_corr_matrix.style.format({"Correlation": "{:.3f}"}) \
-        .applymap(highlight_red_green, subset=['Correlation'])
-    st.write("Correlation with S&P 500")
-    st.write(styled_df, unsafe_allow_html=True)
+    def style_percent(df):
+        col = df.columns[0]
+        return df.style.format({col: "{:.2f}%"}) \
+            .applymap(highlight_red_green, subset=[col])
 
-    def highlight_red_green(val):
-        if val < 0:
-            color = 'background-color: #ffcccc'
-        elif val > 0:
-            color = 'background-color: #ccffcc'
-        else:
-            color = ''
-        return color
-
-    styled_df = sam_corr_matrix.style.format({"Correlation": "{:.3f}"}) \
-        .applymap(highlight_red_green, subset=['Correlation'])
-    st.write("Correlation with S&P 500")
-    st.write(styled_df, unsafe_allow_html=True)
+    cols = st.columns(1)
+    with cols[0]:
+        st.write(style_percent(sam_corr_matrix), unsafe_allow_html=True)
 
 def sam_core_equity_rolling_alpha():
-
     rolling_alpha_to_spx = pd.DataFrame(columns = ['SAM','GOOGL','AMZN','AAPL','MSFT','NVDA','TSLA'],
                                         index = sam_mags_merge.index)
     for row in range(11,len(sam_mags_merge)):
@@ -186,10 +173,10 @@ def sam_core_equity_rolling_alpha():
         rolling_alpha_to_spx.loc[subset.index[11],'NVDA'] = nvda_alpha
         tsla_beta, tsla_alpha, _, _, _ = stats.linregress(subset['SPX'], subset['TSLA'])
         rolling_alpha_to_spx.loc[subset.index[11],'TSLA'] = tsla_alpha
-
     rolling_alpha_to_spx = rolling_alpha_to_spx.dropna()
     rolling_alpha_to_spx['MAGS'] = rolling_alpha_to_spx[mags_tickers].mean(axis=1)
 
+    ### PLOT HISTORICAL ALPHA ###
     fig = go.Figure()
     colors = ['#2056AE', '#E74C3C']
     for name, color in zip(['MAGS','SAM'], colors):
@@ -209,6 +196,7 @@ def sam_core_equity_rolling_alpha():
     )
     st.plotly_chart(fig, use_container_width=True)
 
+    ### CORRELATION ###
     alpha_correlation = pd.DataFrame(rolling_alpha_to_spx.corr()['SAM'][1:])
     def highlight_red_green(val):
         if val < 0:
@@ -223,10 +211,11 @@ def sam_core_equity_rolling_alpha():
         col = df.columns[0]
         return df.style.format({col: "{:.2f}%"}) \
             .applymap(highlight_red_green, subset=[col])
-
-    ### PLOT ###
-    st.title("Alpha Correlation")
     cols = st.columns(1)
     with cols[0]:
         st.write(style_percent(alpha_correlation), unsafe_allow_html=True)
+
+    ### ALPHA METRICS ###
+    rolling_alpha_to_spx[rolling_alpha_to_spx['MAGS'] < 0]['SAM'].mean(axis=0)
+    rolling_alpha_to_spx[rolling_alpha_to_spx['MAGS'] > 0]['SAM'].mean(axis=0)
 
