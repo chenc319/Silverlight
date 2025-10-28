@@ -131,6 +131,7 @@ spx_monthly_pct.columns = ['SPX']
 
 ### MERGE ###
 sam_mags_merge = merge_dfs([mags_monthly_pct, spx_monthly_pct,sam_core_equity]).dropna()
+sam_mags_merge['MAGS'] = sam_mags_merge[mags_tickers].mean(axis=1)
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ----------------------------------------- MAG7 SAM CORE EQUITY ------------------------------------------- ###
@@ -141,14 +142,15 @@ def core_equity_mags_spx():
     cumulative_returns = sam_mags_merge.cumsum() * 100
     streamlit_plot(df=cumulative_returns,
                    columns_array=cumulative_returns.columns,
-                   colors_array=['#006400', '#228B22', '#2E8B57', '#3CB371',
-                                 '#36C88B', '#77DD77', '#ADFF2F', '#2056AE', '#E74C3C'],
+                   colors_array=["#7393B3", "#57666A", "#5F9EA0", "#4682B4", "#6082B6",
+                                 "#849baa", "#435274", "#769A62", "#E74C3C", "#B8860B"]
+,
                    graph_title='Summative Returns',
                    y_axis_label='%')
     streamlit_plot(df = sam_mags_merge * 100,
                    columns_array = sam_mags_merge.columns,
-                   colors_array = ['#006400', '#228B22', '#2E8B57', '#3CB371',
-                                   '#36C88B', '#77DD77', '#ADFF2F', '#2056AE', '#E74C3C'],
+                   colors_array = ["#7393B3", "#57666A", "#5F9EA0", "#4682B4", "#6082B6",
+                                 "#849baa", "#435274", "#769A62", "#E74C3C", "#B8860B"],
                    graph_title = 'Monthly Returns',
                    y_axis_label='%')
 
@@ -197,24 +199,11 @@ def sam_core_equity_rolling_alpha():
     rolling_alpha_to_spx['MAGS'] = rolling_alpha_to_spx[mags_tickers].mean(axis=1)
 
     ### PLOT HISTORICAL ALPHA ###
-    fig = go.Figure()
-    colors = ['#2056AE', '#E74C3C']
-    for name, color in zip(['MAGS','SAM'], colors):
-        fig.add_trace(go.Scatter(
-            x=rolling_alpha_to_spx.index,
-            y=rolling_alpha_to_spx[name],
-            name=name,
-            mode='lines',
-            line=dict(color=color, width=2)
-        ))
-    fig.update_layout(
-        height=450,
-        hovermode='x unified',
-        legend=dict(title='Legend', orientation='h', y=-0.25),
-        margin=dict(t=30, b=30),
-        title="Rolling 12m Alpha"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    streamlit_plot(df=rolling_alpha_to_spx * 10000,
+                   columns_array=['MAGS','SAM'],
+                   colors_array=['#2056AE', '#E74C3C'],
+                   graph_title='Rolling 12 Month Alpha',
+                   y_axis_label='bps')
 
     ### CORRELATION ###
     alpha_correlation = pd.DataFrame(rolling_alpha_to_spx.corr()['SAM'][1:])
