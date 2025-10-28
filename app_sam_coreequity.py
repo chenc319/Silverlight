@@ -99,7 +99,7 @@ def streamlit_subplot(df, columns_array, colors_array, row_nums, col_nums):
         )
     fig.update_layout(
         showlegend=False,
-        height=800,
+        height=600,
         width=1000
     )
     st.plotly_chart(fig, use_container_width=True)
