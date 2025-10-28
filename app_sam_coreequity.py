@@ -111,7 +111,7 @@ def core_equity_mags_spx():
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    cumulative_returns = (1 + sam_mags_merge).cumprod() - 1
+    cumulative_returns = sam_mags_merge.cumsum()
     fig = go.Figure()
     colors = ['#2056AE', '#F2552C', '#6AC47E', '#E74C3C', '#FFD700', '#8A2BE2', '#FF7F50', '#000000', '#17BECF']
     for name, color in zip(cumulative_returns.columns, colors):
@@ -127,7 +127,7 @@ def core_equity_mags_spx():
         hovermode='x unified',
         legend=dict(title='Legend', orientation='h', y=-0.25),
         margin=dict(t=30, b=30),
-        title="Cumulative Returns"
+        title="Summative Returns"
     )
     st.plotly_chart(fig, use_container_width=True)
     
