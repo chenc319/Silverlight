@@ -130,6 +130,7 @@ def core_equity_mags_spx():
         title="Cumulative Returns"
     )
     st.plotly_chart(fig, use_container_width=True)
+    
 
 def core_equity_correlation():
     sam_corr_matrix = sam_mags_merge.corr()['SAM']
