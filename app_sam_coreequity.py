@@ -81,7 +81,7 @@ def streamlit_plot(df,columns_array,colors_array,graph_title,y_axis_label):
     st.plotly_chart(fig, use_container_width=True)
 
 def streamlit_subplot(df,columns_array,colors_array,row_nums,col_nums):
-    fig = sp.make_subplots(rows=4, cols=3, subplot_titles=columns_array)
+    fig = sp.make_subplots(rows=row_nums, cols=col_nums, subplot_titles=columns_array)
     for i, col in enumerate(columns_array):
         row = i // row_nums + 1
         col_pos = i % col_nums + 1
