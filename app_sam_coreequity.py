@@ -145,7 +145,7 @@ def core_equity_mags_spx():
 
     def style_percent(df):
         col = df.columns[0]
-        return df.style.format({col: "{:.2f}%"}) \
+        return df.style.format({col: "{:.2f}"}) \
             .applymap(highlight_red_green, subset=[col])
 
     cols = st.columns(1)
@@ -209,7 +209,7 @@ def sam_core_equity_rolling_alpha():
 
     def style_percent(df):
         col = df.columns[0]
-        return df.style.format({col: "{:.2f}%"}) \
+        return df.style.format({col: "{:.2f}"}) \
             .applymap(highlight_red_green, subset=[col])
     cols = st.columns(1)
     with cols[0]:
