@@ -97,15 +97,10 @@ def streamlit_subplot(df, columns_array, colors_array, row_nums, col_nums):
             row=row,
             col=col_pos
         )
-    # Set axes titles for all subplots
-    for row in range(1, row_nums + 1):
-        for col in range(1, col_nums + 1):
-            fig.update_xaxes(title_text="Date", row=row, col=col)
-            fig.update_yaxes(title_text="Value", row=row, col=col)
     fig.update_layout(
         showlegend=False,
-        height=1800,
-        width=1200
+        height=800,
+        width=1000
     )
     st.plotly_chart(fig, use_container_width=True)
 
