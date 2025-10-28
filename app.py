@@ -87,8 +87,8 @@ menu = st.sidebar.radio(
 ### ---------------------------------------------------------------------------------------- ###
 
 if menu == 'SAM Core Equity':
-    st.title('Correlation Matrices')
-    app_sam_coreequity.core_equity_correlation()
+    # st.title('Correlation Matrices')
+    # app_sam_coreequity.core_equity_correlation()
     st.title('Rolling Alpha')
     app_sam_coreequity.sam_core_equity_rolling_alpha()
 
