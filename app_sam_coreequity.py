@@ -28,8 +28,7 @@ def streamlit_drawdown_plot(df,
                             graph_labels,
                             df_columns_to_plot,
                             line_colors,
-                            fill_colors
-                            ):
+                            fill_colors):
     fig = go.Figure()
     for col, line, fill, label in zip(df_columns_to_plot, line_colors, fill_colors, graph_labels):
         fig.add_trace(go.Scatter(
@@ -49,12 +48,7 @@ def streamlit_drawdown_plot(df,
         yaxis_tickformat='.0%',
         hovermode='x unified',
         template='plotly_white',
-        legend=dict(
-            orientation="h",
-            yanchor='bottom', y=1.02,
-            xanchor='center', x=0.5,
-            title=None
-        ),
+        legend=dict(orientation="h", yanchor='bottom', y=1.02, xanchor='center', x=0.5, title=None),
         margin=dict(l=40, r=40, t=70, b=40),
         plot_bgcolor='#f9f9f9'
     )
@@ -83,7 +77,6 @@ def streamlit_plot(df,columns_array,colors_array,graph_title,y_axis_label):
 def streamlit_subplot(df, columns_array, colors_array, row_nums, col_nums):
     fig = sp.make_subplots(rows=row_nums, cols=col_nums, subplot_titles=columns_array)
     for i, col in enumerate(columns_array):
-        # Key fix: correct the row/col indices!
         row = i // col_nums + 1
         col_pos = i % col_nums + 1
         fig.add_trace(
@@ -190,15 +183,9 @@ def core_equity_mags_spx():
                                  "#849baa", "#435274", "#769A62", "#E74C3C", "#B8860B"],
                    graph_title = 'Monthly Returns',
                    y_axis_label='%')
-    streamlit_subplot(df = cumulative_returns,
-                      columns_array = cumulative_returns.columns,
-                      colors_array = ["#7393B3", "#57666A", "#5F9EA0", "#4682B4", "#6082B6",
-                                 "#849baa", "#435274", "#769A62", "#E74C3C", "#B8860B"],
-                      row_nums=2,
-                      col_nums=5)
 
+    ### DRAWDOWN ###
     drawdown_df = sam_mags_merge.copy()
-    ### CORRELATION ###
     drawdown_df['sam_cumsum'] = sam_mags_merge['SAM'].cumsum()
     drawdown_df['spx_cumsum'] = sam_mags_merge['SPX'].cumsum()
     drawdown_df['mags_cumsum'] = sam_mags_merge['MAGS'].cumsum()
@@ -206,14 +193,11 @@ def core_equity_mags_spx():
     drawdown_df['spx_drawdown'] = compute_drawdown(drawdown_df['spx_cumsum'])
     drawdown_df['mag_drawdown'] = compute_drawdown(drawdown_df['mags_cumsum'])
 
-
     streamlit_drawdown_plot(df=drawdown_df,
                             graph_labels=['SAM', 'SPX', 'MAGS'],
                             df_columns_to_plot=['sam_drawdown', 'spx_drawdown', 'mag_drawdown'],
                             line_colors = ['rgba(95,179,255,1)','rgba(45,205,178,1)','rgba(13,80,185,1)'],
-                            fill_colors = ['rgba(95,179,255,0.3)','rgba(45,205,178,0.3)','rgba(13,80,185,0.3)']
-                            )
-
+                            fill_colors = ['rgba(95,179,255,0.3)','rgba(45,205,178,0.3)','rgba(13,80,185,0.3)'])
 
 def sam_core_equity_rolling_alpha():
     rolling_alpha_to_spx = pd.DataFrame(columns = ['SAM','GOOGL','AMZN','AAPL','MSFT','NVDA','TSLA'],
@@ -246,10 +230,13 @@ def sam_core_equity_rolling_alpha():
                    graph_title='Rolling 12 Month Alpha',
                    y_axis_label='%')
 
+    rolling_alpha_to_spx['spread'] = rolling_alpha_to_spx['SAM'] - rolling_alpha_to_spx['MAGS']
+    streamlit_plot(df=rolling_alpha_to_spx * 100,
+                   columns_array=['spread'],
+                   colors_array=['#2056AE'],
+                   graph_title='Alpha Spread',
+                   y_axis_label='%')
 
-
-
-    ### CORRELATION ###
 
 
 
