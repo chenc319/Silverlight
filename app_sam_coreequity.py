@@ -236,6 +236,7 @@ def sam_core_equity_rolling_alpha():
                    colors_array=['#2056AE'],
                    graph_title='Alpha Spread',
                    y_axis_label='%')
+    
 
 
 
