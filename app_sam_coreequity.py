@@ -93,7 +93,7 @@ sam_mags_merge = merge_dfs([mags_monthly_pct, spx_monthly_pct,sam_core_equity]).
 
 def core_equity_mags_spx():
     fig = go.Figure()
-    colors = ['#2056AE', '#F2552C', '#6AC47E', '#E74C3C', '#FFD700', '#8A2BE2', '#FF7F50', '#000000', '#17BECF']
+    colors = ['#006400', '#228B22', '#2E8B57', '#3CB371', '#36C88B', '#77DD77', '#ADFF2F', '#2056AE', '#E74C3C']
     for name, color in zip(sam_mags_merge.columns, colors):
         fig.add_trace(go.Scatter(
             x=sam_mags_merge.index,
@@ -113,7 +113,8 @@ def core_equity_mags_spx():
 
     cumulative_returns = sam_mags_merge.cumsum()
     fig = go.Figure()
-    colors = ['#2056AE', '#F2552C', '#6AC47E', '#E74C3C', '#FFD700', '#8A2BE2', '#FF7F50', '#000000', '#17BECF']
+    colors = ['#006400', '#228B22', '#2E8B57', '#3CB371', '#36C88B', '#77DD77', '#ADFF2F', '#2056AE', '#E74C3C']
+
     for name, color in zip(cumulative_returns.columns, colors):
         fig.add_trace(go.Scatter(
             x=cumulative_returns.index,
@@ -130,7 +131,7 @@ def core_equity_mags_spx():
         title="Summative Returns"
     )
     st.plotly_chart(fig, use_container_width=True)
-    
+
 
 def core_equity_correlation():
     sam_corr_matrix = sam_mags_merge.corr()['SAM']
