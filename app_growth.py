@@ -33,7 +33,6 @@ def plot_growth_predictor():
         'UNRATE',
         'pce_goods',
         'PCEDG',
-        'TOTRESNS',
         'ICSA']
     with open(Path(DATA_DIR) / 'growth_variables_merge.pkl', 'rb') as file:
         growth_variables_merge = pd.read_pickle(file)

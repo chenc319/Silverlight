@@ -13,6 +13,7 @@ import app_firv_regime
 import app_barra
 import app_inflation
 import app_tail_hedge
+import app_sam_coreequity
 
 import time
 
@@ -32,7 +33,7 @@ def merge_dfs(array_of_dfs):
 
 ### CONFIGURE PAGE SETTINGS ###
 st.set_page_config(
-    page_title="Factor Models & Backtests",
+    page_title="SAM Research",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -70,7 +71,8 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 
 menu = st.sidebar.radio(
     "Go to section:",
-    ['Growth & Inflation Model',
+    ['SAM Core Equity',
+     'Growth & Inflation Model',
      'Growth Predictor',
      'Inflation Predictor',
      'GRID Model',
@@ -79,6 +81,16 @@ menu = st.sidebar.radio(
      'Equity Positioning',
      'Tail Hedge Portfolio']
 )
+
+### ---------------------------------------------------------------------------------------- ###
+### ----------------------------------- SAM CORE EQUITY ------------------------------------ ###
+### ---------------------------------------------------------------------------------------- ###
+
+if menu == 'SAM Core Equity':
+    st.title('Correlation Matrices')
+    app_sam_coreequity.core_equity_correlation()
+    st.title('Rolling Alpha')
+    app_sam_coreequity.sam_core_equity_rolling_alpha()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------- GROWTH AND INFLATION --------------------------------- ###
