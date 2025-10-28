@@ -99,7 +99,7 @@ def streamlit_subplot(df, columns_array, colors_array, row_nums, col_nums):
         )
     fig.update_layout(
         showlegend=False,
-        height=600,
+        height=800,
         width=1000
     )
     st.plotly_chart(fig, use_container_width=True)
@@ -190,8 +190,8 @@ def core_equity_mags_spx():
                                  "#849baa", "#435274", "#769A62", "#E74C3C", "#B8860B"],
                    graph_title = 'Monthly Returns',
                    y_axis_label='%')
-    streamlit_subplot(df = sam_mags_merge * 100,
-                      columns_array = sam_mags_merge.columns,
+    streamlit_subplot(df = cumulative_returns,
+                      columns_array = cumulative_returns.columns,
                       colors_array = ["#7393B3", "#57666A", "#5F9EA0", "#4682B4", "#6082B6",
                                  "#849baa", "#435274", "#769A62", "#E74C3C", "#B8860B"],
                       row_nums=2,
