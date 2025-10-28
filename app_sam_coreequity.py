@@ -155,8 +155,8 @@ def sam_core_equity_rolling_alpha():
     colors = ['#2056AE', '#F2552C', '#6AC47E', '#E74C3C', '#FFD700', '#8A2BE2', '#FF7F50', '#000000', '#17BECF']
     for name, color in zip(rolling_alpha_to_spx.columns, colors):
         fig.add_trace(go.Scatter(
-            x=df.index,
-            y=df[name],
+            x=rolling_alpha_to_spx.index,
+            y=rolling_alpha_to_spx[name],
             name=name,
             mode='lines',
             line=dict(color=color, width=2)
