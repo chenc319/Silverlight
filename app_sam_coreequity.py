@@ -184,8 +184,7 @@ def core_equity_mags_spx():
     streamlit_plot(df=cumulative_returns,
                    columns_array=cumulative_returns.columns,
                    colors_array=["#7393B3", "#57666A", "#5F9EA0", "#4682B4", "#6082B6",
-                                 "#849baa", "#435274", "#769A62", "#E74C3C", "#B8860B"]
-,
+                                 "#849baa", "#435274", "#769A62", "#E74C3C", "#B8860B"],
                    graph_title='Summative Returns',
                    y_axis_label='%')
     streamlit_plot(df = sam_mags_merge * 100,
@@ -194,6 +193,12 @@ def core_equity_mags_spx():
                                  "#849baa", "#435274", "#769A62", "#E74C3C", "#B8860B"],
                    graph_title = 'Monthly Returns',
                    y_axis_label='%')
+    streamlit_subplot(df = sam_mags_merge * 100,
+                      columns_array = sam_mags_merge.columns,
+                      colors_array = ["#7393B3", "#57666A", "#5F9EA0", "#4682B4", "#6082B6",
+                                 "#849baa", "#435274", "#769A62", "#E74C3C", "#B8860B"],
+                      row_nums=2,
+                      col_nums=5)
 
     drawdown_df = sam_mags_merge.copy()
     ### CORRELATION ###
@@ -238,17 +243,13 @@ def sam_core_equity_rolling_alpha():
     rolling_alpha_to_spx['MAGS'] = rolling_alpha_to_spx[mags_tickers].mean(axis=1)
 
     ### PLOT HISTORICAL ALPHA ###
-    streamlit_plot(df=rolling_alpha_to_spx * 10000,
+    streamlit_plot(df=rolling_alpha_to_spx * 100,
                    columns_array=['MAGS','SAM'],
                    colors_array=['#2056AE', '#E74C3C'],
                    graph_title='Rolling 12 Month Alpha',
-                   y_axis_label='bps')
+                   y_axis_label='%')
 
-    streamlit_plot(df=rolling_alpha_to_spx * 10000,
-                   columns_array=['MAGS', 'SAM'],
-                   colors_array=['#2056AE', '#E74C3C'],
-                   graph_title='Rolling 12 Month Alpha',
-                   y_axis_label='bps')
+
 
 
     ### CORRELATION ###
