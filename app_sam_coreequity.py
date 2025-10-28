@@ -19,6 +19,53 @@ def merge_dfs(array_of_dfs):
                                                   left_index=True,
                                                   right_index=True, how='outer'), array_of_dfs)
 
+def streamlit_plot(df,columns_array,colors_array,graph_title,y_axis_label):
+    fig = go.Figure()
+    for name, color in zip(columns_array, colors_array):
+        fig.add_trace(go.Scatter(
+            x=df.index,
+            y=df[name],
+            name=name,
+            mode='lines',
+            line=dict(color=color, width=2)
+        ))
+    fig.update_layout(
+        height=450,
+        hovermode='x unified',
+        legend=dict(title='Legend', orientation='h', y=-0.25),
+        margin=dict(t=30, b=30),
+        title=graph_title,
+        yaxis_title=y_axis_label
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+def streamlit_subplot(df,columns_array,colors_array,row_nums,col_nums):
+    fig = sp.make_subplots(rows=4, cols=3, subplot_titles=columns_array)
+    for i, col in enumerate(columns_array):
+        row = i // row_nums + 1
+        col_pos = i % col_nums + 1
+        fig.add_trace(
+            go.Scatter(
+                x=df.index,
+                y=df[col],
+                mode='lines',
+                name=col,
+                line=dict(color=colors_array[i % len(colors_array)], width=2)
+            ),
+            row=row,
+            col=col_pos
+        )
+    for row in range(1, row_nums):
+        for col in range(1, col_nums):
+            fig.update_xaxes(title_text="Date", row=row, col=col)
+            fig.update_yaxes(title_text="Value", row=row, col=col)
+    fig.update_layout(
+        showlegend=False,
+        height=1800,
+        width=1200
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
 ### SAM ###
 data = '''
 2025  4.63  -0.78  -3.15  0.83  4.56  2.87  ---   ---   ---   ---   ---   ---
@@ -85,52 +132,25 @@ spx_monthly_pct.columns = ['SPX']
 ### MERGE ###
 sam_mags_merge = merge_dfs([mags_monthly_pct, spx_monthly_pct,sam_core_equity]).dropna()
 
-
-
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ----------------------------------------- MAG7 SAM CORE EQUITY ------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def core_equity_mags_spx():
-    fig = go.Figure()
-    colors = ['#006400', '#228B22', '#2E8B57', '#3CB371', '#36C88B', '#77DD77', '#ADFF2F', '#2056AE', '#E74C3C']
-    for name, color in zip(sam_mags_merge.columns, colors):
-        fig.add_trace(go.Scatter(
-            x=sam_mags_merge.index,
-            y=sam_mags_merge[name],
-            name=name,
-            mode='lines',
-            line=dict(color=color, width=2)
-        ))
-    fig.update_layout(
-        height=450,
-        hovermode='x unified',
-        legend=dict(title='Legend', orientation='h', y=-0.25),
-        margin=dict(t=30, b=30),
-        title="Monthly Returns"
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
+    ### PLOTS ###
     cumulative_returns = sam_mags_merge.cumsum()
-    fig = go.Figure()
-    colors = ['#006400', '#228B22', '#2E8B57', '#3CB371', '#36C88B', '#77DD77', '#ADFF2F', '#2056AE', '#E74C3C']
-
-    for name, color in zip(cumulative_returns.columns, colors):
-        fig.add_trace(go.Scatter(
-            x=cumulative_returns.index,
-            y=cumulative_returns[name],
-            name=name,
-            mode='lines',
-            line=dict(color=color, width=2)
-        ))
-    fig.update_layout(
-        height=450,
-        hovermode='x unified',
-        legend=dict(title='Legend', orientation='h', y=-0.25),
-        margin=dict(t=30, b=30),
-        title="Summative Returns"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    streamlit_plot(df=cumulative_returns,
+                   columns_array=cumulative_returns.columns,
+                   colors_array=['#006400', '#228B22', '#2E8B57', '#3CB371',
+                                 '#36C88B', '#77DD77', '#ADFF2F', '#2056AE', '#E74C3C'],
+                   graph_title='Summative Returns',
+                   )
+    streamlit_plot(df = sam_mags_merge,
+                   columns_array = sam_mags_merge.columns,
+                   colors_array = ['#006400', '#228B22', '#2E8B57', '#3CB371',
+                                   '#36C88B', '#77DD77', '#ADFF2F', '#2056AE', '#E74C3C'],
+                   graph_title = 'Monthly Returns',
+                   )
 
     ### CORRELATION ###
     sam_corr_matrix = pd.DataFrame(sam_mags_merge.corr()['SAM'][:8])

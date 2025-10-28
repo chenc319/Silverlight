@@ -144,9 +144,7 @@ def plot_barra_predictor():
         bt_results.columns = [each_factor]
         barra_factor_backtest = merge_dfs([barra_factor_backtest,bt_results])
 
-        ### RETURN METRICS ###
-        plt.plot(barra_factor_backtest.mean(axis=1).cumsum())
-        plt.show()
+
 
 
 
