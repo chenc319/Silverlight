@@ -86,13 +86,50 @@ spx_monthly_pct.columns = ['SPX']
 sam_mags_merge = merge_dfs([mags_monthly_pct, spx_monthly_pct,sam_core_equity]).dropna()
 
 
+
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ----------------------------------------- MAG7 SAM CORE EQUITY ------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def core_equity_mags_spx():
-    sam_corr_matrix = sam_mags_merge.corr()['SAM']
-    spx_corr_matrix = sam_mags_merge.corr()['SPX']
+    fig = go.Figure()
+    colors = ['#2056AE', '#F2552C', '#6AC47E', '#E74C3C', '#FFD700', '#8A2BE2', '#FF7F50', '#000000', '#17BECF']
+    for name, color in zip(sam_mags_merge.columns, colors):
+        fig.add_trace(go.Scatter(
+            x=sam_mags_merge.index,
+            y=sam_mags_merge[name],
+            name=name,
+            mode='lines',
+            line=dict(color=color, width=2)
+        ))
+    fig.update_layout(
+        height=450,
+        hovermode='x unified',
+        legend=dict(title='Legend', orientation='h', y=-0.25),
+        margin=dict(t=30, b=30),
+        title="Monthly Returns"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    cumulative_returns = (1 + sam_mags_merge).cumprod() - 1
+    fig = go.Figure()
+    colors = ['#2056AE', '#F2552C', '#6AC47E', '#E74C3C', '#FFD700', '#8A2BE2', '#FF7F50', '#000000', '#17BECF']
+    for name, color in zip(cumulative_returns.columns, colors):
+        fig.add_trace(go.Scatter(
+            x=cumulative_returns.index,
+            y=cumulative_returns[name],
+            name=name,
+            mode='lines',
+            line=dict(color=color, width=2)
+        ))
+    fig.update_layout(
+        height=450,
+        hovermode='x unified',
+        legend=dict(title='Legend', orientation='h', y=-0.25),
+        margin=dict(t=30, b=30),
+        title="Cumulative Returns"
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 def core_equity_correlation():
     sam_corr_matrix = sam_mags_merge.corr()['SAM']
