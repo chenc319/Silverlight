@@ -138,14 +138,14 @@ sam_mags_merge = merge_dfs([mags_monthly_pct, spx_monthly_pct,sam_core_equity]).
 
 def core_equity_mags_spx():
     ### PLOTS ###
-    cumulative_returns = sam_mags_merge.cumsum()
+    cumulative_returns = sam_mags_merge.cumsum() * 100
     streamlit_plot(df=cumulative_returns,
                    columns_array=cumulative_returns.columns,
                    colors_array=['#006400', '#228B22', '#2E8B57', '#3CB371',
                                  '#36C88B', '#77DD77', '#ADFF2F', '#2056AE', '#E74C3C'],
                    graph_title='Summative Returns',
                    y_axis_label='%')
-    streamlit_plot(df = sam_mags_merge,
+    streamlit_plot(df = sam_mags_merge * 100,
                    columns_array = sam_mags_merge.columns,
                    colors_array = ['#006400', '#228B22', '#2E8B57', '#3CB371',
                                    '#36C88B', '#77DD77', '#ADFF2F', '#2056AE', '#E74C3C'],
