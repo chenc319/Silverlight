@@ -209,7 +209,7 @@ def sam_core_equity_rolling_alpha():
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    alpha_correlation = rolling_alpha_to_spx.corr()['SAM'][1:]
+    alpha_correlation = pd.DataFrame(rolling_alpha_to_spx.corr()['SAM'][1:])
     def highlight_red_green(val):
         if val < 0:
             color = 'background-color: #ffcccc'  # light red
