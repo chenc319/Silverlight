@@ -188,12 +188,11 @@ def sam_core_equity_rolling_alpha():
         rolling_alpha_to_spx.loc[subset.index[11],'TSLA'] = tsla_alpha
 
     rolling_alpha_to_spx = rolling_alpha_to_spx.dropna()
-    rolling_alpha_to_spx.corr()
     rolling_alpha_to_spx['MAGS'] = rolling_alpha_to_spx[mags_tickers].mean(axis=1)
 
     fig = go.Figure()
     colors = ['#2056AE', '#E74C3C']
-    for name, color in zip(['SAM','MAGS'], colors):
+    for name, color in zip(['MAGS','SAM'], colors):
         fig.add_trace(go.Scatter(
             x=rolling_alpha_to_spx.index,
             y=rolling_alpha_to_spx[name],
@@ -206,6 +205,28 @@ def sam_core_equity_rolling_alpha():
         hovermode='x unified',
         legend=dict(title='Legend', orientation='h', y=-0.25),
         margin=dict(t=30, b=30),
-        title="MAG7, SPX, and SAM Portfolio Performance"
+        title="Rolling 12m Alpha"
     )
     st.plotly_chart(fig, use_container_width=True)
+
+    alpha_correlation = rolling_alpha_to_spx.corr()['SAM'][1:]
+    def highlight_red_green(val):
+        if val < 0:
+            color = 'background-color: #ffcccc'  # light red
+        elif val > 0:
+            color = 'background-color: #ccffcc'  # light green
+        else:
+            color = ''  # no highlight for zero
+        return color
+
+    def style_percent(df):
+        col = df.columns[0]
+        return df.style.format({col: "{:.2f}%"}) \
+            .applymap(highlight_red_green, subset=[col])
+
+    ### PLOT ###
+    st.title("Alpha Correlation")
+    cols = st.columns(1)
+    with cols[0]:
+        st.write(style_percent(alpha_correlation), unsafe_allow_html=True)
+
