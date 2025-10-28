@@ -80,10 +80,11 @@ def streamlit_plot(df,columns_array,colors_array,graph_title,y_axis_label):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-def streamlit_subplot(df,columns_array,colors_array,row_nums,col_nums):
+def streamlit_subplot(df, columns_array, colors_array, row_nums, col_nums):
     fig = sp.make_subplots(rows=row_nums, cols=col_nums, subplot_titles=columns_array)
     for i, col in enumerate(columns_array):
-        row = i // row_nums + 1
+        # Key fix: correct the row/col indices!
+        row = i // col_nums + 1
         col_pos = i % col_nums + 1
         fig.add_trace(
             go.Scatter(
@@ -96,8 +97,9 @@ def streamlit_subplot(df,columns_array,colors_array,row_nums,col_nums):
             row=row,
             col=col_pos
         )
-    for row in range(1, row_nums):
-        for col in range(1, col_nums):
+    # Set axes titles for all subplots
+    for row in range(1, row_nums + 1):
+        for col in range(1, col_nums + 1):
             fig.update_xaxes(title_text="Date", row=row, col=col)
             fig.update_yaxes(title_text="Value", row=row, col=col)
     fig.update_layout(
