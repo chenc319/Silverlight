@@ -3,13 +3,9 @@
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 ### FUNCTIONS ###
-import pandas as pd
-import functools as ft
 import streamlit as st
 import plotly.graph_objs as go
-from pathlib import Path
 import plotly.subplots as sp
-import os
 from plotly.subplots import make_subplots
 import pandas as pd
 from pathlib import Path
