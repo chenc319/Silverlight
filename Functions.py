@@ -7,7 +7,6 @@ import streamlit as st
 import plotly.graph_objs as go
 import plotly.subplots as sp
 import pandas as pd
-import os
 import functools as ft
 
 def merge_dfs(array_of_dfs):
@@ -36,8 +35,8 @@ def return_metrics(backtest_returns_data,
                    'Ann. Return',
                    'Ann. Volatility',
                    'Return/Risk',
-                   'Max Return','Max Return Date',
-                   'Min Return','Min Return Date',
+                   'Max Return',
+                   'Min Return',
                    'Beta']
     )
     for x in range(0,len(backtest_returns_data.columns)):
@@ -61,8 +60,9 @@ def return_metrics(backtest_returns_data,
                                       avg_win_return,avg_lose_return,
                                       win_ratio,ann_return,
                                       ann_vol,return_risk,
-                                      max_return,max_return_date,
-                                      min_return,min_return_date,beta]
+                                      max_return,
+                                      min_return,
+                                      beta]
     return(return_metrics_df)
 
 def streamlit_return_metrics_table(df,
@@ -76,7 +76,7 @@ def streamlit_return_metrics_table(df,
         green_high = ['Total Return', 'Avg Return', 'Avg Upside Return', 'Win Ratio',
                       'Ann. Return', 'Return/Risk', 'Max Return']
     if green_low is None:
-        green_low = ['Avg Downside Return', 'Ann. Volatility', 'Min Return']
+        green_low = ['Avg Downside Return', 'Ann. Volatility', 'Min Return','Beta']
 
     styler = df.style.format({
         'Total Return': '{:,.2%}',

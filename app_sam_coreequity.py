@@ -2,12 +2,11 @@
 ### ----------------------------------------- MAG7 SAM CORE EQUITY ------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-### FUNCTIONS ###
-import pandas as pd
-from pathlib import Path
-import os
-from scipy import stats
+### PACKAGES ###
 from Functions import *
+from pathlib import Path
+from scipy import stats
+import os
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 ### SAM ###
@@ -160,7 +159,7 @@ def core_equity_mag_backtest_simulation():
     sam_mags_merge['SAM_50'] = (sam_mags_merge['SAM'] * 0.50) + (sam_mags_merge['MAGS'] * 0.50)
     sam_mags_merge['SAM_75'] = (sam_mags_merge['SAM'] * 0.75) + (sam_mags_merge['MAGS'] * 0.25)
 
-    return_metrics_df = return_metrics(sam_mags_merge[['SAM_25','SAM_50','SAM_75']],
+    return_metrics_df = return_metrics(sam_mags_merge[['MAGS','SAM_25','SAM_50','SAM_75','SAM']],
                                        sam_mags_merge['SPX'],
                                        12)
     streamlit_return_metrics_table(return_metrics_df)
