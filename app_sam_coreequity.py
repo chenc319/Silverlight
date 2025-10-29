@@ -171,16 +171,16 @@ def sam_core_equity_rolling_alpha():
     sam_mags_merge[sam_mags_merge['alpha_spread'] > 0]['MAGS'].mean()
     sam_mags_merge[sam_mags_merge['alpha_spread'] > 0]['SAM'].mean()
 
-    alpha_spread_df = pd.DataFrame(columns = ['CE','MAGS'],
+    alpha_spread_df = pd.DataFrame(columns = ['CE Return','MAGS Return'],
                                    index = ['- Alpha Spread',
                                             '+ Alpha Spread'])
-    alpha_spread_df.loc['- Alpha Spread','CE'] = round(
+    alpha_spread_df.loc['- Alpha Spread','CE Return'] = round(
         sam_mags_merge[sam_mags_merge['alpha_spread'] < 0]['SAM'].mean()*100,2)
-    alpha_spread_df.loc['- Alpha Spread','MAGS'] = round(
+    alpha_spread_df.loc['- Alpha Spread','MAGS Return'] = round(
         sam_mags_merge[sam_mags_merge['alpha_spread'] < 0]['MAGS'].mean()*100,2)
-    alpha_spread_df.loc['+ Alpha Spread','CE'] = round(
+    alpha_spread_df.loc['+ Alpha Spread','CE Return'] = round(
         sam_mags_merge[sam_mags_merge['alpha_spread'] > 0]['SAM'].mean()*100,2)
-    alpha_spread_df.loc['+ Alpha Spread','MAGS'] = round(
+    alpha_spread_df.loc['+ Alpha Spread','MAGS Return'] = round(
         sam_mags_merge[sam_mags_merge['alpha_spread'] > 0]['MAGS'].mean()*100,2)
 
     st.dataframe(alpha_spread_df)
