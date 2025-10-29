@@ -134,17 +134,41 @@ def streamlit_drawdown_plot(df,
                             fill_colors):
     fig = go.Figure()
     for col, line, fill, label in zip(df_columns_to_plot, line_colors, fill_colors, graph_labels):
+        # Add black line trace
         fig.add_trace(go.Scatter(
             x=df.index,
             y=df[col],
             mode='lines',
             name=label,
-            line=dict(color=line, width=2),
-            fill='tozeroy',
-            fillcolor=fill,
-            hovertemplate=f"{label}<br>Date: %{{x|%Y-%m-%d}}<br>Drawdown: %{{y:.2%}}<extra></extra>",
-            showlegend=True
+            line=dict(color='black', width=2),
+            showlegend=True,
+            hovertemplate=f"{label}<br>Date: %{{x|%Y-%m-%d}}<br>Drawdown: %{{y:.2%}}<extra></extra>"
         ))
+
+        # Add positive area (light green)
+        fig.add_trace(go.Scatter(
+            x=df.index,
+            y=df[col].where(df[col] > 0, 0),
+            mode='lines',
+            line=dict(width=0),
+            fill='tozeroy',
+            fillcolor='lightgreen',
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+
+        # Add negative area (light red)
+        fig.add_trace(go.Scatter(
+            x=df.index,
+            y=df[col].where(df[col] < 0, 0),
+            mode='lines',
+            line=dict(width=0),
+            fill='tozeroy',
+            fillcolor='lightcoral',
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+
     fig.update_layout(
         title="Drawdown Analysis",
         yaxis_title="Drawdown (%)",
