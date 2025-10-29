@@ -129,24 +129,26 @@ def core_equity_mags_spx():
 def sam_core_equity_rolling_alpha():
     rolling_alpha_to_spx = pd.DataFrame(columns = ['SAM','GOOGL','AMZN','AAPL','MSFT','NVDA','TSLA'],
                                         index = sam_mags_merge.index)
-    for row in range(11,len(sam_mags_merge)):
-        subset = sam_mags_merge.iloc[row-11:row+1]
+    window = 24
+    true_window = window-1
+    for row in range(true_window,len(sam_mags_merge)):
+        subset = sam_mags_merge.iloc[row-true_window:row+1]
         sam_beta, sam_alpha, _, _, _ = stats.linregress(subset['SPX'], subset['SAM'])
-        rolling_alpha_to_spx.loc[subset.index[11],'SAM'] = sam_alpha
+        rolling_alpha_to_spx.loc[subset.index[true_window],'SAM'] = sam_alpha
         goog_beta, goog_alpha, _, _, _ = stats.linregress(subset['SPX'], subset['GOOGL'])
-        rolling_alpha_to_spx.loc[subset.index[11],'GOOGL'] = goog_alpha
+        rolling_alpha_to_spx.loc[subset.index[true_window],'GOOGL'] = goog_alpha
         amzn_beta, amzn_alpha, _, _, _ = stats.linregress(subset['SPX'], subset['AMZN'])
-        rolling_alpha_to_spx.loc[subset.index[11],'AMZN'] = amzn_alpha
+        rolling_alpha_to_spx.loc[subset.index[true_window],'AMZN'] = amzn_alpha
         aapl_beta, aapl_alpha, _, _, _ = stats.linregress(subset['SPX'], subset['AAPL'])
-        rolling_alpha_to_spx.loc[subset.index[11],'AAPL'] = aapl_alpha
+        rolling_alpha_to_spx.loc[subset.index[true_window],'AAPL'] = aapl_alpha
         meta_beta, meta_alpha, _, _, _ = stats.linregress(subset['SPX'], subset['META'])
-        rolling_alpha_to_spx.loc[subset.index[11],'META'] = meta_alpha
+        rolling_alpha_to_spx.loc[subset.index[true_window],'META'] = meta_alpha
         msft_beta, msft_alpha, _, _, _ = stats.linregress(subset['SPX'], subset['MSFT'])
-        rolling_alpha_to_spx.loc[subset.index[11],'MSFT'] = msft_alpha
+        rolling_alpha_to_spx.loc[subset.index[true_window],'MSFT'] = msft_alpha
         nvda_beta, nvda_alpha, _, _, _ = stats.linregress(subset['SPX'], subset['NVDA'])
-        rolling_alpha_to_spx.loc[subset.index[11],'NVDA'] = nvda_alpha
+        rolling_alpha_to_spx.loc[subset.index[true_window],'NVDA'] = nvda_alpha
         tsla_beta, tsla_alpha, _, _, _ = stats.linregress(subset['SPX'], subset['TSLA'])
-        rolling_alpha_to_spx.loc[subset.index[11],'TSLA'] = tsla_alpha
+        rolling_alpha_to_spx.loc[subset.index[true_window],'TSLA'] = tsla_alpha
     rolling_alpha_to_spx = rolling_alpha_to_spx.dropna()
     rolling_alpha_to_spx['MAGS'] = rolling_alpha_to_spx[mags_tickers].mean(axis=1)
     rolling_alpha_to_spx['spread'] = rolling_alpha_to_spx['SAM'] - rolling_alpha_to_spx['MAGS']
