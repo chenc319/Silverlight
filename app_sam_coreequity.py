@@ -129,7 +129,7 @@ def core_equity_mags_spx():
 def sam_core_equity_rolling_alpha():
     rolling_alpha_to_spx = pd.DataFrame(columns = ['SAM','GOOGL','AMZN','AAPL','MSFT','NVDA','TSLA'],
                                         index = sam_mags_merge.index)
-    window = 6
+    window = 12
     true_window = window-1
     for row in range(true_window,len(sam_mags_merge)):
         subset = sam_mags_merge.iloc[row-true_window:row+1]
