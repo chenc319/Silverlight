@@ -144,7 +144,6 @@ def streamlit_drawdown_plot(df,
             showlegend=True,
             hovertemplate=f"{label}<br>Date: %{{x|%Y-%m-%d}}<br>Drawdown: %{{y:.2%}}<extra></extra>"
         ))
-
         # Add positive area (light green)
         fig.add_trace(go.Scatter(
             x=df.index,
@@ -156,7 +155,6 @@ def streamlit_drawdown_plot(df,
             showlegend=False,
             hoverinfo='skip'
         ))
-
         # Add negative area (light red)
         fig.add_trace(go.Scatter(
             x=df.index,
@@ -168,7 +166,6 @@ def streamlit_drawdown_plot(df,
             showlegend=False,
             hoverinfo='skip'
         ))
-
     fig.update_layout(
         title="Drawdown Analysis",
         yaxis_title="Drawdown (%)",
