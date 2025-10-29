@@ -149,6 +149,7 @@ def sam_core_equity_rolling_alpha():
         rolling_alpha_to_spx.loc[subset.index[11],'TSLA'] = tsla_alpha
     rolling_alpha_to_spx = rolling_alpha_to_spx.dropna()
     rolling_alpha_to_spx['MAGS'] = rolling_alpha_to_spx[mags_tickers].mean(axis=1)
+    rolling_alpha_to_spx['spread'] = rolling_alpha_to_spx['SAM'] - rolling_alpha_to_spx['MAGS']
 
     ### PLOT HISTORICAL ALPHA ###
     streamlit_plot(df=rolling_alpha_to_spx * 100,
@@ -157,16 +158,31 @@ def sam_core_equity_rolling_alpha():
                    graph_title='Rolling 12 Month Alpha',
                    y_axis_label='%')
 
-    rolling_alpha_to_spx['spread'] = rolling_alpha_to_spx['SAM'] - rolling_alpha_to_spx['MAGS']
     streamlit_spread_plot(df=rolling_alpha_to_spx * 100,
-                   columns_array=['spread'],
-                   graph_title='Alpha Spread',
-                   y_axis_label='%')
+                          graph_title='Alpha Spread',
+                          y_axis_label='%')
 
-    rolling_alpha_to_spx[rolling_alpha_to_spx['spread'] < 0]['MAGS'].mean(axis=0)
-    rolling_alpha_to_spx[rolling_alpha_to_spx['spread'] < 0]['SAM'].mean(axis=0)
-    rolling_alpha_to_spx[rolling_alpha_to_spx['spread'] > 0]['MAGS'].mean(axis=0)
-    rolling_alpha_to_spx[rolling_alpha_to_spx['spread'] > 0]['SAM'].mean(axis=0)
+    ### ALPHA SPREAD RELATIVE TO RETURNS ###
+    sam_mags_merge['alpha_spread'] = rolling_alpha_to_spx['spread']
+
+    sam_mags_merge[sam_mags_merge['alpha_spread'] < 0]['MAGS'].mean()
+    sam_mags_merge[sam_mags_merge['alpha_spread'] < 0]['SAM'].mean()
+    sam_mags_merge[sam_mags_merge['alpha_spread'] > 0]['MAGS'].mean()
+    sam_mags_merge[sam_mags_merge['alpha_spread'] > 0]['SAM'].mean()
+
+    alpha_spread_df = pd.DataFrame(columns = ['CE','MAGS'],
+                                   index = ['- Alpha Spread',
+                                            '+ Alpha Spread'])
+    alpha_spread_df.loc['- Alpha Spread','CE'] = round(
+        sam_mags_merge[sam_mags_merge['alpha_spread'] < 0]['SAM'].mean()*100,2)
+    alpha_spread_df.loc['- Alpha Spread','MAGS'] = round(
+        sam_mags_merge[sam_mags_merge['alpha_spread'] < 0]['MAGS'].mean()*100,2)
+    alpha_spread_df.loc['+ Alpha Spread','CE'] = round(
+        sam_mags_merge[sam_mags_merge['alpha_spread'] > 0]['SAM'].mean()*100,2)
+    alpha_spread_df.loc['+ Alpha Spread','MAGS'] = round(
+        sam_mags_merge[sam_mags_merge['alpha_spread'] > 0]['MAGS'].mean()*100,2)
+
+    st.dataframe(alpha_spread_df)
 
 def core_equity_mag_backtest_simulation():
     ### CALCULATE MOCK PORTFOLIOS ###
