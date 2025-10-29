@@ -69,56 +69,40 @@ def streamlit_return_metrics_table(df,
                                    green_high=None,
                                    green_low=None):
     """
-    Streamlit table styling:
-      - If one row: positive = green, negative = red (uniform, not gradient)
-      - If many rows: min = red, max = green, gradient by value
-      - All text: black
+    Display a styled return metrics table in Streamlit with smooth green-red gradient
+    (max=green, min=red), all text black.
     """
     if green_high is None:
         green_high = ['Total Return', 'Avg Return', 'Avg Upside Return', 'Win Ratio',
                       'Ann. Return', 'Return/Risk', 'Max Return']
     if green_low is None:
-        green_low = ['Avg Downside Return', 'Ann. Volatility', 'Min Return']
+        green_low = ['Avg Downside Return', 'Ann. Volatility', 'Min Return','Beta']
+
     styler = df.style.format({
         'Total Return': '{:,.2%}',
-        'Avg Return': '{:,.4%}',
-        'Avg Upside Return': '{:.4%}',
-        'Avg Downside Return': '{:.4%}',
+        'Avg Return': '{:,.2%}',
+        'Avg Upside Return': '{:.2%}',
+        'Avg Downside Return': '{:.2%}',
         'Win Ratio': '{:.2%}',
         'Ann. Return': '{:.2%}',
         'Ann. Volatility': '{:.2%}',
         'Return/Risk': '{:.2f}',
-        'Max Return': '{:.4%}',
-        'Min Return': '{:.4%}',
+        'Max Return': '{:.2%}',
+        'Min Return': '{:.2%}',
         'Beta': '{:.2f}'
     })
-    if len(df) == 1:
-        # Single-row: binary hard coloring
-        def posneg_bg(val, flip=False):
-            try:
-                val = float(val)
-                if flip:
-                    color = 'green' if val < 0 else 'red'
-                else:
-                    color = 'green' if val > 0 else 'red'
-                return f'background-color: {color}; color: black'
-            except:
-                return 'color: black'
-        for col in green_high:
-            if col in df.columns:
-                styler = styler.applymap(lambda v: posneg_bg(v, flip=False), subset=[col])
-        for col in green_low:
-            if col in df.columns:
-                styler = styler.applymap(lambda v: posneg_bg(v, flip=True), subset=[col])
-    else:
-        # Multi-row: gradient
-        for col in green_high:
-            if col in df.columns:
-                styler = styler.background_gradient(subset=[col], cmap="RdYlGn")
-        for col in green_low:
-            if col in df.columns:
-                styler = styler.background_gradient(subset=[col], cmap="RdYlGn_r")
-        styler = styler.set_properties(**{'color': 'black'})
+
+    # Apply smooth red-green backgrounds only
+    for col in green_high:
+        if col in df.columns:
+            styler = styler.background_gradient(subset=[col], cmap="RdYlGn")
+    for col in green_low:
+        if col in df.columns:
+            styler = styler.background_gradient(subset=[col], cmap="RdYlGn_r")
+
+    # All text black: Use set_properties
+    styler = styler.set_properties(**{'color': 'black'})
+
     return st.dataframe(styler)
 
 def compute_drawdown(cumret):
