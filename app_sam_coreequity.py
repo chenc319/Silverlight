@@ -161,7 +161,7 @@ def core_equity_mag_backtest_simulation():
     sam_mags_merge['SAM_75'] = (sam_mags_merge['SAM'] * 0.75) + (sam_mags_merge['MAGS'] * 0.25)
 
     ### PLOTS ###
-    streamlit_plot(df=sam_mags_merge * 100,
+    streamlit_plot(df=sam_mags_merge.cumsum() * 100,
                    columns_array=['MAGS','SAM_25','SAM_50','SAM_75','SAM'],
                    colors_array=[
                        "#4F6D7A",  # MAGS - muted deep blue-grey
