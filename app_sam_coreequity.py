@@ -158,9 +158,8 @@ def sam_core_equity_rolling_alpha():
                    y_axis_label='%')
 
     rolling_alpha_to_spx['spread'] = rolling_alpha_to_spx['SAM'] - rolling_alpha_to_spx['MAGS']
-    streamlit_plot(df=rolling_alpha_to_spx * 100,
+    streamlit_spread_plot(df=rolling_alpha_to_spx * 100,
                    columns_array=['spread'],
-                   colors_array=['#2056AE'],
                    graph_title='Alpha Spread',
                    y_axis_label='%')
 
