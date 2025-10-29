@@ -74,7 +74,22 @@ spx_monthly_pct.columns = ['SPX']
 
 ### MERGE ###
 sam_mags_merge = merge_dfs([mags_monthly_pct, spx_monthly_pct,sam_core_equity]).dropna()
-sam_mags_merge['MAGS'] = sam_mags_merge[mags_tickers].mean(axis=1)
+
+### MAGS WEIGHTS ###
+with open(Path(DATA_DIR) / 'mags_weights.xlsx', 'rb') as file:
+    mags_weights_df = pd.read_excel(file,sheet_name='Sheet1')
+    mags_weights_df.index = mags_weights_df['Date'].values
+    mags_weights_df.drop('Date', axis=1, inplace=True)
+    mags_weights_df['sum'] = mags_weights_df.sum(axis=1)
+normalized_mags_weights = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA'])
+normalized_mags_pct = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA'])
+for col in normalized_mags_weights.columns:
+    normalized_mags_weights[col] = (mags_weights_df[col] / mags_weights_df['sum']).resample('ME').last()
+    col_df = merge_dfs([sam_mags_merge[col],normalized_mags_weights[col]]).ffill().dropna()
+    col_df.columns = ['pct','weights']
+    normalized_mags_pct[col] = col_df['pct'] * col_df['weights']
+
+sam_mags_merge['MAGS'] = normalized_mags_pct.sum(axis=1)
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ----------------------------------------- MAG7 SAM CORE EQUITY ------------------------------------------- ###
