@@ -134,37 +134,16 @@ def streamlit_drawdown_plot(df,
                             fill_colors):
     fig = go.Figure()
     for col, line, fill, label in zip(df_columns_to_plot, line_colors, fill_colors, graph_labels):
-        # Add black line trace
         fig.add_trace(go.Scatter(
             x=df.index,
             y=df[col],
             mode='lines',
             name=label,
-            line=dict(color='black', width=2),
-            showlegend=True,
-            hovertemplate=f"{label}<br>Date: %{{x|%Y-%m-%d}}<br>Drawdown: %{{y:.2%}}<extra></extra>"
-        ))
-        # Add positive area (light green)
-        fig.add_trace(go.Scatter(
-            x=df.index,
-            y=df[col].where(df[col] > 0, 0),
-            mode='lines',
-            line=dict(width=0),
+            line=dict(color=line, width=2),
             fill='tozeroy',
-            fillcolor='lightgreen',
-            showlegend=False,
-            hoverinfo='skip'
-        ))
-        # Add negative area (light red)
-        fig.add_trace(go.Scatter(
-            x=df.index,
-            y=df[col].where(df[col] < 0, 0),
-            mode='lines',
-            line=dict(width=0),
-            fill='tozeroy',
-            fillcolor='lightcoral',
-            showlegend=False,
-            hoverinfo='skip'
+            fillcolor=fill,
+            hovertemplate=f"{label}<br>Date: %{{x|%Y-%m-%d}}<br>Drawdown: %{{y:.2%}}<extra></extra>",
+            showlegend=True
         ))
     fig.update_layout(
         title="Drawdown Analysis",
@@ -197,6 +176,59 @@ def streamlit_plot(df,columns_array,colors_array,graph_title,y_axis_label):
         yaxis_title=y_axis_label
     )
     st.plotly_chart(fig, use_container_width=True)
+
+def streamlit_spread_plot(df, columns_array, graph_title, y_axis_label):
+    fig = go.Figure()
+    for name in columns_array:
+        y = df[name]
+        x = df.index
+
+        # Main black line
+        fig.add_trace(go.Scatter(
+            x=x,
+            y=y,
+            name=name,
+            mode='lines',
+            line=dict(color='black', width=2),
+            showlegend=True
+        ))
+
+        # Positive shading (light green)
+        fig.add_trace(go.Scatter(
+            x=x,
+            y=y.where(y > 0, 0),
+            mode='lines',
+            line=dict(color='rgba(0,0,0,0)', width=0),
+            fill='tozeroy',
+            fillcolor='rgba(144,238,144,0.5)',  # Light green
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+
+        # Negative shading (light red)
+        fig.add_trace(go.Scatter(
+            x=x,
+            y=y.where(y < 0, 0),
+            mode='lines',
+            line=dict(color='rgba(0,0,0,0)', width=0),
+            fill='tozeroy',
+            fillcolor='rgba(255,182,193,0.5)',  # Light red
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+
+    fig.update_layout(
+        height=450,
+        hovermode='x unified',
+        legend=dict(title='Legend', orientation='h', y=-0.25),
+        margin=dict(t=30, b=30),
+        title=graph_title,
+        yaxis_title=y_axis_label,
+        template='plotly_white',
+        plot_bgcolor='#f9f9f9'
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
 
 def streamlit_subplot(df, columns_array, colors_array, row_nums, col_nums):
     fig = sp.make_subplots(rows=row_nums, cols=col_nums, subplot_titles=columns_array)
