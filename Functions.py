@@ -65,15 +65,27 @@ def return_metrics(backtest_returns_data,
                                       beta]
     return(return_metrics_df)
 
+
+def custom_posneg_gradient(val, min_pos, max_pos, min_neg, max_neg):
+    if pd.isnull(val):
+        return 'background-color: white; color: black'
+    if val > 0:
+        # interpolate green from min_pos to max_pos
+        # e.g., 128 to 0 for green, fixed 255 for red and blue
+        intensity = int(128 - 128 * (val - min_pos) / (max_pos - min_pos) if max_pos != min_pos else 0)
+        r, g, b = (255 - intensity, 255, 255 - intensity)
+        return f'background-color: rgb({r},{g},{b}); color: black'
+    elif val < 0:
+        # interpolate red from max_neg to min_neg
+        intensity = int(128 - 128 * (val - max_neg) / (min_neg - max_neg) if min_neg != max_neg else 0)
+        r, g, b = (255, 255 - intensity, 255 - intensity)
+        return f'background-color: rgb({r},{g},{b}); color: black'
+    else:
+        return 'background-color: white; color: black'
+
+
 def streamlit_return_metrics_table(df):
-    """
-    For all columns:
-      - More positive = greener, more negative = redder (via gradient)
-      - Zero = yellow (RdYlGn midpoint)
-      - All text stays black
-      - Handles single/multi row identically via gradient
-    """
-    styler = df.style.format({
+    fmt_dict = {
         'Total Return': '{:,.2%}',
         'Avg Return': '{:,.4%}',
         'Avg Upside Return': '{:.4%}',
@@ -85,13 +97,24 @@ def streamlit_return_metrics_table(df):
         'Max Return': '{:.4%}',
         'Min Return': '{:.4%}',
         'Beta': '{:.2f}'
-    })
+    }
+    styler = df.style.format(fmt_dict)
 
-    # Apply RdYlGn gradient to every column (all: more green=more positive, more red=more negative)
+    # compute min/max by sign for each column
     for col in df.columns:
-        styler = styler.background_gradient(subset=[col], cmap='RdYlGn')
+        col_vals = df[col].dropna()
+        pos = col_vals[col_vals > 0]
+        neg = col_vals[col_vals < 0]
+        min_pos = pos.min() if len(pos) else 0.001  # avoid zero division
+        max_pos = pos.max() if len(pos) else 0.001
+        min_neg = neg.min() if len(neg) else -0.001
+        max_neg = neg.max() if len(neg) else -0.001  # note: max_neg closer to zero
 
-    styler = styler.set_properties(**{'color': 'black'})
+        def style_cell(val, p1=min_pos, p2=max_pos, n1=min_neg, n2=max_neg):
+            return custom_posneg_gradient(val, p1, p2, n1, n2)
+
+        styler = styler.applymap(style_cell, subset=[col])
+
     return st.dataframe(styler)
 
 def compute_drawdown(cumret):
