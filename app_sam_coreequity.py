@@ -155,10 +155,23 @@ def sam_core_equity_rolling_alpha():
     rolling_alpha_to_spx[rolling_alpha_to_spx['spread'] > 0]['SAM'].mean(axis=0)
 
 def core_equity_mag_backtest_simulation():
+    ### CALCULATE MOCK PORTFOLIOS ###
     sam_mags_merge['SAM_25'] = (sam_mags_merge['SAM'] * 0.25) + (sam_mags_merge['MAGS'] * 0.75)
     sam_mags_merge['SAM_50'] = (sam_mags_merge['SAM'] * 0.50) + (sam_mags_merge['MAGS'] * 0.50)
     sam_mags_merge['SAM_75'] = (sam_mags_merge['SAM'] * 0.75) + (sam_mags_merge['MAGS'] * 0.25)
 
+    ### PLOTS ###
+    streamlit_plot(df=sam_mags_merge * 100,
+                   columns_array=['MAGS','SAM_25','SAM_50','SAM_75','SAM'],
+                   colors_array=[
+                       "#4F6D7A",  # MAGS - muted deep blue-grey
+                       "#A3B18A",  # SAM_25 - soft olive green
+                       "#E9C46A",  # SAM_50 - warm sand gold
+                       "#E07A5F",  # SAM_75 - muted coral/orange
+                       "#7EBC89",  # SAM - mellow green-teal
+                       ],
+                   graph_title='Mock Portfolios',
+                   y_axis_label='%')
     return_metrics_df = return_metrics(sam_mags_merge[['MAGS','SAM_25','SAM_50','SAM_75','SAM']],
                                        sam_mags_merge['SPX'],
                                        12)
