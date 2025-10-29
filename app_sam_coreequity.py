@@ -27,7 +27,8 @@ def static_beta(return_ts, benchmark_ts,):
     return individual_beta
 
 def return_metrics(backtest_returns_data,
-                   benchmark_data):
+                   benchmark_data,
+                   ann_factor):
     backtest_returns_data = pd.DataFrame(backtest_returns_data)
     benchmark_data = pd.DataFrame(benchmark_data)
     return_metrics_df = pd.DataFrame(
@@ -46,20 +47,20 @@ def return_metrics(backtest_returns_data,
     for x in range(0,len(backtest_returns_data.columns)):
         col = backtest_returns_data.columns[x]
         data = pd.DataFrame(backtest_returns_data[col]).ffill().dropna()
-        data.columns = ['daily returns']
-        total_return = data['daily returns'].sum()
-        mean_return = data['daily returns'].mean()
-        avg_win_return = data[data['daily returns'] > 0].mean().iloc[0]
-        avg_lose_return = data[data['daily returns'] < 0].mean().iloc[0]
-        win_ratio = len(data[data['daily returns'] > 0]) / len(data)
-        ann_return = mean_return * 252
-        ann_vol = data['daily returns'].std() * (252**0.5)
+        data.columns = ['returns']
+        total_return = data['returns'].sum()
+        mean_return = data['returns'].mean()
+        avg_win_return = data[data['returns'] > 0].mean().iloc[0]
+        avg_lose_return = data[data['returns'] < 0].mean().iloc[0]
+        win_ratio = len(data[data['returns'] > 0]) / len(data)
+        ann_return = mean_return * ann_factor
+        ann_vol = data['returns'].std() * (ann_factor**0.5)
         return_risk = ann_return / ann_vol
-        max_return = data['daily returns'].max()
-        max_return_date = data[data['daily returns'] == max_return].index[0]
-        min_return = data['daily returns'].min()
-        min_return_date = data[data['daily returns'] == min_return].index[0]
-        beta = static_beta(benchmark_data,data['daily returns'])
+        max_return = data['returns'].max()
+        max_return_date = data[data['returns'] == max_return].index[0]
+        min_return = data['returns'].min()
+        min_return_date = data[data['returns'] == min_return].index[0]
+        beta = static_beta(benchmark_data,data['returns'])
         return_metrics_df.loc[col] = [total_return,mean_return,
                                       avg_win_return,avg_lose_return,
                                       win_ratio,ann_return,
@@ -69,7 +70,6 @@ def return_metrics(backtest_returns_data,
     return(return_metrics_df)
 
 def streamlit_return_metrics_table(df):
-    # Format numbers and apply color gradients where fitting
     return (
         df.style
         .format({
