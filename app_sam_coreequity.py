@@ -70,7 +70,7 @@ def return_metrics(backtest_returns_data,
     return(return_metrics_df)
 
 def streamlit_return_metrics_table(df):
-    return (
+    return st.dataframe(
         df.style
         .format({
             'Total Return': '{:,.2%}',
@@ -320,8 +320,10 @@ def core_equity_mag_backtest_simulation():
     sam_mags_merge['SAM_50'] = (sam_mags_merge['SAM'] * 0.50) + (sam_mags_merge['MAGS'] * 0.50)
     sam_mags_merge['SAM_75'] = (sam_mags_merge['SAM'] * 0.75) + (sam_mags_merge['MAGS'] * 0.25)
 
-    return_metrics_df = return_metrics(sam_mags_merge[['SAM_25','SAM_50','SAM_75']],sam_mags_merge['SPX'])
-    st.dataframe(streamlit_return_metrics_table(return_metrics_df))
+    return_metrics_df = return_metrics(sam_mags_merge[['SAM_25','SAM_50','SAM_75']],
+                                       sam_mags_merge['SPX'],
+                                       12)
+    streamlit_return_metrics_table(return_metrics_df)
 
 
 
