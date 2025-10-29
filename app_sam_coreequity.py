@@ -19,6 +19,79 @@ def merge_dfs(array_of_dfs):
                                                   left_index=True,
                                                   right_index=True, how='outer'), array_of_dfs)
 
+def static_beta(return_ts, benchmark_ts,):
+    returns = merge_dfs([return_ts,benchmark_ts])
+    rolling_cov = returns.iloc[:,0].cov(returns.iloc[:,1])
+    rolling_var = returns.iloc[:,1].var()
+    individual_beta = rolling_cov / rolling_var
+    return individual_beta
+
+def return_metrics(backtest_returns_data,
+                   benchmark_data):
+    backtest_returns_data = pd.DataFrame(backtest_returns_data)
+    benchmark_data = pd.DataFrame(benchmark_data)
+    return_metrics_df = pd.DataFrame(
+        columns = ['Total Return',
+                   'Avg Return',
+                   'Avg Upside Return',
+                   'Avg Downside Return',
+                   'Win Ratio',
+                   'Ann. Return',
+                   'Ann. Volatility',
+                   'Return/Risk',
+                   'Max Return','Max Return Date',
+                   'Min Return','Min Return Date',
+                   'Beta']
+    )
+    for x in range(0,len(backtest_returns_data.columns)):
+        col = backtest_returns_data.columns[x]
+        data = pd.DataFrame(backtest_returns_data[col]).ffill().dropna()
+        data.columns = ['daily returns']
+        total_return = data['daily returns'].sum()
+        mean_return = data['daily returns'].mean()
+        avg_win_return = data[data['daily returns'] > 0].mean().iloc[0]
+        avg_lose_return = data[data['daily returns'] < 0].mean().iloc[0]
+        win_ratio = len(data[data['daily returns'] > 0]) / len(data)
+        ann_return = mean_return * 252
+        ann_vol = data['daily returns'].std() * (252**0.5)
+        return_risk = ann_return / ann_vol
+        max_return = data['daily returns'].max()
+        max_return_date = data[data['daily returns'] == max_return].index[0]
+        min_return = data['daily returns'].min()
+        min_return_date = data[data['daily returns'] == min_return].index[0]
+        beta = static_beta(benchmark_data,data['daily returns'])
+        return_metrics_df.loc[col] = [total_return,mean_return,
+                                      avg_win_return,avg_lose_return,
+                                      win_ratio,ann_return,
+                                      ann_vol,return_risk,
+                                      max_return,max_return_date,
+                                      min_return,min_return_date,beta]
+    return(return_metrics_df)
+
+def streamlit_return_metrics_table(df):
+    # Format numbers and apply color gradients where fitting
+    return (
+        df.style
+        .format({
+            'Total Return': '{:,.2%}',
+            'Avg Return': '{:,.4%}',
+            'Avg Upside Return': '{:,.4%}',
+            'Avg Downside Return': '{:,.4%}',
+            'Win Ratio': '{:.2%}',
+            'Ann. Return': '{:.2%}',
+            'Ann. Volatility': '{:.2%}',
+            'Return/Risk': '{:.2f}',
+            'Max Return': '{:.4%}',
+            'Min Return': '{:.4%}',
+            'Beta': '{:.2f}'
+        })
+        .background_gradient(subset=['Return/Risk'], cmap='RdYlGn')
+        .applymap(lambda v: 'color: green' if v > 0 else 'color: red', subset=['Avg Upside Return', 'Return/Risk'])
+        .applymap(lambda v: 'color: red' if v < 0 else 'color: green', subset=['Avg Downside Return'])
+        .highlight_max(color='lightgreen', axis=0)
+        .highlight_min(color='salmon', axis=0)
+    )
+
 def compute_drawdown(cumret):
     roll_max = cumret.cummax()
     drawdown = (cumret - roll_max) / roll_max
@@ -236,7 +309,21 @@ def sam_core_equity_rolling_alpha():
                    colors_array=['#2056AE'],
                    graph_title='Alpha Spread',
                    y_axis_label='%')
-    
+
+    rolling_alpha_to_spx[rolling_alpha_to_spx['spread'] < 0]['MAGS'].mean(axis=0)
+    rolling_alpha_to_spx[rolling_alpha_to_spx['spread'] < 0]['SAM'].mean(axis=0)
+    rolling_alpha_to_spx[rolling_alpha_to_spx['spread'] > 0]['MAGS'].mean(axis=0)
+    rolling_alpha_to_spx[rolling_alpha_to_spx['spread'] > 0]['SAM'].mean(axis=0)
+
+def core_equity_mag_backtest_simulation():
+    sam_mags_merge['SAM_25'] = (sam_mags_merge['SAM'] * 0.25) + (sam_mags_merge['MAGS'] * 0.75)
+    sam_mags_merge['SAM_50'] = (sam_mags_merge['SAM'] * 0.50) + (sam_mags_merge['MAGS'] * 0.50)
+    sam_mags_merge['SAM_75'] = (sam_mags_merge['SAM'] * 0.75) + (sam_mags_merge['MAGS'] * 0.25)
+
+    return_metrics_df = return_metrics(sam_mags_merge[['SAM_25','SAM_50','SAM_75']],sam_mags_merge['SPX'])
+    streamlit_return_metrics_table(return_metrics_df)
+
+
 
 
 
