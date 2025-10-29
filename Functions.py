@@ -69,14 +69,12 @@ def streamlit_return_metrics_table(df,
                                    green_high=None,
                                    green_low=None):
     """
-    Display a styled return metrics table in Streamlit with column-wise gradients.
-    green_high: list of column names where high values should be more green
-    green_low: list of column names where low values should be more green
+    Display a styled return metrics table in Streamlit with smooth green-red gradient
+    (max=green, min=red), all text black.
     """
-    # Default logic if not passed explicitly
     if green_high is None:
-        green_high = ['Total Return', 'Avg Return', 'Avg Upside Return',
-                      'Win Ratio', 'Ann. Return', 'Return/Risk', 'Max Return']
+        green_high = ['Total Return', 'Avg Return', 'Avg Upside Return', 'Win Ratio',
+                      'Ann. Return', 'Return/Risk', 'Max Return']
     if green_low is None:
         green_low = ['Avg Downside Return', 'Ann. Volatility', 'Min Return']
 
@@ -94,17 +92,16 @@ def streamlit_return_metrics_table(df,
         'Beta': '{:.2f}'
     })
 
-    # Apply background_gradient with 'RdYlGn' for "green high", 'RdYlGn_r' for "green low"
+    # Apply smooth red-green backgrounds only
     for col in green_high:
         if col in df.columns:
-            styler = styler.background_gradient(subset=[col], cmap='RdYlGn')
+            styler = styler.background_gradient(subset=[col], cmap="RdYlGn")
     for col in green_low:
         if col in df.columns:
-            styler = styler.background_gradient(subset=[col], cmap='RdYlGn_r')
+            styler = styler.background_gradient(subset=[col], cmap="RdYlGn_r")
 
-    # Optionally, add min/max highlights for further pop
-    styler = styler.highlight_max(color='lightgreen', axis=0)
-    styler = styler.highlight_min(color='salmon', axis=0)
+    # All text black: Use set_properties
+    styler = styler.set_properties(**{'color': 'black'})
 
     return st.dataframe(styler)
 
