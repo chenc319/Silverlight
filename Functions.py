@@ -80,15 +80,15 @@ def streamlit_return_metrics_table(df,
 
     styler = df.style.format({
         'Total Return': '{:,.2%}',
-        'Avg Return': '{:,.4%}',
-        'Avg Upside Return': '{:.4%}',
-        'Avg Downside Return': '{:.4%}',
+        'Avg Return': '{:,.2%}',
+        'Avg Upside Return': '{:.2%}',
+        'Avg Downside Return': '{:.2%}',
         'Win Ratio': '{:.2%}',
         'Ann. Return': '{:.2%}',
         'Ann. Volatility': '{:.2%}',
         'Return/Risk': '{:.2f}',
-        'Max Return': '{:.4%}',
-        'Min Return': '{:.4%}',
+        'Max Return': '{:.2%}',
+        'Min Return': '{:.2%}',
         'Beta': '{:.2f}'
     })
 
