@@ -65,44 +65,33 @@ def return_metrics(backtest_returns_data,
                                       beta]
     return(return_metrics_df)
 
-def streamlit_return_metrics_table(df,
-                                   green_high=None,
-                                   green_low=None):
+def streamlit_return_metrics_table(df):
     """
-    Display a styled return metrics table in Streamlit with smooth green-red gradient
-    (max=green, min=red), all text black.
+    For all columns:
+      - More positive = greener, more negative = redder (via gradient)
+      - Zero = yellow (RdYlGn midpoint)
+      - All text stays black
+      - Handles single/multi row identically via gradient
     """
-    if green_high is None:
-        green_high = ['Total Return', 'Avg Return', 'Avg Upside Return', 'Win Ratio',
-                      'Ann. Return', 'Return/Risk', 'Max Return']
-    if green_low is None:
-        green_low = ['Avg Downside Return', 'Ann. Volatility', 'Min Return','Beta']
-
     styler = df.style.format({
         'Total Return': '{:,.2%}',
-        'Avg Return': '{:,.2%}',
-        'Avg Upside Return': '{:.2%}',
-        'Avg Downside Return': '{:.2%}',
+        'Avg Return': '{:,.4%}',
+        'Avg Upside Return': '{:.4%}',
+        'Avg Downside Return': '{:.4%}',
         'Win Ratio': '{:.2%}',
         'Ann. Return': '{:.2%}',
         'Ann. Volatility': '{:.2%}',
         'Return/Risk': '{:.2f}',
-        'Max Return': '{:.2%}',
-        'Min Return': '{:.2%}',
+        'Max Return': '{:.4%}',
+        'Min Return': '{:.4%}',
         'Beta': '{:.2f}'
     })
 
-    # Apply smooth red-green backgrounds only
-    for col in green_high:
-        if col in df.columns:
-            styler = styler.background_gradient(subset=[col], cmap="RdYlGn")
-    for col in green_low:
-        if col in df.columns:
-            styler = styler.background_gradient(subset=[col], cmap="RdYlGn_r")
+    # Apply RdYlGn gradient to every column (all: more green=more positive, more red=more negative)
+    for col in df.columns:
+        styler = styler.background_gradient(subset=[col], cmap='RdYlGn')
 
-    # All text black: Use set_properties
     styler = styler.set_properties(**{'color': 'black'})
-
     return st.dataframe(styler)
 
 def compute_drawdown(cumret):
