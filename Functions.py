@@ -66,25 +66,28 @@ def return_metrics(backtest_returns_data,
     return(return_metrics_df)
 
 
-def custom_posneg_gradient_strict(val, min_pos, max_pos, min_neg, max_neg):
+def posneg_only_red_green(val, min_pos, max_pos, min_neg, max_neg):
     if pd.isnull(val):
-        # treat NaN as very pale green for visibility (alternatively: return a light neutral shade)
-        return 'background-color: rgb(230,255,230); color: black'
+        return 'background-color: rgb(240,255,240); color: black'
     if val > 0:
-        # Green gradient: from pale green to stronger green
-        g_ratio = 0 if max_pos == min_pos else (val - min_pos) / (max_pos - min_pos)
-        g_val = int(230 - 130 * g_ratio)  # 230 (very pale), to 100 (darker)
-        r_b_val = int(255 - 150 * g_ratio)  # 255 (white), to 105 (more green)
-        return f'background-color: rgb({r_b_val},{g_val},{r_b_val}); color: black'
+        # Strictly green gradient: lightest = min_pos, strongest = max_pos
+        ratio = 0 if max_pos == min_pos else (val - min_pos) / (max_pos - min_pos)
+        # From light green to green: (230,255,230) -> (0,180,0)
+        r = int(230 - 230 * ratio)
+        g = int(255 - 75 * ratio)
+        b = int(230 - 230 * ratio)
+        return f'background-color: rgb({r},{g},{b}); color: black'
     elif val < 0:
-        # Red gradient: from pale red to stronger red
-        r_ratio = 0 if min_neg == max_neg else (val - max_neg) / (min_neg - max_neg)
-        r_val = int(230 - 130 * r_ratio)  # 230 (very pale), to 100 (darker)
-        g_b_val = int(255 - 150 * r_ratio)  # 255 (white), to 105 (more red)
-        return f'background-color: rgb({r_val},{g_b_val},{g_b_val}); color: black'
+        # Strictly red gradient: lightest = max_neg, strongest = min_neg
+        ratio = 0 if min_neg == max_neg else (val - max_neg) / (min_neg - max_neg)
+        # From light red to red: (255,230,230) -> (255,0,0)
+        r = 255
+        g = int(230 - 230 * ratio)
+        b = int(230 - 230 * ratio)
+        return f'background-color: rgb({r},{g},{b}); color: black'
     else:
-        # Zero is mapped to very pale green
-        return 'background-color: rgb(230,255,230); color: black'
+        # Zero assigned very pale green
+        return 'background-color: rgb(240,255,240); color: black'
 
 
 def streamlit_return_metrics_table(df):
@@ -103,20 +106,17 @@ def streamlit_return_metrics_table(df):
     }
     styler = df.style.format(fmt_dict)
 
-    # Get per-column scaling for proper gradients
     for col in df.columns:
         vals = df[col].dropna()
         pos = vals[vals > 0]
         neg = vals[vals < 0]
-        has_pos = len(pos) > 0
-        has_neg = len(neg) > 0
-        min_pos = pos.min() if has_pos else 0.001
-        max_pos = pos.max() if has_pos else 0.001
-        min_neg = neg.min() if has_neg else -0.001
-        max_neg = neg.max() if has_neg else -0.001
+        min_pos = pos.min() if len(pos) else 0.001
+        max_pos = pos.max() if len(pos) else 1
+        min_neg = neg.min() if len(neg) else -1
+        max_neg = neg.max() if len(neg) else -0.001
 
         def style_cell(val, mp=min_pos, xp=max_pos, mn=min_neg, xn=max_neg):
-            return custom_posneg_gradient_strict(val, mp, xp, mn, xn)
+            return posneg_only_red_green(val, mp, xp, mn, xn)
 
         styler = styler.applymap(style_cell, subset=[col])
 
