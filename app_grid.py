@@ -56,7 +56,6 @@ growth_dict = {
 inflation_dict = {
     'CPIAUCSL': 'cpi_all_items',
     'CPILFESL': 'cpi_less_food_energy',
-    'PPIACO': 'ppi_all_commodities',
     'CPIUFDSL': 'cpi_food',
     'CPIENGSL': 'cpi_energy',
     'CUSR0000SAH3': 'cpi_household_furnishings',
@@ -107,7 +106,6 @@ with open(Path(DATA_DIR) / 'cli.pkl', 'rb') as file:
 ### INFLATION VARIABLE ###
 factor_features = [
     'CPILFESL',
-    'PPIACO',
     'CPIUFDSL',
     'CPIENGSL',
     'CUSR0000SAH3',
