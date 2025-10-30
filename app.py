@@ -15,8 +15,6 @@ import app_inflation
 import app_tail_hedge
 import app_sam_coreequity
 
-import time
-
 ### FUNCTIONS ###
 def merge_dfs(array_of_dfs):
     new_df = ft.reduce(lambda left,

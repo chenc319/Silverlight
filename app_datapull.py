@@ -2,19 +2,14 @@
 ### ---------------------------------------------- DATA PULLS ------------------------------------------------ ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
+### PACKAGES ###
+from Functions import *
 import pandas as pd
-import functools as ft
 from pandas_datareader import data as pdr
 from pathlib import Path
 import os
 import pickle
-import numpy as np
 DATA_DIR = os.getenv('DATA_DIR', 'data')
-
-def merge_dfs(array_of_dfs):
-    return ft.reduce(lambda left, right: pd.merge(left, right,
-                                                  left_index=True,
-                                                  right_index=True, how='outer'), array_of_dfs)
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ---------------------------------------------- DATA PULLS ------------------------------------------------ ###
