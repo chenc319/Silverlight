@@ -25,7 +25,6 @@ def plot_inflation_predictor():
     # --- Load Data ---
     factor_features = [
         'CPILFESL',
-        'PPIACO',
         'CPIUFDSL',
         'CPIENGSL',
         'CUSR0000SAH3',

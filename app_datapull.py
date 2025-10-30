@@ -132,7 +132,6 @@ def refresh_data(start,end,**kwargs):
     ### INFLATION VARIABLES ###
     cpi_total = pdr.DataReader('CPIAUCSL', 'fred', start, end).resample('ME').last()
     cpi_less_foodenergy = pdr.DataReader('CPILFESL', 'fred', start, end).resample('ME').last()
-    ppi_total = pdr.DataReader('PPIACO', 'fred', start, end).resample('ME').last()
     cpi_food = pdr.DataReader('CPIUFDSL', 'fred', start, end).resample('ME').last()
     cpi_energy = pdr.DataReader('CPIENGSL', 'fred', start, end).resample('ME').last()
     cpi_household_furnishings = pdr.DataReader('CUSR0000SAH3', 'fred', start, end).resample('ME').last()
@@ -143,7 +142,7 @@ def refresh_data(start,end,**kwargs):
     cpi_motor_fuel = pdr.DataReader('CUSR0000SETB', 'fred', start, end).resample('ME').last()
     cpi_services_less_energy = pdr.DataReader('CUSR0000SASLE', 'fred', start, end).resample('ME').last()
     inflation_variables_merge = merge_dfs(
-        [cpi_total, cpi_less_foodenergy, ppi_total,
+        [cpi_total, cpi_less_foodenergy,
          cpi_food, cpi_energy, cpi_household_furnishings,
          cpi_apparel, cpi_medical_care, cpi_transportation,
          cpi_alcohol, cpi_motor_fuel, cpi_services_less_energy]).dropna()
