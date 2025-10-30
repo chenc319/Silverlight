@@ -221,7 +221,7 @@ def plot_cpi_nowcast():
     pred = model.predict(factor_test.values.reshape(-1, 1))[0]
     train_pred = model.predict(factor_train.values.reshape(-1, 1))
 
-    window = 24  # number of months to look back
+    window = 36  # number of months to look back
     hist_errors = train['CPIAUCSL'].values - train_pred
     recent_errors = hist_errors[-window:] if len(hist_errors) >= window else hist_errors
     upside_shift = np.quantile(recent_errors, 0.90)  # upper 80th percentile error
