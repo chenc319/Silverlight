@@ -202,7 +202,6 @@ def plot_cpi_nowcast():
     test = target_feature_df.iloc[len(target_feature_df)-1:len(target_feature_df)]
     factor_features = [
         'CPILFESL',
-        'PPIACO',
         'CPIUFDSL',
         'CPIENGSL',
         'CUSR0000SAH3',
