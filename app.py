@@ -124,7 +124,7 @@ elif menu == 'Inflation Predictor':
 
 elif menu == 'GRID Model':
     st.title('Upcoming GRID Regime')
-    app_inflation.grid_regime_nowcast()
+    app_grid.grid_regime_nowcast()
     app_inflation.plot_cpi_nowcast()
     app_inflation.plot_cpi_nowcast()
     st.title('GRID Regime Performance')

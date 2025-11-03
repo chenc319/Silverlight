@@ -491,6 +491,32 @@ def grid_regime_nowcast():
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
     target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
     target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
+    target_feature_df = target_feature_df.dropna()
+
+    train = target_feature_df.iloc[len(target_feature_df) - 37:len(target_feature_df) - 1]
+    test = target_feature_df.iloc[len(target_feature_df) - 1:len(target_feature_df)]
+    factor_features = [
+        'CPILFESL',
+        'CPIUFDSL',
+        'CPIENGSL',
+        'CUSR0000SAH3',
+        'CPIAPPSL',
+        'CPIMEDSL',
+        'CPITRNSL',
+        'CUSR0000SAF116',
+        'CUSR0000SETB',
+        'CUSR0000SASLE'
+    ]
+    factor_train = train[factor_features].mean(axis=1)
+    factor_test = test[factor_features].mean(axis=1)
+    model = LinearRegression()
+    model.fit(factor_train.values.reshape(-1, 1), train['CPIAUCSL'].values)
+    pred = model.predict(factor_test.values.reshape(-1, 1))[0]
+    train_pred = model.predict(factor_train.values.reshape(-1, 1))
+    inflation_yoy_pred = pred
+    inflation_2nd_order_diff = pred - target_feature_df['CPIAUCSL'][-1]
+    cli_1st_order_diff = pred - target_feature_df['CPIAUCSL'][-1]
+
 
 
 
