@@ -28,7 +28,7 @@ def return_metrics(backtest_returns_data, benchmark_data, ann_factor):
         columns=['Total Return', 'Avg Return', 'Avg Upside Return', 'Avg Downside Return',
                  'Win Ratio', 'Ann. Return', 'Ann. Volatility', 'Return/Risk',
                  'Max Return', 'Min Return',
-                 'Upside Capture', 'Downside Capture', 'Beta', 'Capture Ratio']
+                 'Upside Capture', 'Downside Capture', 'Capture Ratio','Beta']
     )
     benchmark_returns = benchmark_data.iloc[:,0].ffill().dropna()
 
