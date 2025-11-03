@@ -25,19 +25,10 @@ def return_metrics(backtest_returns_data, benchmark_data, ann_factor):
     backtest_returns_data = pd.DataFrame(backtest_returns_data)
     benchmark_data = pd.DataFrame(benchmark_data)
     return_metrics_df = pd.DataFrame(
-        columns = ['Total Return',
-                   'Avg Return',
-                   'Avg Upside Return',
-                   'Avg Downside Return',
-                   'Win Ratio',
-                   'Ann. Return',
-                   'Ann. Volatility',
-                   'Return/Risk',
-                   'Max Return',
-                   'Min Return',
-                   'Upside Capture',
-                   'Downside Capture',
-                   'Beta']
+        columns=['Total Return', 'Avg Return', 'Avg Upside Return', 'Avg Downside Return',
+                 'Win Ratio', 'Ann. Return', 'Ann. Volatility', 'Return/Risk',
+                 'Max Return', 'Min Return',
+                 'Upside Capture', 'Downside Capture', 'Beta', 'Capture Ratio']
     )
     benchmark_returns = benchmark_data.iloc[:,0].ffill().dropna()
 
@@ -56,17 +47,21 @@ def return_metrics(backtest_returns_data, benchmark_data, ann_factor):
         max_return = data['returns'].max()
         min_return = data['returns'].min()
 
+        # Upside/Downside Capture
         upside_mask = benchmark_returns > 0
         downside_mask = benchmark_returns < 0
         upside_capture = (data['returns'][upside_mask].mean() / benchmark_returns[upside_mask].mean()) if upside_mask.any() else None
         downside_capture = (data['returns'][downside_mask].mean() / benchmark_returns[downside_mask].mean()) if downside_mask.any() else None
+
+        # Capture Ratio: Upside / |Downside|
+        capture_ratio = (upside_capture / abs(downside_capture)) if (upside_capture is not None and downside_capture not in (None, 0)) else None
 
         beta = static_beta(benchmark_data, data['returns'])
 
         return_metrics_df.loc[col] = [
             total_return, mean_return, avg_win_return, avg_lose_return, win_ratio,
             ann_return, ann_vol, return_risk, max_return, min_return,
-            upside_capture, downside_capture, beta
+            upside_capture, downside_capture, beta, capture_ratio
         ]
     return return_metrics_df
 
@@ -109,6 +104,7 @@ def streamlit_return_metrics_table(df):
         'Min Return': '{:.2%}',
         'Upside Capture': '{:.2%}',
         'Downside Capture': '{:.2%}',
+        'Capture Ratio': '{:.2%}',
         'Beta': '{:.2f}'
     }
     styler = df.style.format(fmt_dict)
