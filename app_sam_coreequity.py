@@ -210,6 +210,30 @@ def core_equity_mag_backtest_simulation():
                                        12)
     streamlit_return_metrics_table(return_metrics_df)
 
+    upside_capture_sam = (sam_mags_merge[sam_mags_merge['SPX'] > 0][['SAM']].mean()[0] /
+                          sam_mags_merge[sam_mags_merge['SPX'] > 0][['SPX']].mean()[0])
+
+    upside_capture_mag = (sam_mags_merge[sam_mags_merge['SPX'] > 0][['MAGS']].mean()[0] /
+                          sam_mags_merge[sam_mags_merge['SPX'] > 0][['SPX']].mean()[0])
+
+    downside_capture_sam = (sam_mags_merge[sam_mags_merge['SPX'] < 0][['SAM']].mean()[0] /
+                            sam_mags_merge[sam_mags_merge['SPX'] < 0][['SPX']].mean()[0])
+
+    downside_capture_mag = (sam_mags_merge[sam_mags_merge['SPX'] < 0][['MAGS']].mean()[0] /
+                            sam_mags_merge[sam_mags_merge['SPX'] < 0][['SPX']].mean()[0])
+
+    downside_capture_df = sam_mags_merge[sam_mags_merge['SPX'] < 0][['SAM','MAGS']]
+    streamlit_plot(df=downside_capture_df * 100,
+                   columns_array=['MAGS','SAM'],
+                   colors_array=[
+                       "#4F6D7A",  # MAGS - muted deep blue-grey
+                       "#A3B18A",  # SAM_25 - soft olive green
+                   ],
+                   graph_title='Downside Market Capture',
+                   y_axis_label='%')
+
+
+
 
 
 
