@@ -149,6 +149,35 @@ for i in range(window, len(target_feature_df)):
     })
 
 inflation_prediction = pd.DataFrame(result_factor, index=target_feature_df.index[window:])
+inflation_prediction = inflation_prediction.shift(1)
+
+grid_growth_inflation_spx = merge_dfs([
+    cli.pct_change(),
+    inflation_prediction['prediction'].resample('ME').last().diff(),
+    spx_monthly.pct_change().shift(-1)
+]).dropna()
+grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
+grid_growth_inflation_spx = grid_growth_inflation_spx['2005-01-01':]
+
+def regime_label(row):
+    if row['inflation'] > 0 and row['growth'] > 0:
+        return 0  # Reflation
+    elif row['inflation'] > 0 and row['growth'] < 0:
+        return 1  # Stagflation
+    elif row['inflation'] < 0 and row['growth'] > 0:
+        return 2  # Goldilocks
+    elif row['inflation'] < 0 and row['growth'] < 0:
+        return 3  # Deflation
+    else:
+        return np.nan
+regime_labels = {
+    0: 'Reflation',
+    1: 'Stagflation',
+    2: 'Goldilocks',
+    3: 'Deflation'
+}
+grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regime_label, axis=1)
+grid_growth_inflation_spx['regime_label'] = grid_growth_inflation_spx['regime_code'].map(regime_labels)
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------------- GRID -------------------------------------------------- ###
@@ -323,33 +352,6 @@ def plot_grid_model():
 
 
 def grid_z_score_backtest():
-    grid_growth_inflation_spx = merge_dfs([
-        cli.pct_change(),
-        inflation_prediction['prediction'].resample('ME').last().diff(),
-        spx_monthly.pct_change().shift(-1)
-    ]).dropna()
-    grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
-    grid_growth_inflation_spx = grid_growth_inflation_spx['2005-01-01':]
-
-    def regime_label(row):
-        if row['inflation'] > 0 and row['growth'] > 0:
-            return 0  # Reflation
-        elif row['inflation'] > 0 and row['growth'] < 0:
-            return 1  # Stagflation
-        elif row['inflation'] < 0 and row['growth'] > 0:
-            return 2  # Goldilocks
-        elif row['inflation'] < 0 and row['growth'] < 0:
-            return 3  # Deflation
-        else:
-            return np.nan
-    regime_labels = {
-        0: 'Reflation',
-        1: 'Stagflation',
-        2: 'Goldilocks',
-        3: 'Deflation'
-    }
-    grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regime_label, axis=1)
-    grid_growth_inflation_spx['regime_label'] = grid_growth_inflation_spx['regime_code'].map(regime_labels)
 
     def grid_backtest(row):
         if row['regime_label']== 'Goldilocks':
@@ -476,6 +478,8 @@ def grid_z_score_backtest():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.write(styled, unsafe_allow_html=True)
+
+# def grid_regime_nowcast():
 
 
 
