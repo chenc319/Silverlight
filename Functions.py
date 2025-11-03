@@ -61,7 +61,7 @@ def return_metrics(backtest_returns_data, benchmark_data, ann_factor):
         return_metrics_df.loc[col] = [
             total_return, mean_return, avg_win_return, avg_lose_return, win_ratio,
             ann_return, ann_vol, return_risk, max_return, min_return,
-            upside_capture, downside_capture, beta, capture_ratio
+            upside_capture, downside_capture, capture_ratio,beta
         ]
     return return_metrics_df
 
