@@ -225,12 +225,14 @@ def core_equity_mag_backtest_simulation():
     downside_capture_df = sam_mags_merge[sam_mags_merge['SPX'] < 0][['SAM','MAGS']]
     streamlit_plot(df=downside_capture_df * 100,
                    columns_array=['MAGS','SAM'],
-                   colors_array=[
-                       "#4F6D7A",  # MAGS - muted deep blue-grey
-                       "#A3B18A",  # SAM_25 - soft olive green
-                   ],
+                   colors_array=['#2056AE', '#E74C3C'],
                    graph_title='Downside Market Capture',
                    y_axis_label='%')
+
+    from scipy.stats import pearsonr
+    corr, p_value = pearsonr(downside_capture_df['SAM'], downside_capture_df['MAGS'])
+
+
 
 
 
