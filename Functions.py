@@ -21,9 +21,7 @@ def static_beta(return_ts, benchmark_ts,):
     individual_beta = rolling_cov / rolling_var
     return individual_beta
 
-def return_metrics(backtest_returns_data,
-                   benchmark_data,
-                   ann_factor):
+def return_metrics(backtest_returns_data, benchmark_data, ann_factor):
     backtest_returns_data = pd.DataFrame(backtest_returns_data)
     benchmark_data = pd.DataFrame(benchmark_data)
     return_metrics_df = pd.DataFrame(
@@ -37,33 +35,40 @@ def return_metrics(backtest_returns_data,
                    'Return/Risk',
                    'Max Return',
                    'Min Return',
+                   'Upside Capture',
+                   'Downside Capture',
                    'Beta']
     )
-    for x in range(0,len(backtest_returns_data.columns)):
+    benchmark_returns = benchmark_data.iloc[:,0].ffill().dropna()
+
+    for x in range(0, len(backtest_returns_data.columns)):
         col = backtest_returns_data.columns[x]
         data = pd.DataFrame(backtest_returns_data[col]).ffill().dropna()
         data.columns = ['returns']
         total_return = data['returns'].sum()
         mean_return = data['returns'].mean()
-        avg_win_return = data[data['returns'] > 0].mean().iloc[0]
-        avg_lose_return = data[data['returns'] < 0].mean().iloc[0]
+        avg_win_return = data[data['returns'] > 0]['returns'].mean()
+        avg_lose_return = data[data['returns'] < 0]['returns'].mean()
         win_ratio = len(data[data['returns'] > 0]) / len(data)
         ann_return = mean_return * ann_factor
-        ann_vol = data['returns'].std() * (ann_factor**0.5)
-        return_risk = ann_return / ann_vol
+        ann_vol = data['returns'].std() * (ann_factor ** 0.5)
+        return_risk = ann_return / ann_vol if ann_vol != 0 else None
         max_return = data['returns'].max()
-        max_return_date = data[data['returns'] == max_return].index[0]
         min_return = data['returns'].min()
-        min_return_date = data[data['returns'] == min_return].index[0]
-        beta = static_beta(benchmark_data,data['returns'])
-        return_metrics_df.loc[col] = [total_return,mean_return,
-                                      avg_win_return,avg_lose_return,
-                                      win_ratio,ann_return,
-                                      ann_vol,return_risk,
-                                      max_return,
-                                      min_return,
-                                      beta]
-    return(return_metrics_df)
+
+        upside_mask = benchmark_returns > 0
+        downside_mask = benchmark_returns < 0
+        upside_capture = (data['returns'][upside_mask].mean() / benchmark_returns[upside_mask].mean()) if upside_mask.any() else None
+        downside_capture = (data['returns'][downside_mask].mean() / benchmark_returns[downside_mask].mean()) if downside_mask.any() else None
+
+        beta = static_beta(benchmark_data, data['returns'])
+
+        return_metrics_df.loc[col] = [
+            total_return, mean_return, avg_win_return, avg_lose_return, win_ratio,
+            ann_return, ann_vol, return_risk, max_return, min_return,
+            upside_capture, downside_capture, beta
+        ]
+    return return_metrics_df
 
 
 def posneg_only_red_green(val, min_pos, max_pos, min_neg, max_neg):
@@ -93,15 +98,17 @@ def posneg_only_red_green(val, min_pos, max_pos, min_neg, max_neg):
 def streamlit_return_metrics_table(df):
     fmt_dict = {
         'Total Return': '{:,.2%}',
-        'Avg Return': '{:,.4%}',
-        'Avg Upside Return': '{:.4%}',
-        'Avg Downside Return': '{:.4%}',
+        'Avg Return': '{:,.2%}',
+        'Avg Upside Return': '{:.2%}',
+        'Avg Downside Return': '{:.2%}',
         'Win Ratio': '{:.2%}',
         'Ann. Return': '{:.2%}',
         'Ann. Volatility': '{:.2%}',
         'Return/Risk': '{:.2f}',
-        'Max Return': '{:.4%}',
-        'Min Return': '{:.4%}',
+        'Max Return': '{:.2%}',
+        'Min Return': '{:.2%}',
+        'Upside Capture %': '{:.2%}',
+        'Downside Capture % Return': '{:.2%}',
         'Beta': '{:.2f}'
     }
     styler = df.style.format(fmt_dict)
