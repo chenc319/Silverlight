@@ -107,8 +107,8 @@ def streamlit_return_metrics_table(df):
         'Return/Risk': '{:.2f}',
         'Max Return': '{:.2%}',
         'Min Return': '{:.2%}',
-        'Upside Capture %': '{:.2%}',
-        'Downside Capture % Return': '{:.2%}',
+        'Upside Capture': '{:.2%}',
+        'Downside Capture': '{:.2%}',
         'Beta': '{:.2f}'
     }
     styler = df.style.format(fmt_dict)
