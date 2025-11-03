@@ -149,7 +149,7 @@ for i in range(window, len(target_feature_df)):
     })
 
 inflation_prediction = pd.DataFrame(result_factor, index=target_feature_df.index[window:])
-inflation_prediction = inflation_prediction.shift(1)
+inflation_prediction = inflation_prediction.shift(1).dropna()
 
 grid_growth_inflation_spx = merge_dfs([
     cli.pct_change(),
@@ -479,8 +479,18 @@ def grid_z_score_backtest():
     with col2:
         st.write(styled, unsafe_allow_html=True)
 
-# def grid_regime_nowcast():
-
+def grid_regime_nowcast():
+    with open(Path(DATA_DIR) / 'inflation_variables_merge.pkl', 'rb') as file:
+        inflation_variables_merge = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
+        di_reserves = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
+        m2_money_supply = pd.read_pickle(file)
+    inflation_variables_merge = merge_dfs([inflation_variables_merge, di_reserves, m2_money_supply])
+    target_feature_df = inflation_variables_merge.pct_change(12)
+    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
+    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
+    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
 
 
 
