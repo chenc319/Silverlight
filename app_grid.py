@@ -142,7 +142,7 @@ for i in range(window, len(target_feature_df)):
 
 inflation_prediction = pd.DataFrame(result_factor, index=target_feature_df.index[window:])
 inflation_prediction.index = inflation_prediction.index + pd.DateOffset(months=1)
-inflation_prediction['inflation_signal'] = inflation_prediction['prediction'] - inflation_prediction['actual']
+inflation_prediction['inflation_signal'] = inflation_prediction['prediction'].diff()
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------- PREPARE BACKTEST DATAFRAMES --------------------------------------- ###
@@ -453,5 +453,6 @@ def grid_bonds_backtest():
     )
     st.plotly_chart(fig, use_container_width=True)
 
+def grid_mags_backtest():
 
 
