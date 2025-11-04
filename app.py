@@ -6,7 +6,6 @@
 import streamlit as st
 import pandas as pd
 import functools as ft
-from archives import app_growth_inflation
 import app_growth
 import app_grid
 import app_firv_regime
