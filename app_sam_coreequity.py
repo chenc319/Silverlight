@@ -233,6 +233,7 @@ def core_equity_mag_backtest_simulation():
     from scipy.stats import pearsonr
     corr, p_value = pearsonr(downside_capture_df['SAM'], downside_capture_df['MAGS'])
 
+
 def mock_daily_sam_ce_portfolio():
     with open(Path(DATA_DIR) / 'Core Equity Single Account Daily Performance 2017-2025.xlsx', 'rb') as file:
         ce_df = pd.read_excel(file,sheet_name = 'Performance Details')
