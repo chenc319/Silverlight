@@ -511,11 +511,33 @@ def grid_regime_nowcast():
     factor_test = test[factor_features].mean(axis=1)
     model = LinearRegression()
     model.fit(factor_train.values.reshape(-1, 1), train['CPIAUCSL'].values)
-    pred = model.predict(factor_test.values.reshape(-1, 1))[0]
-    train_pred = model.predict(factor_train.values.reshape(-1, 1))
-    inflation_yoy_pred = pred
-    inflation_2nd_order_diff = pred - target_feature_df['CPIAUCSL'][-1]
-    cli_1st_order_diff = pred - target_feature_df['CPIAUCSL'][-1]
+    inflation_yoy_pred = model.predict(factor_test.values.reshape(-1, 1))[0]
+    inflation_2nd_order_diff = inflation_yoy_pred - target_feature_df['CPIAUCSL'][-1]
+    cli_1st_order_change = cli.pct_change().iloc[-1][0]
+
+    if inflation_2nd_order_diff > 0 and cli_1st_order_change > 0:
+        upcoming_grid_regime = 'Reflation'
+    elif inflation_2nd_order_diff > 0 and cli_1st_order_change < 0:
+        upcoming_grid_regime = 'Stagflation'
+    elif inflation_2nd_order_diff < 0 and cli_1st_order_change > 0:
+        upcoming_grid_regime = 'Goldilocks'
+    elif inflation_2nd_order_diff < 0 and cli_1st_order_change < 0:
+        upcoming_grid_regime = 'Deflation'
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("**Inflation 2nd Order Change**")
+        st.write(inflation_2nd_order_diff)
+
+    with col2:
+        st.markdown("**CPI 1st Order Change**")
+        st.write(cli_1st_order_change)
+
+    with col3:
+        st.markdown("**Quad Regime**")
+        st.write(upcoming_grid_regime)
+
 
 
 
