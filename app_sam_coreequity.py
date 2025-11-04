@@ -255,7 +255,7 @@ def mock_daily_sam_ce_portfolio():
 
     streamlit_return_metrics_table(return_metrics_df)
 
-    streamlit_plot(df=return_metrics_df.cumsum() * 100,
+    streamlit_plot(df=merge_df.cumsum() * 100,
                    columns_array=['SAM CE', 'SPX'],
                    colors_array=['#2056AE', '#E74C3C'],
                    graph_title='Historical Performance',
