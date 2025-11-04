@@ -220,11 +220,12 @@ def plot_grid_model():
         3: 'Deflation'
     }
     regime_colors = {
-        0: '#E74C3C',  # Reflation (red)
-        1: '#F1C40F',  # Stagflation (yellow)
-        2: '#27AE60',  # Goldilocks (green)
-        3: '#2980B9'  # Deflation (blue)
+        0: '#90ee90',  # Reflation (red)
+        1: '#ffc107',  # Stagflation (yellow)
+        2: '#28a745',  # Goldilocks (green)
+        3: '#dc3545'  # Deflation (blue)
     }
+
     df['regime_color'] = df['regime_code'].map(regime_colors)
     df['regime_label'] = df['regime_code'].map(regime_labels)
 
@@ -321,10 +322,10 @@ def plot_grid_model():
     ### GRID RETURN DISTRIBUTION ###
     regimes = ['Reflation', 'Stagflation', 'Goldilocks', 'Deflation']
     regime_colors_plotly = {
-        "Reflation": "#E74C3C",
-        "Stagflation": "#F1C40F",
-        "Goldilocks": "#27AE60",
-        "Deflation": "#2980B9"
+        "Reflation": "#90ee90",
+        "Stagflation": "#ffc107",
+        "Goldilocks": "#28a745",
+        "Deflation": "#dc3545"
     }
 
     fig = make_subplots(rows=2, cols=2, subplot_titles=regimes)
