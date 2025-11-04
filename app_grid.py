@@ -257,14 +257,18 @@ def grid_regime_nowcast():
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown("**Inflation 2nd Order Change**")
+        st.markdown("**Growth**")
+        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{cli_1st_order_change:+.2%}</span>",
+                    unsafe_allow_html=True)
+        st.caption("OECD CLI 1st Order % Change")
+
+
+    with col2:
+        st.markdown("**Inflation**")
         st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{inflation_2nd_order_diff:+.2%}</span>",
                     unsafe_allow_html=True)
 
-    with col2:
-        st.markdown("**CPI 1st Order Change**")
-        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{cli_1st_order_change:+.2%}</span>",
-                    unsafe_allow_html=True)
+        st.caption("SAM CPI 2nd Order % Change")
 
     with col3:
         st.markdown("**Quad Regime**")
@@ -272,7 +276,14 @@ def grid_regime_nowcast():
             f"<span style='background-color:{regime_color};color:white;padding:0.25em 0.75em;border-radius:0.3em;font-weight:bold;font-size:1.2em'>{upcoming_grid_regime}</span>",
             unsafe_allow_html=True
         )
-        st.caption("Macro regime based on combined inflation/CPI signal.")
+        if upcoming_grid_regime == 'Goldilocks':
+            st.caption("Growth + Inflation -")
+        elif upcoming_grid_regime == 'Reflation':
+            st.caption("Growth + Inflation +")
+        elif upcoming_grid_regime == 'Deflation':
+            st.caption("Growth - Inflation -")
+        elif upcoming_grid_regime == 'Stagflation':
+            st.caption("Growth - Inflation +")
 
 def grid_equity_backtest():
     # Regime weights logic
