@@ -524,19 +524,34 @@ def grid_regime_nowcast():
     elif inflation_2nd_order_diff < 0 and cli_1st_order_change < 0:
         upcoming_grid_regime = 'Deflation'
 
+    # Color mapping for regimes (customize as desired)
+    regime_colors = {
+        "Reflation": "orange",
+        "Stagflation": "red",
+        "Goldilocks": "green",
+        "Deflation": "blue"
+    }
+    regime_color = regime_colors.get(upcoming_grid_regime, "gray")
+
     col1, col2, col3 = st.columns(3)
 
     with col1:
         st.markdown("**Inflation 2nd Order Change**")
-        st.write(inflation_2nd_order_diff)
+        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{inflation_2nd_order_diff:+.2f}</span>",
+                    unsafe_allow_html=True)
 
     with col2:
         st.markdown("**CPI 1st Order Change**")
-        st.write(cli_1st_order_change)
+        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{cli_1st_order_change:+.2%}</span>",
+                    unsafe_allow_html=True)
 
     with col3:
         st.markdown("**Quad Regime**")
-        st.write(upcoming_grid_regime)
+        st.markdown(
+            f"<span style='background-color:{regime_color};color:white;padding:0.25em 0.75em;border-radius:0.3em;font-weight:bold;font-size:1.2em'>{upcoming_grid_regime}</span>",
+            unsafe_allow_html=True
+        )
+        st.caption("Macro regime based on combined inflation/CPI signal.")
 
 
 
