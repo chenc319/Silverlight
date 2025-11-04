@@ -512,7 +512,7 @@ def grid_regime_nowcast():
     model = LinearRegression()
     model.fit(factor_train.values.reshape(-1, 1), train['CPIAUCSL'].values)
     inflation_yoy_pred = model.predict(factor_test.values.reshape(-1, 1))[0]
-    inflation_2nd_order_diff = inflation_yoy_pred - target_feature_df['CPIAUCSL'][-1]
+    inflation_2nd_order_diff = (inflation_yoy_pred - target_feature_df['CPIAUCSL'][-1]) / target_feature_df['CPIAUCSL'][-1]
     cli_1st_order_change = cli.pct_change().iloc[-1][0]
 
     if inflation_2nd_order_diff > 0 and cli_1st_order_change > 0:
@@ -537,7 +537,7 @@ def grid_regime_nowcast():
 
     with col1:
         st.markdown("**Inflation 2nd Order Change**")
-        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{inflation_2nd_order_diff:+.2f}</span>",
+        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{inflation_2nd_order_diff:+.2%}</span>",
                     unsafe_allow_html=True)
 
     with col2:
