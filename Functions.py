@@ -299,3 +299,46 @@ def streamlit_subplot(df, columns_array, colors_array, row_nums, col_nums):
         width=1000
     )
     st.plotly_chart(fig, use_container_width=True)
+
+
+def plot_regime_return_histograms(df, regime_col, return_col, regimes):
+    """
+    Plots subplot histograms for a set of regimes' return distributions.
+
+    Args:
+        df: pd.DataFrame containing your data.
+        regime_col: str, name of regime label column.
+        return_col: str, name of return column.
+        regimes: list of regime names, defines subplot order.
+    """
+    import plotly.graph_objs as go
+    from plotly.subplots import make_subplots
+
+    # Auto-title and color for up to 4 regimes
+    subplot_titles = [str(regime) for regime in regimes]
+    default_colors = ['#28a745', '#90ee90', '#dc3545', '#ffc107']
+    regime_colors = {regimes[i]: default_colors[i % len(default_colors)] for i in range(len(regimes))}
+
+    fig = make_subplots(rows=2, cols=2, subplot_titles=subplot_titles)
+    min_bound = df[return_col].min()
+    max_bound = df[return_col].max()
+
+    for i, regime in enumerate(regimes):
+        row = i // 2 + 1
+        col = i % 2 + 1
+        subdata = df[df[regime_col] == regime]
+        fig.add_trace(
+            go.Histogram(
+                x=subdata[return_col].dropna(),
+                name=subplot_titles[i],
+                marker_color=regime_colors[regime],
+                opacity=0.8,
+                nbinsx=30
+            ),
+            row=row,
+            col=col
+        )
+        fig.update_xaxes(title_text="Equity % Return", row=row, col=col, range=[min_bound, max_bound])
+        fig.update_yaxes(title_text="Count", row=row, col=col)
+    fig.update_layout(showlegend=False, height=600)
+    st.plotly_chart(fig, use_container_width=True)

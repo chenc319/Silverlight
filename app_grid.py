@@ -196,6 +196,15 @@ grid_growth_inflation_agg['regime_code'] = grid_growth_inflation_agg.apply(regim
 grid_growth_inflation_agg['regime_label'] = grid_growth_inflation_agg['regime_code'].map(regime_labels)
 grid_growth_inflation_agg['regime_color'] = grid_growth_inflation_agg['regime_code'].map(regime_colors)
 
+def grid_backtest(row):
+    regime_weights = {
+        'Goldilocks': 1,
+        'Reflation': 0.75,
+        'Deflation': 0.5,
+        'Stagflation': 0.25
+    }
+    return regime_weights.get(row['regime_label'], np.nan)
+
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------------- GRID -------------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
@@ -261,15 +270,12 @@ def grid_regime_nowcast():
         st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{cli_1st_order_change:+.2%}</span>",
                     unsafe_allow_html=True)
         st.caption("OECD CLI 1st Order % Change")
-
-
     with col2:
         st.markdown("**Inflation**")
         st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{inflation_2nd_order_diff:+.2%}</span>",
                     unsafe_allow_html=True)
 
         st.caption("SAM CPI 2nd Order % Change")
-
     with col3:
         st.markdown("**Quad Regime**")
         st.markdown(
@@ -286,16 +292,6 @@ def grid_regime_nowcast():
             st.caption("Growth - Inflation +")
 
 def grid_equity_backtest():
-    # Regime weights logic
-    def grid_backtest(row):
-        regime_weights = {
-            'Goldilocks': 1,
-            'Reflation': 0.75,
-            'Deflation': 0.5,
-            'Stagflation': 0.25
-        }
-        return regime_weights.get(row['regime_label'], np.nan)
-
     grid_growth_inflation_spx['weights'] = grid_growth_inflation_spx.apply(grid_backtest, axis=1)
     grid_growth_inflation_spx['bt_returns'] = grid_growth_inflation_spx['weights'] * grid_growth_inflation_spx['spx']
     grid_growth_inflation_spx['cumsum_spx'] = (1 + grid_growth_inflation_spx['spx']).cumprod()
@@ -314,18 +310,6 @@ def grid_equity_backtest():
 
     # Display main summary table
     streamlit_return_metrics_table(grid_metrics)
-
-    # Performance by regime
-    regimes = ['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
-    regime_labels = [
-        'Goldilocks (I-G+)', 'Reflation (I+G+)', 'Deflation (I-G-)', 'Stagflation (I+G-)'
-    ]
-    regime_colors_plotly = {
-        "Goldilocks": "#28a745",
-        "Reflation": "#90ee90",
-        "Stagflation": "#ffc107",
-        "Deflation": "#dc3545"
-    }
 
     regime_stats_df = return_metrics_by_regime(base_df = grid_growth_inflation_spx,
                                                return_col = 'bt_returns',
@@ -356,102 +340,69 @@ def grid_equity_backtest():
     )
 
     # Regime return distribution subplots
+    plot_regime_return_histograms(
+        grid_growth_inflation_spx,
+        regime_col='regime_label',
+        return_col='spx',
+        regimes=['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+    )
 
-    fig = make_subplots(rows=2, cols=2, subplot_titles=regime_labels)
-    min_bound = grid_growth_inflation_spx['spx'].min()
-    max_bound = grid_growth_inflation_spx['spx'].max()
-    for i, regime in enumerate(regimes):
-        row = i // 2 + 1
-        col = i % 2 + 1
-        subdata = grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == regime]
-        fig.add_trace(
-            go.Histogram(
-                x=subdata['spx'].dropna(),
-                name=regime_labels[i],
-                marker_color=regime_colors_plotly.get(regime, "#AAAAAA"),
-                opacity=0.8,
-                nbinsx=30
-            ),
-            row=row,
-            col=col
-        )
-        fig.update_xaxes(title_text="Equity % Return", row=row, col=col, range=[min_bound, max_bound])
-        fig.update_yaxes(title_text="Count", row=row, col=col)
-    fig.update_layout(showlegend=False, height=600)
-    st.plotly_chart(fig, use_container_width=True)
 
 def grid_bonds_backtest():
-    def grid_backtest(row):
-        if row['regime_label'] == 'Goldilocks':
-            return 1
-        elif row['regime_label'] == 'Reflation':
-            return 0.75
-        elif row['regime_label'] == 'Deflation':
-            return 0.5
-        elif row['regime_label'] == 'Stagflation':
-            return 0.25
-        else:
-            return np.nan
-
     grid_growth_inflation_agg['weights'] = grid_growth_inflation_agg.apply(grid_backtest, axis=1)
-    grid_growth_inflation_agg['bt_returns'] = grid_growth_inflation_agg['weights'] * grid_growth_inflation_agg[
-        'bonds']
+    grid_growth_inflation_agg['bt_returns'] = grid_growth_inflation_agg['weights'] * grid_growth_inflation_agg['bonds']
     grid_growth_inflation_agg['cumsum_bonds'] = (1 + grid_growth_inflation_agg['bonds']).cumprod()
     grid_growth_inflation_agg['cumsum_bt'] = (1 + grid_growth_inflation_agg['bt_returns']).cumprod()
 
-    ### DRAWDOWN ###
-    def compute_drawdown(cumret):
-        roll_max = cumret.cummax()
-        drawdown = (cumret - roll_max) / roll_max
-        return drawdown
-
-    def calculate_beta(strategy_returns, benchmark_returns):
-        cov = np.cov(strategy_returns, benchmark_returns)[0, 1]
-        var = np.var(benchmark_returns)
-        return cov / var
-
-    # Calculate drawdown series
+    # Drawdown calculations using your helper
     grid_growth_inflation_agg['drawdown_bt'] = compute_drawdown(grid_growth_inflation_agg['cumsum_bt'])
     grid_growth_inflation_agg['drawdown_bonds'] = compute_drawdown(grid_growth_inflation_agg['cumsum_bonds'])
 
-    ### TABLE OF RESULTS ###
-    grid_backtest_results = pd.DataFrame()
-    grid_backtest_results['Strategy'] = ['GRID Model', 'Bonds']
-    grid_backtest_results['Mean Monthly Returns'] = [
-        grid_growth_inflation_agg['bt_returns'].mean() * 100,
-        grid_growth_inflation_agg['bonds'].mean() * 100,
-    ]
-    grid_backtest_results['Ann. Returns'] = grid_backtest_results['Mean Monthly Returns'] * 12
-    grid_backtest_results['Ann. Volatility'] = [
-        (grid_growth_inflation_agg['bt_returns'].std() * 12 ** 0.5) * 100,
-        (grid_growth_inflation_agg['bonds'].std() * 12 ** 0.5) * 100,
-    ]
-    grid_backtest_results['Return/Risk'] = grid_backtest_results['Ann. Returns'] / grid_backtest_results[
-        'Ann. Volatility']
-    grid_beta = calculate_beta(grid_growth_inflation_agg['bt_returns'], grid_growth_inflation_agg['bonds'])
-    bonds_beta = 1.0  # Self-benchmarking
-
-    grid_backtest_results['Beta'] = [grid_beta, bonds_beta]
-
-    ### PLOT ###
-    fig = go.Figure()
-    cols = ['cumsum_bt', 'cumsum_bonds']
-    labels = [
-        'GRID',
-        'Bonds',
-    ]
-    colors = ['#5FB3FF', '#2DCDB2']
-    for col, color, label in zip(cols, colors, labels):
-        fig.add_trace(go.Scatter(x=grid_growth_inflation_agg.index, y=grid_growth_inflation_agg[col],
-                                 mode='lines',
-                                 name=label,
-                                 line=dict(color=color)))
-    fig.update_layout(
-        title="GRID Bonds Backtest",
-        yaxis_title="Dollars",
-        hovermode='x unified'
+    # Performance metrics table with your helper function
+    grid_metrics = return_metrics(
+        backtest_returns_data=grid_growth_inflation_agg[['bt_returns', 'bonds']],
+        benchmark_data=grid_growth_inflation_agg[['bonds']],
+        ann_factor=12
     )
-    st.plotly_chart(fig, use_container_width=True)
+
+    # Display main summary table
+    streamlit_return_metrics_table(grid_metrics)
+
+    regime_stats_df = return_metrics_by_regime(base_df=grid_growth_inflation_agg,
+                                               return_col='bt_returns',
+                                               benchmark_col='bonds',
+                                               regime_col='regime_label', ann_factor=12)
+    desired_order = ['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+    regime_stats_df = regime_stats_df.reindex(desired_order)
+
+    # Styled regime table
+    streamlit_return_metrics_table(regime_stats_df)
+
+    # Cum return plot
+    streamlit_plot(
+        df=grid_growth_inflation_agg,
+        columns_array=['cumsum_bt', 'cumsum_bonds'],
+        colors_array=['#5FB3FF', '#2DCDB2'],
+        graph_title="GRID Z-Score Backtest",
+        y_axis_label="Cumulative Return"
+    )
+
+    # Drawdown plot
+    streamlit_drawdown_plot(
+        df=grid_growth_inflation_agg,
+        graph_labels=['GRID', 'Bonds'],
+        df_columns_to_plot=['drawdown_bt', 'drawdown_bonds'],
+        line_colors=['rgba(95,179,255,1)', 'rgba(45,205,178,1)'],
+        fill_colors=['rgba(95,179,255,0.3)', 'rgba(45,205,178,0.3)']
+    )
+
+    # Regime return distribution subplots
+    plot_regime_return_histograms(
+        grid_growth_inflation_agg,
+        regime_col='regime_label',
+        return_col='bonds',
+        regimes=['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+    )
 
 def grid_mags_backtest():
     print('ih')
