@@ -259,6 +259,12 @@ def mock_daily_sam_ce_portfolio():
     cumulative_return_stream.columns = ['SAM CE','SPX']
     cumulative_return_stream['SPX'] = (1 + cumulative_return_stream['SPX']).cumprod() - 1
 
+    streamlit_plot(df=merge_df * 100,
+                   columns_array=['SAM CE'],
+                   colors_array=['#2056AE'],
+                   graph_title='Daily Return Stream',
+                   y_axis_label='%')
+
     streamlit_plot(df=cumulative_return_stream * 100,
                    columns_array=['SAM CE', 'SPX'],
                    colors_array=['#2056AE', '#E74C3C'],
