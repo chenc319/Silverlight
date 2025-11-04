@@ -352,7 +352,7 @@ def grid_equity_backtest():
     for i, regime in enumerate(regimes):
         row = i // 2 + 1
         col = i % 2 + 1
-        subdata = df[df['regime_label'] == regime]
+        subdata = grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == regime]
         fig.add_trace(
             go.Histogram(
                 x=subdata['spx'].dropna(),
