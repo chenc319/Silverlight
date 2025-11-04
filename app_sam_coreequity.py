@@ -257,7 +257,7 @@ def mock_daily_sam_ce_portfolio():
 
     cumulative_return_stream = merge_dfs([daily_cumulative_ce,spx_daily_pct]).dropna()
     cumulative_return_stream.columns = ['SAM CE','SPX']
-    cumulative_return_stream['SPX'] = cumulative_return_stream['SPX'].cumsum()
+    cumulative_return_stream['SPX'] = (1 + cumulative_return_stream['SPX']).cumprod() - 1
 
     streamlit_plot(df=cumulative_return_stream * 100,
                    columns_array=['SAM CE', 'SPX'],
