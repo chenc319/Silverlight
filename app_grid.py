@@ -277,7 +277,7 @@ def grid_regime_nowcast():
             unsafe_allow_html=True
         )
         st.caption("Macro regime based on combined inflation/CPI signal.")
-    
+
 def grid_equity_backtest():
     # Regime weights logic
     def grid_backtest(row):
