@@ -89,6 +89,12 @@ spx_monthly = pd.DataFrame(sp500['Close']).resample('ME').last()
 spx_monthly.columns = ['spx']
 spx_monthly_pct = spx_monthly.pct_change().dropna()
 
+### BONDS DATA ###
+with open(Path(DATA_DIR) / 'AGG.csv', 'rb') as file:
+    agg = pd.read_csv(file)
+agg.index = pd.to_datetime(agg['Date']).values
+agg = pd.DataFrame(agg['Close']).resample('ME').last()
+
 ### SECTOR DATA ###
 spx_sectors_merge = pd.DataFrame()
 for each_factor in list(spx_sectors.keys()):
@@ -155,6 +161,14 @@ grid_growth_inflation_spx = merge_dfs([
     cli.pct_change(),
     inflation_prediction['prediction'].resample('ME').last().diff(),
     spx_monthly.pct_change().shift(-1)
+]).dropna()
+grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
+grid_growth_inflation_spx = grid_growth_inflation_spx['2005-01-01':]
+
+grid_growth_inflation_agg = merge_dfs([
+    cli.pct_change(),
+    inflation_prediction['prediction'].resample('ME').last().diff(),
+    agg.pct_change().shift(-1)
 ]).dropna()
 grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
 grid_growth_inflation_spx = grid_growth_inflation_spx['2005-01-01':]
@@ -352,7 +366,7 @@ def plot_grid_model():
     st.plotly_chart(fig, use_container_width=True)
 
 
-def grid_z_score_backtest():
+def grid_equity_backtest():
 
     def grid_backtest(row):
         if row['regime_label']== 'Goldilocks':
@@ -554,6 +568,7 @@ def grid_regime_nowcast():
         )
         st.caption("Macro regime based on combined inflation/CPI signal.")
 
+def grid_bonds_backtest():
 
 
 

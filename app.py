@@ -125,10 +125,11 @@ elif menu == 'Inflation Predictor':
 elif menu == 'GRID Model':
     st.title('Upcoming GRID Regime')
     app_grid.grid_regime_nowcast()
-    app_inflation.plot_cpi_nowcast()
-    st.title('GRID Model Backtest')
+    st.title('GRID Equities Backtest')
     app_grid.plot_grid_model()
-    app_grid.grid_z_score_backtest()
+    app_grid.grid_equity_backtest()
+    st.title('GRID Bonds Backtest')
+    app_grid.grid_bonds_backtest()
 
 
 ### ---------------------------------------------------------------------------------------- ###
