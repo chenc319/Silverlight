@@ -559,7 +559,6 @@ def grid_regime_nowcast():
         st.caption("Macro regime based on combined inflation/CPI signal.")
 
 def grid_bonds_backtest():
-
     def grid_backtest(row):
         if row['regime_label'] == 'Goldilocks':
             return 1
