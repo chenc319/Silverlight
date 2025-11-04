@@ -607,13 +607,13 @@ def grid_bonds_backtest():
     grid_backtest_results['Return/Risk'] = grid_backtest_results['Ann. Returns'] / grid_backtest_results[
         'Ann. Volatility']
     grid_beta = calculate_beta(grid_growth_inflation_agg['bt_returns'], grid_growth_inflation_agg['bonds'])
-    spx_beta = 1.0  # Self-benchmarking
+    bonds_beta = 1.0  # Self-benchmarking
 
-    grid_backtest_results['Beta'] = [grid_beta, spx_beta]
+    grid_backtest_results['Beta'] = [grid_beta, bonds_beta]
 
     ### PLOT ###
     fig = go.Figure()
-    cols = ['cumsum_bt', 'cumsum_spx']
+    cols = ['cumsum_bt', 'cumsum_bonds']
     labels = [
         'GRID',
         'Bonds',
