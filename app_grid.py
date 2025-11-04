@@ -454,5 +454,5 @@ def grid_bonds_backtest():
     st.plotly_chart(fig, use_container_width=True)
 
 def grid_mags_backtest():
-
+    print('ih')
 
