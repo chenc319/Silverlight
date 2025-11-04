@@ -98,6 +98,7 @@ elif menu == 'GRID Model':
     st.title('Upcoming GRID Regime')
     app_grid.grid_regime_nowcast()
     st.title('GRID Equities Backtest')
+    app_grid.plot_grid_equity_model()
     app_grid.grid_equity_backtest()
     st.title('GRID Bonds Backtest')
     app_grid.grid_bonds_backtest()

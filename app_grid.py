@@ -204,9 +204,80 @@ grid_growth_inflation_agg['regime_color'] = grid_growth_inflation_agg['regime_co
 ### -------------------------------------------------- GRID -------------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
+def grid_regime_nowcast():
+    with open(Path(DATA_DIR) / 'inflation_variables_merge.pkl', 'rb') as file:
+        inflation_variables_merge = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
+        di_reserves = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
+        m2_money_supply = pd.read_pickle(file)
+    inflation_variables_merge = merge_dfs([inflation_variables_merge, di_reserves, m2_money_supply])
+    target_feature_df = inflation_variables_merge.pct_change(12)
+    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
+    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
+    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
+    target_feature_df = target_feature_df.dropna()
 
+    train = target_feature_df.iloc[len(target_feature_df) - 37:len(target_feature_df) - 1]
+    test = target_feature_df.iloc[len(target_feature_df) - 1:len(target_feature_df)]
+    factor_features = [
+        'CPILFESL',
+        'CPIUFDSL',
+        'CPIENGSL',
+        'CUSR0000SAH3',
+        'CPIAPPSL',
+        'CPIMEDSL',
+        'CPITRNSL',
+        'CUSR0000SAF116',
+        'CUSR0000SETB',
+        'CUSR0000SASLE'
+    ]
+    factor_train = train[factor_features].mean(axis=1)
+    factor_test = test[factor_features].mean(axis=1)
+    model = LinearRegression()
+    model.fit(factor_train.values.reshape(-1, 1), train['CPIAUCSL'].values)
+    inflation_yoy_pred = model.predict(factor_test.values.reshape(-1, 1))[0]
+    inflation_2nd_order_diff = (inflation_yoy_pred - target_feature_df['CPIAUCSL'][-1]) / target_feature_df['CPIAUCSL'][-1]
+    cli_1st_order_change = cli.pct_change().iloc[-1][0]
 
+    if inflation_2nd_order_diff > 0 and cli_1st_order_change > 0:
+        upcoming_grid_regime = 'Reflation'
+    elif inflation_2nd_order_diff > 0 and cli_1st_order_change < 0:
+        upcoming_grid_regime = 'Stagflation'
+    elif inflation_2nd_order_diff < 0 and cli_1st_order_change > 0:
+        upcoming_grid_regime = 'Goldilocks'
+    elif inflation_2nd_order_diff < 0 and cli_1st_order_change < 0:
+        upcoming_grid_regime = 'Deflation'
 
+    # Color mapping for regimes (customize as desired)
+    regime_colors = {
+        "Goldilocks": "#28a745",  # Green
+        "Reflation": "#90ee90",  # Super light green
+        "Stagflation": "#ffc107",  # Yellow
+        "Deflation": "#dc3545"  # Red
+    }
+    regime_color = regime_colors.get(upcoming_grid_regime, "gray")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("**Inflation 2nd Order Change**")
+        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{inflation_2nd_order_diff:+.2%}</span>",
+                    unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("**CPI 1st Order Change**")
+        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{cli_1st_order_change:+.2%}</span>",
+                    unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("**Quad Regime**")
+        st.markdown(
+            f"<span style='background-color:{regime_color};color:white;padding:0.25em 0.75em;border-radius:0.3em;font-weight:bold;font-size:1.2em'>{upcoming_grid_regime}</span>",
+            unsafe_allow_html=True
+        )
+        st.caption("Macro regime based on combined inflation/CPI signal.")
+    
 def grid_equity_backtest():
     # Regime weights logic
     def grid_backtest(row):
@@ -312,81 +383,6 @@ def grid_equity_backtest():
         fig.update_yaxes(title_text="Count", row=row, col=col)
     fig.update_layout(showlegend=False, height=600)
     st.plotly_chart(fig, use_container_width=True)
-
-
-def grid_regime_nowcast():
-    with open(Path(DATA_DIR) / 'inflation_variables_merge.pkl', 'rb') as file:
-        inflation_variables_merge = pd.read_pickle(file)
-    with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
-        di_reserves = pd.read_pickle(file)
-    with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
-        m2_money_supply = pd.read_pickle(file)
-    inflation_variables_merge = merge_dfs([inflation_variables_merge, di_reserves, m2_money_supply])
-    target_feature_df = inflation_variables_merge.pct_change(12)
-    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
-    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
-    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
-    target_feature_df = target_feature_df.dropna()
-
-    train = target_feature_df.iloc[len(target_feature_df) - 37:len(target_feature_df) - 1]
-    test = target_feature_df.iloc[len(target_feature_df) - 1:len(target_feature_df)]
-    factor_features = [
-        'CPILFESL',
-        'CPIUFDSL',
-        'CPIENGSL',
-        'CUSR0000SAH3',
-        'CPIAPPSL',
-        'CPIMEDSL',
-        'CPITRNSL',
-        'CUSR0000SAF116',
-        'CUSR0000SETB',
-        'CUSR0000SASLE'
-    ]
-    factor_train = train[factor_features].mean(axis=1)
-    factor_test = test[factor_features].mean(axis=1)
-    model = LinearRegression()
-    model.fit(factor_train.values.reshape(-1, 1), train['CPIAUCSL'].values)
-    inflation_yoy_pred = model.predict(factor_test.values.reshape(-1, 1))[0]
-    inflation_2nd_order_diff = (inflation_yoy_pred - target_feature_df['CPIAUCSL'][-1]) / target_feature_df['CPIAUCSL'][-1]
-    cli_1st_order_change = cli.pct_change().iloc[-1][0]
-
-    if inflation_2nd_order_diff > 0 and cli_1st_order_change > 0:
-        upcoming_grid_regime = 'Reflation'
-    elif inflation_2nd_order_diff > 0 and cli_1st_order_change < 0:
-        upcoming_grid_regime = 'Stagflation'
-    elif inflation_2nd_order_diff < 0 and cli_1st_order_change > 0:
-        upcoming_grid_regime = 'Goldilocks'
-    elif inflation_2nd_order_diff < 0 and cli_1st_order_change < 0:
-        upcoming_grid_regime = 'Deflation'
-
-    # Color mapping for regimes (customize as desired)
-    regime_colors = {
-        "Goldilocks": "#28a745",  # Green
-        "Reflation": "#90ee90",  # Super light green
-        "Stagflation": "#ffc107",  # Yellow
-        "Deflation": "#dc3545"  # Red
-    }
-    regime_color = regime_colors.get(upcoming_grid_regime, "gray")
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.markdown("**Inflation 2nd Order Change**")
-        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{inflation_2nd_order_diff:+.2%}</span>",
-                    unsafe_allow_html=True)
-
-    with col2:
-        st.markdown("**CPI 1st Order Change**")
-        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{cli_1st_order_change:+.2%}</span>",
-                    unsafe_allow_html=True)
-
-    with col3:
-        st.markdown("**Quad Regime**")
-        st.markdown(
-            f"<span style='background-color:{regime_color};color:white;padding:0.25em 0.75em;border-radius:0.3em;font-weight:bold;font-size:1.2em'>{upcoming_grid_regime}</span>",
-            unsafe_allow_html=True
-        )
-        st.caption("Macro regime based on combined inflation/CPI signal.")
 
 def grid_bonds_backtest():
     def grid_backtest(row):
