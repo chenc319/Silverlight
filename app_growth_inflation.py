@@ -13,7 +13,7 @@ import os
 from matplotlib.colors import LinearSegmentedColormap
 from plotly.subplots import make_subplots
 import numpy as np
-DATA_DIR = os.getenv('DATA_DIR', '../data')
+DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 spx_sectors = {
     "XLC": "Comm Services",

@@ -8,6 +8,7 @@ import pandas as pd
 import functools as ft
 import app_growth
 import app_grid
+import app_growth_inflation
 import app_firv_regime
 import app_barra
 import app_inflation
@@ -69,6 +70,7 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 menu = st.sidebar.radio(
     "Go to section:",
     ['SAM Core Equity',
+     'Growth & Inflation Study',
      'GRID Model',
      'Growth Predictor',
      'Inflation Predictor',
@@ -91,6 +93,11 @@ if menu == 'SAM Core Equity':
     app_sam_coreequity.core_equity_mag_backtest_simulation()
     st.title('Daily SAM CE vs. SPX')
     app_sam_coreequity.mock_daily_sam_ce_portfolio()
+
+elif menu == 'Growth & Inflation Study':
+    app_growth_inflation.plot_growth_inflation()
+    app_growth_inflation.plot_spx_sector_regimes()
+    app_growth_inflation.core_equity_mag_backtest_simulation()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------- GROWTH AND INFLATION --------------------------------- ###
