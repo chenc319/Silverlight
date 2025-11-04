@@ -2,14 +2,9 @@
 ### ----------------------------------------------- INFLATION ------------------------------------------------ ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-import streamlit as st
-import pandas as pd
-import numpy as np
+from Functions import *
 from pathlib import Path
 import os
-import functools as ft
-from sklearn.linear_model import LinearRegression
-import plotly.graph_objs as go
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 def merge_dfs(array_of_dfs):

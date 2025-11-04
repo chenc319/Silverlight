@@ -8,6 +8,11 @@ import plotly.graph_objs as go
 import plotly.subplots as sp
 import pandas as pd
 import functools as ft
+import numpy as np
+from plotly.subplots import make_subplots
+from matplotlib.colors import LinearSegmentedColormap
+from sklearn.linear_model import LinearRegression
+
 
 def merge_dfs(array_of_dfs):
     return ft.reduce(lambda left, right: pd.merge(left, right,
