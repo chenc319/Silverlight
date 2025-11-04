@@ -181,57 +181,27 @@ regime_labels = {
     2: 'Goldilocks',
     3: 'Deflation'
 }
+regime_colors = {
+    0: '#90ee90',  # Reflation (red)
+    1: '#ffc107',  # Stagflation (yellow)
+    2: '#28a745',  # Goldilocks (green)
+    3: '#dc3545'  # Deflation (blue)
+    }
+
 grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regime_label, axis=1)
 grid_growth_inflation_spx['regime_label'] = grid_growth_inflation_spx['regime_code'].map(regime_labels)
+grid_growth_inflation_spx['regime_color'] = grid_growth_inflation_spx['regime_code'].map(regime_colors)
 
 grid_growth_inflation_agg['regime_code'] = grid_growth_inflation_agg.apply(regime_label, axis=1)
 grid_growth_inflation_agg['regime_label'] = grid_growth_inflation_agg['regime_code'].map(regime_labels)
+grid_growth_inflation_agg['regime_color'] = grid_growth_inflation_agg['regime_code'].map(regime_colors)
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------------- GRID -------------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-def plot_grid_model():
-
-    growth_inflation_prediction = merge_dfs([
-        cli.pct_change(),
-        inflation_prediction['prediction'].resample('ME').last().diff(),
-        spx_monthly.pct_change().shift(-1)
-    ]).dropna()
-    growth_inflation_prediction.columns = ['growth','inflation','spx']
-    growth_inflation_prediction = growth_inflation_prediction['2005-01-01':]
-
-    def regime_label(row):
-        if row['inflation'] > 0 and row['growth'] > 0:
-            return 0  # Reflation
-        elif row['inflation'] > 0 and row['growth'] < 0:
-            return 1  # Stagflation
-        elif row['inflation'] < 0 and row['growth'] > 0:
-            return 2  # Goldilocks
-        elif row['inflation'] < 0 and row['growth'] < 0:
-            return 3  # Deflation
-        else:
-            return np.nan
-
-    df = growth_inflation_prediction.copy()
-    df['regime_code'] = df.apply(regime_label, axis=1)
-    df = df.dropna(subset=['regime_code']).copy()
-    df['regime_code'] = df['regime_code'].astype(int)
-    regime_labels = {
-        0: 'Reflation',
-        1: 'Stagflation',
-        2: 'Goldilocks',
-        3: 'Deflation'
-    }
-    regime_colors = {
-        0: '#90ee90',  # Reflation (red)
-        1: '#ffc107',  # Stagflation (yellow)
-        2: '#28a745',  # Goldilocks (green)
-        3: '#dc3545'  # Deflation (blue)
-    }
-
-    df['regime_color'] = df['regime_code'].map(regime_colors)
-    df['regime_label'] = df['regime_code'].map(regime_labels)
+def plot_grid_equity_model():
+    df = grid_growth_inflation_spx.copy()
 
     reflation_regime = df[df['regime_label'] == 'Reflation']
     stagflation_regime = df[df['regime_label'] == 'Stagflation']
