@@ -6,7 +6,7 @@
 import streamlit as st
 import pandas as pd
 import functools as ft
-import app_growth_inflation
+from archives import app_growth_inflation
 import app_growth
 import app_grid
 import app_firv_regime
@@ -70,10 +70,9 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 menu = st.sidebar.radio(
     "Go to section:",
     ['SAM Core Equity',
-     'Growth & Inflation Model',
+     'GRID Model',
      'Growth Predictor',
      'Inflation Predictor',
-     'GRID Model',
      'Yield Curve Regimes',
      'Barra Factor Model',
      'Equity Positioning',
@@ -92,14 +91,18 @@ if menu == 'SAM Core Equity':
     st.title('SAM Core Equity + MAGS Portfolios')
     app_sam_coreequity.core_equity_mag_backtest_simulation()
 
-
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------- GROWTH AND INFLATION --------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-if menu == 'Growth & Inflation Model':
-    app_growth_inflation.plot_growth_inflation(start_date, end_date)
-    app_growth_inflation.plot_spx_sector_regimes(start_date, end_date)
+elif menu == 'GRID Model':
+    st.title('Upcoming GRID Regime')
+    app_grid.grid_regime_nowcast()
+    st.title('GRID Equities Backtest')
+    app_grid.plot_grid_model()
+    app_grid.grid_equity_backtest()
+    st.title('GRID Bonds Backtest')
+    app_grid.grid_bonds_backtest()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- GROWTH ---------------------------------------- ###
@@ -119,27 +122,12 @@ elif menu == 'Inflation Predictor':
     app_inflation.plot_cpi_nowcast()
 
 ### ---------------------------------------------------------------------------------------- ###
-### --------------------------------- GROWTH AND INFLATION --------------------------------- ###
-### ---------------------------------------------------------------------------------------- ###
-
-elif menu == 'GRID Model':
-    st.title('Upcoming GRID Regime')
-    app_grid.grid_regime_nowcast()
-    st.title('GRID Equities Backtest')
-    app_grid.plot_grid_model()
-    app_grid.grid_equity_backtest()
-    st.title('GRID Bonds Backtest')
-    app_grid.grid_bonds_backtest()
-
-
-### ---------------------------------------------------------------------------------------- ###
 ### ------------------------------- YIELD CURVE REGIME MODEL ------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
 elif menu == 'Yield Curve Regimes':
     st.title("Yield Curve Tenors by Regime")
     app_firv_regime.plot_treasury_yield_curves(start_date, end_date)
-
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ---------------------------------- BARRA FACTOR MODEL ---------------------------------- ###
@@ -150,7 +138,6 @@ elif menu == 'Barra Factor Model':
     app_barra.plot_barra_factors(start_date,end_date)
     st.title("Barra Factor Prediction")
     app_barra.plot_barra_predictor()
-
 
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------- TAIL HEDGE PORTFOLIO --------------------------------- ###

@@ -3,12 +3,8 @@
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 ### PACKAGES ###
-import pandas as pd
-import functools as ft
-import streamlit as st
-import plotly.graph_objs as go
+from Functions import *
 from pathlib import Path
-import plotly.subplots as sp
 import os
 from matplotlib.colors import LinearSegmentedColormap
 from plotly.subplots import make_subplots
@@ -29,16 +25,6 @@ spx_sectors = {
     "XLK": "Tech",
     "XLU": "utilities"
 }
-
-def merge_dfs(array_of_dfs):
-    return ft.reduce(lambda left, right: pd.merge(left, right,
-                                                  left_index=True,
-                                                  right_index=True, how='outer'), array_of_dfs)
-
-### ---------------------------------------------------------------------------------------------------------- ###
-### -------------------------------------------------- GRID -------------------------------------------------- ###
-### ---------------------------------------------------------------------------------------------------------- ###
-
 growth_dict = {
     'USALOLITOAASTSAM': 'cli_amplitude_adjusted',
     'INDPRO': 'industrial_production',
@@ -79,6 +65,10 @@ spx_sectors = {
     "XLK": "Tech",
     "XLU": "utilities"
 }
+
+### ---------------------------------------------------------------------------------------------------------- ###
+### -------------------------------------------------- GRID -------------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
 
 ### SPX DATA ###
 with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
@@ -155,11 +145,12 @@ for i in range(window, len(target_feature_df)):
     })
 
 inflation_prediction = pd.DataFrame(result_factor, index=target_feature_df.index[window:])
-inflation_prediction = inflation_prediction.shift(1).dropna()
+inflation_prediction.index = inflation_prediction.index + pd.DateOffset(months=1)
+inflation_prediction['inflation_signal'] = inflation_prediction['prediction'] - inflation_prediction['actual']
 
 grid_growth_inflation_spx = merge_dfs([
     cli.pct_change(),
-    inflation_prediction['prediction'].resample('ME').last().diff(),
+    inflation_prediction['inflation_signal'].resample('ME').last(),
     spx_monthly.pct_change().shift(-1)
 ]).dropna()
 grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
@@ -167,11 +158,11 @@ grid_growth_inflation_spx = grid_growth_inflation_spx['2005-01-01':]
 
 grid_growth_inflation_agg = merge_dfs([
     cli.pct_change(),
-    inflation_prediction['prediction'].resample('ME').last().diff(),
+    inflation_prediction['inflation_signal'].resample('ME').last(),
     agg.pct_change().shift(-1)
 ]).dropna()
-grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
-grid_growth_inflation_spx = grid_growth_inflation_spx['2005-01-01':]
+grid_growth_inflation_agg.columns = ['growth', 'inflation', 'bonds']
+grid_growth_inflation_agg = grid_growth_inflation_agg['2005-01-01':]
 
 def regime_label(row):
     if row['inflation'] > 0 and row['growth'] > 0:
@@ -193,13 +184,12 @@ regime_labels = {
 grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regime_label, axis=1)
 grid_growth_inflation_spx['regime_label'] = grid_growth_inflation_spx['regime_code'].map(regime_labels)
 
+grid_growth_inflation_agg['regime_code'] = grid_growth_inflation_agg.apply(regime_label, axis=1)
+grid_growth_inflation_agg['regime_label'] = grid_growth_inflation_agg['regime_code'].map(regime_labels)
+
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------------- GRID -------------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
-
-def plot_grid_factors(start,end,**kwargs):
-    inflation_prediction
-    cli
 
 def plot_grid_model():
 
@@ -570,6 +560,77 @@ def grid_regime_nowcast():
 
 def grid_bonds_backtest():
 
+    def grid_backtest(row):
+        if row['regime_label'] == 'Goldilocks':
+            return 1
+        elif row['regime_label'] == 'Reflation':
+            return 0.75
+        elif row['regime_label'] == 'Deflation':
+            return 0.5
+        elif row['regime_label'] == 'Stagflation':
+            return 0.25
+        else:
+            return np.nan
+
+    grid_growth_inflation_agg['weights'] = grid_growth_inflation_agg.apply(grid_backtest, axis=1)
+    grid_growth_inflation_agg['bt_returns'] = grid_growth_inflation_agg['weights'] * grid_growth_inflation_agg[
+        'bonds']
+    grid_growth_inflation_agg['cumsum_bonds'] = (1 + grid_growth_inflation_agg['bonds']).cumprod()
+    grid_growth_inflation_agg['cumsum_bt'] = (1 + grid_growth_inflation_agg['bt_returns']).cumprod()
+
+    ### DRAWDOWN ###
+    def compute_drawdown(cumret):
+        roll_max = cumret.cummax()
+        drawdown = (cumret - roll_max) / roll_max
+        return drawdown
+
+    def calculate_beta(strategy_returns, benchmark_returns):
+        cov = np.cov(strategy_returns, benchmark_returns)[0, 1]
+        var = np.var(benchmark_returns)
+        return cov / var
+
+    # Calculate drawdown series
+    grid_growth_inflation_agg['drawdown_bt'] = compute_drawdown(grid_growth_inflation_agg['cumsum_bt'])
+    grid_growth_inflation_agg['drawdown_bonds'] = compute_drawdown(grid_growth_inflation_agg['cumsum_bonds'])
+
+    ### TABLE OF RESULTS ###
+    grid_backtest_results = pd.DataFrame()
+    grid_backtest_results['Strategy'] = ['GRID Model', 'Bonds']
+    grid_backtest_results['Mean Monthly Returns'] = [
+        grid_growth_inflation_agg['bt_returns'].mean() * 100,
+        grid_growth_inflation_agg['bonds'].mean() * 100,
+    ]
+    grid_backtest_results['Ann. Returns'] = grid_backtest_results['Mean Monthly Returns'] * 12
+    grid_backtest_results['Ann. Volatility'] = [
+        (grid_growth_inflation_agg['bt_returns'].std() * 12 ** 0.5) * 100,
+        (grid_growth_inflation_agg['bonds'].std() * 12 ** 0.5) * 100,
+    ]
+    grid_backtest_results['Return/Risk'] = grid_backtest_results['Ann. Returns'] / grid_backtest_results[
+        'Ann. Volatility']
+    grid_beta = calculate_beta(grid_growth_inflation_agg['bt_returns'], grid_growth_inflation_agg['bonds'])
+    spx_beta = 1.0  # Self-benchmarking
+
+    grid_backtest_results['Beta'] = [grid_beta, spx_beta]
+
+    ### PLOT ###
+    fig = go.Figure()
+    cols = ['cumsum_bt', 'cumsum_spx']
+    labels = [
+        'GRID',
+        'Bonds',
+    ]
+    colors = ['#5FB3FF', '#2DCDB2']
+    for col, color, label in zip(cols, colors, labels):
+        fig.add_trace(go.Scatter(x=grid_growth_inflation_agg.index, y=grid_growth_inflation_agg[col],
+                                 mode='lines',
+                                 name=label,
+                                 line=dict(color=color)))
+    fig.update_layout(
+        title="GRID Bonds Backtest",
+        yaxis_title="Dollars",
+        hovermode='x unified'
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 
 
