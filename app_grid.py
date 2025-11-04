@@ -6,10 +6,6 @@
 from Functions import *
 from pathlib import Path
 import os
-from matplotlib.colors import LinearSegmentedColormap
-from plotly.subplots import make_subplots
-import numpy as np
-from sklearn.linear_model import LinearRegression
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 spx_sectors = {
@@ -349,12 +345,10 @@ def grid_equity_backtest():
     )
 
     # Regime return distribution subplots
-    import plotly.graph_objs as go
-    from plotly.subplots import make_subplots
 
     fig = make_subplots(rows=2, cols=2, subplot_titles=regime_labels)
-    min_bound = df['spx'].min()
-    max_bound = df['spx'].max()
+    min_bound = grid_growth_inflation_spx['spx'].min()
+    max_bound = grid_growth_inflation_spx['spx'].max()
     for i, regime in enumerate(regimes):
         row = i // 2 + 1
         col = i % 2 + 1
