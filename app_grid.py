@@ -192,6 +192,21 @@ grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regim
 grid_growth_inflation_spx['regime_label'] = grid_growth_inflation_spx['regime_code'].map(regime_labels)
 grid_growth_inflation_spx['regime_color'] = grid_growth_inflation_spx['regime_code'].map(regime_colors)
 
+(len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Goldilocks'])
+ / len(grid_growth_inflation_spx))
+
+
+(len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Reflation'])
+ / len(grid_growth_inflation_spx))
+
+
+(len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Deflation'])
+ / len(grid_growth_inflation_spx))
+
+
+(len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Stagflation'])
+ / len(grid_growth_inflation_spx))
+
 grid_growth_inflation_agg['regime_code'] = grid_growth_inflation_agg.apply(regime_label, axis=1)
 grid_growth_inflation_agg['regime_label'] = grid_growth_inflation_agg['regime_code'].map(regime_labels)
 grid_growth_inflation_agg['regime_color'] = grid_growth_inflation_agg['regime_code'].map(regime_colors)
