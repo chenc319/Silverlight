@@ -65,6 +65,45 @@ def return_metrics(backtest_returns_data, benchmark_data, ann_factor):
         ]
     return return_metrics_df
 
+def return_metrics_by_regime(base_df, return_col, benchmark_col, regime_col='regime_label', ann_factor=12):
+    """
+    Computes return metrics for each unique regime label in the base DataFrame.
+
+    Args:
+        base_df: pd.DataFrame. Must include regime_col, return_col, benchmark_col.
+        return_col: str. Name of the column to use as the individual strategy stream.
+        benchmark_col: str. Name of the column to use for the benchmark stream.
+        regime_col: str. The column containing the regime labels (default 'regime_label').
+        ann_factor: int. Annualization factor for metrics (default 12 for monthly).
+
+    Returns:
+        pd.DataFrame. Regime-by-regime metrics, indexed by regime label.
+    """
+
+    unique_regimes = base_df[regime_col].dropna().unique()
+    metrics_list = []
+
+    for regime in unique_regimes:
+        mask = base_df[regime_col] == regime
+        regime_returns = base_df.loc[mask, return_col]
+        benchmark_returns = base_df.loc[mask, benchmark_col]
+
+        metric_df = return_metrics(
+            pd.DataFrame({str(regime): regime_returns}),
+            pd.DataFrame({benchmark_col: benchmark_returns}),
+            ann_factor
+        )
+        # metric_df will have index=str(regime), so we pull out the values as a dict and add regime
+        metrics_dict = metric_df.loc[str(regime)].to_dict()
+        metrics_dict['Regime'] = regime
+        metrics_list.append(metrics_dict)
+
+    # Recombine into final result DataFrame
+    regime_metrics_df = pd.DataFrame(metrics_list)
+    regime_metrics_df.set_index('Regime', inplace=True)
+    return regime_metrics_df
+
+
 
 def posneg_only_red_green(val, min_pos, max_pos, min_neg, max_neg):
     if pd.isnull(val):

@@ -319,22 +319,13 @@ def grid_equity_backtest():
         "Stagflation": "#ffc107",
         "Deflation": "#dc3545"
     }
-    regime_stats = []
-    df = grid_growth_inflation_spx.copy()
-    total_rows = len(df)
-    for regime, label in zip(regimes, regime_labels):
-        regime_df = df[df['regime_label'] == regime]
-        mean_return = regime_df['spx'].mean() * 100
-        ann_return = mean_return * 12
-        ann_vol = regime_df['spx'].std() * (12 ** 0.5) * 100
-        win_ratio = (regime_df['spx'] > 0).mean() * 100
-        occurrence_pct = len(regime_df) / total_rows * 100
-        regime_stats.append([label, mean_return, ann_return, ann_vol, ann_return / ann_vol if ann_vol else None, win_ratio, occurrence_pct])
 
-    regime_stats_df = pd.DataFrame(
-        regime_stats,
-        columns=['Regime','Mean Monthly Returns','Ann. Returns','Ann. Volatility','Return/Risk','Win Ratio','% of Occurrences']
-    )
+    regime_stats_df = return_metrics_by_regime(base_df = grid_growth_inflation_spx,
+                                               return_col = 'bt_returns',
+                                               benchmark_col = 'spx',
+                                               regime_col='regime_label', ann_factor=12)
+    desired_order = ['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+    regime_stats_df = regime_stats_df.reindex(desired_order)
 
     # Styled regime table
     streamlit_return_metrics_table(regime_stats_df)
