@@ -1,6 +1,7 @@
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ----------------------------------------- MAG7 SAM CORE EQUITY ------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
+import pandas as pd
 
 ### PACKAGES ###
 from Functions import *
@@ -231,6 +232,34 @@ def core_equity_mag_backtest_simulation():
 
     from scipy.stats import pearsonr
     corr, p_value = pearsonr(downside_capture_df['SAM'], downside_capture_df['MAGS'])
+
+def mock_daily_sam_ce_portfolio():
+    with open(Path(DATA_DIR) / 'Core Equity Single Account Daily Performance 2017-2025.xlsx', 'rb') as file:
+        ce_df = pd.read_excel(file,sheet_name = 'Performance Details')
+        ce_df.index = pd.to_datetime(ce_df['As Of Date'].values)
+        daily_ce = pd.DataFrame(ce_df['Performance'])
+        daily_cumulative_ce = pd.DataFrame(ce_df['Cumulative Performance'])
+
+    with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
+        spx_df = pd.read_csv(file)
+        spx_df.index = pd.to_datetime(spx_df['Date'].values)
+        spx_daily_pct = pd.DataFrame(spx_df['Close'].pct_change())
+        spx_daily_pct.columns = ['Benchmark']
+
+    merge_df = merge_dfs([daily_ce,spx_daily_pct]).dropna()
+    merge_df.columns = ['SAM CE','SPX']
+    return_metrics_df = return_metrics(merge_df[['SAM CE','SPX']],
+                                       merge_df['SPX'],
+                                       252)
+
+    streamlit_return_metrics_table(return_metrics_df)
+
+    streamlit_plot(df=return_metrics_df.cumsum() * 100,
+                   columns_array=['SAM CE', 'SPX'],
+                   colors_array=['#2056AE', '#E74C3C'],
+                   graph_title='Historical Performance',
+                   y_axis_label='%')
+
 
 
 

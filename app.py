@@ -89,6 +89,8 @@ if menu == 'SAM Core Equity':
     app_sam_coreequity.sam_core_equity_rolling_alpha()
     st.title('SAM Core Equity + MAGS Portfolios')
     app_sam_coreequity.core_equity_mag_backtest_simulation()
+    st.title('Daily SAM CE vs. SPX')
+    app_sam_coreequity.mock_daily_sam_ce_portfolio()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------- GROWTH AND INFLATION --------------------------------- ###
