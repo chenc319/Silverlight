@@ -526,10 +526,10 @@ def grid_regime_nowcast():
 
     # Color mapping for regimes (customize as desired)
     regime_colors = {
-        "Reflation": "orange",
-        "Stagflation": "red",
-        "Goldilocks": "green",
-        "Deflation": "blue"
+        "Goldilocks": "#28a745",  # Green
+        "Reflation": "#90ee90",  # Super light green
+        "Stagflation": "#ffc107",  # Yellow
+        "Deflation": "#dc3545"  # Red
     }
     regime_color = regime_colors.get(upcoming_grid_regime, "gray")
 
