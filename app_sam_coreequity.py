@@ -263,13 +263,13 @@ def mock_daily_sam_ce_portfolio():
     streamlit_plot(df=merge_df * 100,
                    columns_array=['SAM CE'],
                    colors_array=['#2056AE'],
-                   graph_title='Daily Return Stream',
+                   graph_title='Historical Daily Return Stream',
                    y_axis_label='%')
 
     streamlit_plot(df=cumulative_return_stream * 100,
                    columns_array=['SAM CE', 'SPX'],
                    colors_array=['#2056AE', '#E74C3C'],
-                   graph_title='Historical Performance',
+                   graph_title='Historical Cumulative Performance',
                    y_axis_label='%')
 
 
