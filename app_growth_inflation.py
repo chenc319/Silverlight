@@ -130,10 +130,10 @@ def plot_growth_inflation(start, end, **kwargs):
     growth_inflation_df['regime_code'] = growth_inflation_df.apply(regime_label, axis=1)
 
     regime_colors = {
-        0: '#E74C3C',  # Reflation (red)
-        1: '#F1C40F',  # Stagflation (yellow)
-        2: '#27AE60',  # Goldilocks (green)
-        3: '#2980B9'  # Deflation (blue)
+        0: '#90ee90',  # Reflation (red)
+        1: '#ffc107',  # Stagflation (yellow)
+        2: '#28a745',  # Goldilocks (green)
+        3: '#dc3545'  # Deflation (blue)
     }
 
     df = growth_inflation_df.copy()
@@ -246,10 +246,10 @@ def plot_growth_inflation(start, end, **kwargs):
     ### PLOT ###
     st.title("Equity and Fixed Income by Regime")
     regime_colors = {
-        0: '#E74C3C',  # Reflation (red)
-        1: '#F1C40F',  # Stagflation (yellow)
-        2: '#27AE60',  # Goldilocks (green)
-        3: '#2980B9'  # Deflation (blue)
+        0: '#90ee90',  # Reflation (red)
+        1: '#ffc107',  # Stagflation (yellow)
+        2: '#28a745',  # Goldilocks (green)
+        3: '#dc3545'  # Deflation (blue)
     }
     regime_labels = {
         0: 'Reflation',
@@ -350,11 +350,12 @@ def plot_growth_inflation(start, end, **kwargs):
         'Deflation'
     ]
     regime_colors = {
-        "Reflation": "#27AE60",
-        "Stagflation": "#E74C3C",
-        "Goldilocks": "#F1C40F",
-        "Deflation": "#2980B9"
+        "Reflation": "#90ee90",
+        "Stagflation": "#ffc107",
+        "Goldilocks": "#28a745",
+        "Deflation": "#dc3545"
     }
+
     fig = sp.make_subplots(
         rows=2, cols=2,
         subplot_titles=regimes
@@ -400,11 +401,12 @@ def plot_growth_inflation(start, end, **kwargs):
         'Deflation'
     ]
     regime_colors = {
-        "Reflation": "#27AE60",
-        "Stagflation": "#E74C3C",
-        "Goldilocks": "#F1C40F",
-        "Deflation": "#2980B9"
+        "Reflation": "#90ee90",
+        "Stagflation": "#ffc107",
+        "Goldilocks": "#28a745",
+        "Deflation": "#dc3545"
     }
+
     fig = sp.make_subplots(
         rows=2, cols=2,
         subplot_titles=regimes
