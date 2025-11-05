@@ -395,7 +395,7 @@ def grid_equity_backtest():
         df=grid_growth_inflation_spx,
         columns_array=['cumsum_bt', 'cumsum_spx'],
         colors_array=['#5FB3FF', '#2DCDB2'],
-        graph_title="GRID Z-Score Backtest",
+        graph_title="GRID Backtest",
         y_axis_label="Cumulative Return"
     )
 
@@ -452,7 +452,7 @@ def grid_bonds_backtest():
         df=grid_growth_inflation_agg,
         columns_array=['cumsum_bt', 'cumsum_bonds'],
         colors_array=['#5FB3FF', '#2DCDB2'],
-        graph_title="GRID Z-Score Backtest",
+        graph_title="GRID Backtest",
         y_axis_label="Cumulative Return"
     )
 
@@ -477,8 +477,8 @@ def grid_mags_backtest():
     grid_growth_inflation_mags['weights'] = grid_growth_inflation_mags.apply(grid_equity_weights, axis=1)
     grid_growth_inflation_mags['bt_returns'] = (
                 grid_growth_inflation_mags['weights'] * grid_growth_inflation_mags['mags']).shift(1)
-    grid_growth_inflation_mags['cumsum_mags'] = (1 + grid_growth_inflation_mags['mags']).cumprod()
-    grid_growth_inflation_mags['cumsum_bt'] = (1 + grid_growth_inflation_mags['bt_returns']).cumprod()
+    grid_growth_inflation_mags['cumsum_mags'] = grid_growth_inflation_mags['mags'].cumsum()
+    grid_growth_inflation_mags['cumsum_bt'] = grid_growth_inflation_mags['bt_returns'].cumsum()
 
     # Drawdown calculations using your helper
     grid_growth_inflation_mags['drawdown_bt'] = compute_drawdown(grid_growth_inflation_mags['cumsum_bt'])
@@ -509,7 +509,7 @@ def grid_mags_backtest():
         df=grid_growth_inflation_mags,
         columns_array=['cumsum_bt', 'cumsum_mags'],
         colors_array=['#5FB3FF', '#2DCDB2'],
-        graph_title="GRID Z-Score Backtest",
+        graph_title="GRID Backtest",
         y_axis_label="Cumulative Return"
     )
 
