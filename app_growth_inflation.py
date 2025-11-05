@@ -88,6 +88,7 @@ for each_factor in list(spx_sectors.keys()):
 
 ### GROWTH INFLATION DATA ###
 growth_inflation_df = merge_dfs([growth.shift(-2),inflation.shift(-1),spx_monthly,agg]).dropna()
+
 growth_inflation_df.columns = ['growth','inflation','sp500','bonds']
 growth_inflation_df['growth'] = growth_inflation_df['growth'].pct_change(4)
 growth_inflation_df['inflation'] = growth_inflation_df['inflation'].pct_change(4)
