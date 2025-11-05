@@ -117,9 +117,9 @@ def core_equity_mags_spx():
     drawdown_df['sam_cumsum'] = sam_mags_merge['SAM'].cumsum()
     drawdown_df['spx_cumsum'] = sam_mags_merge['SPX'].cumsum()
     drawdown_df['mags_cumsum'] = sam_mags_merge['MAGS'].cumsum()
-    drawdown_df['sam_drawdown'] = compute_drawdown(drawdown_df['sam_cumsum'])
-    drawdown_df['spx_drawdown'] = compute_drawdown(drawdown_df['spx_cumsum'])
-    drawdown_df['mag_drawdown'] = compute_drawdown(drawdown_df['mags_cumsum'])
+    drawdown_df['sam_drawdown'] = compute_drawdown(drawdown_df['SAM'])
+    drawdown_df['spx_drawdown'] = compute_drawdown(drawdown_df['SPX'])
+    drawdown_df['mag_drawdown'] = compute_drawdown(drawdown_df['MAGS'])
 
     streamlit_drawdown_plot(df=drawdown_df,
                             graph_labels=['SAM', 'SPX', 'MAGS'],
