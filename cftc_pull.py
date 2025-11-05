@@ -84,3 +84,6 @@ for each_date, each_text in historical_cftf_financial_texts.items():
     records = [r for r in records if r]
     historical_cftf_financial_dfs[each_date] = pd.DataFrame(records)
     print(each_date)
+
+with open(Path(DATA_DIR) / 'historical_cftf_financial_dfs.pkl', 'wb') as file:
+    pickle.dump(historical_cftf_financial_dfs, file)

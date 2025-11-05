@@ -171,7 +171,7 @@ def streamlit_return_metrics_table(df):
 
 def compute_drawdown(cumret):
     roll_max = cumret.cummax()
-    drawdown = (cumret - roll_max) / roll_max
+    drawdown = cumret / roll_max - 1
     return drawdown
 
 def streamlit_drawdown_plot(df,
