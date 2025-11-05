@@ -248,7 +248,6 @@ def mock_daily_sam_ce_portfolio():
         spx_daily_pct.columns = ['Benchmark']
 
     merge_df = merge_dfs([daily_ce,spx_daily_pct]).dropna()
-    merge_df.to_csv(Path(DATA_DIR) / 'sam_ce_spx.csv')
     merge_df.columns = ['SAM CE','SPX']
     return_metrics_df = return_metrics(merge_df[['SAM CE','SPX']],
                                        merge_df['SPX'],
