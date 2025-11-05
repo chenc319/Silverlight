@@ -102,13 +102,13 @@ growth_inflation_df = growth_inflation_df.dropna()
 def plot_growth_inflation(start, end, **kwargs):
 
     def regime_label(row):
-        if row['inflation_roc'] > 0 and row['growth_roc'] > 0:
+        if row['inflation'] > 0 and row['growth'] > 0:
             return 0  # Reflation
-        elif row['inflation_roc'] > 0 and row['growth_roc'] < 0:
+        elif row['inflation'] > 0 and row['growth'] < 0:
             return 1  # Stagflation
-        elif row['inflation_roc'] < 0 and row['growth_roc'] > 0:
+        elif row['inflation'] < 0 and row['growth'] > 0:
             return 2  # Goldilocks
-        elif row['inflation_roc'] < 0 and row['growth_roc'] < 0:
+        elif row['inflation'] < 0 and row['growth'] < 0:
             return 3  # Deflation
         else:
             return np.nan
