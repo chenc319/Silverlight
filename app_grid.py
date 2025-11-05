@@ -474,7 +474,7 @@ def grid_bonds_backtest():
     )
 
 def grid_mags_backtest():
-    grid_growth_inflation_mags['weights'] = grid_growth_inflation_mags.apply(grid_bond_weights, axis=1)
+    grid_growth_inflation_mags['weights'] = grid_growth_inflation_mags.apply(grid_equity_weights, axis=1)
     grid_growth_inflation_mags['bt_returns'] = (
                 grid_growth_inflation_mags['weights'] * grid_growth_inflation_mags['mags']).shift(1)
     grid_growth_inflation_mags['cumsum_mags'] = (1 + grid_growth_inflation_mags['mags']).cumprod()
