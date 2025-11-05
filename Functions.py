@@ -46,7 +46,7 @@ def return_metrics(backtest_returns_data, benchmark_data, ann_factor):
         avg_win_return = data[data['returns'] > 0]['returns'].mean()
         avg_lose_return = data[data['returns'] < 0]['returns'].mean()
         win_ratio = len(data[data['returns'] > 0]) / len(data)
-        ann_return = mean_return * ann_factor
+        ann_return = (1+ mean_return) ** ann_factor
         ann_vol = data['returns'].std() * (ann_factor ** 0.5)
         return_risk = ann_return / ann_vol if ann_vol != 0 else None
         max_return = data['returns'].max()
