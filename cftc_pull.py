@@ -87,3 +87,55 @@ for each_date, each_text in historical_cftf_financial_texts.items():
 
 with open(Path(DATA_DIR) / 'historical_cftf_financial_dfs.pkl', 'wb') as file:
     pickle.dump(historical_cftf_financial_dfs, file)
+
+spx_positioning_df = pd.DataFrame(columns = [
+    'open_interest',
+    'dealer_long', 'dealer_short', 'dealer_spread',
+    'asset_mgr_long', 'asset_mgr_short', 'asset_mgr_spread',
+    'lev_funds_long', 'lev_funds_short', 'lev_funds_spread'
+],
+    index = list(historical_cftf_financial_dfs.keys())
+)
+
+emini_spx_positioning_df = pd.DataFrame(columns = [
+    'open_interest',
+    'dealer_long', 'dealer_short', 'dealer_spread',
+    'asset_mgr_long', 'asset_mgr_short', 'asset_mgr_spread',
+    'lev_funds_long', 'lev_funds_short', 'lev_funds_spread'
+],
+    index = list(historical_cftf_financial_dfs.keys())
+)
+
+vix_positioning_df = pd.DataFrame(columns = [
+    'open_interest',
+    'dealer_long', 'dealer_short', 'dealer_spread',
+    'asset_mgr_long', 'asset_mgr_short', 'asset_mgr_spread',
+    'lev_funds_long', 'lev_funds_short', 'lev_funds_spread'
+],
+    index = list(historical_cftf_financial_dfs.keys())
+)
+
+for each_date, each_text in historical_cftf_financial_dfs.items():
+    try:
+        df = each_text.copy()
+        df.index = each_text['contract']
+        spx_positioning_df.loc[each_date,spx_positioning_df.columns] = (
+            df.loc)['S&P 500 Consolidated - CHICAGO MERCANTILE EXCHANGE',spx_positioning_df.columns]
+        emini_spx_positioning_df.loc[each_date,emini_spx_positioning_df.columns] = (
+            df.loc)['E-MINI S&P 500 - CHICAGO MERCANTILE EXCHANGE',emini_spx_positioning_df.columns]
+        vix_positioning_df.loc[each_date,vix_positioning_df.columns] = (
+            df.loc)['VIX FUTURES - CBOE FUTURES EXCHANGE',vix_positioning_df.columns]
+    except:
+        continue
+
+spx_positioning_df = spx_positioning_df.dropna()
+emini_spx_positioning_df = emini_spx_positioning_df.dropna()
+vix_positioning_df = vix_positioning_df.dropna()
+
+with open(Path(DATA_DIR) / 'spx_positioning_df.pkl', 'wb') as file:
+    pickle.dump(spx_positioning_df, file)
+with open(Path(DATA_DIR) / 'emini_spx_positioning_df.pkl', 'wb') as file:
+    pickle.dump(emini_spx_positioning_df, file)
+with open(Path(DATA_DIR) / 'vix_positioning_df.pkl', 'wb') as file:
+    pickle.dump(vix_positioning_df, file)
+
