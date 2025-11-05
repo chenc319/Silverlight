@@ -306,8 +306,15 @@ def streamlit_subplot(df, columns_array, colors_array, row_nums, col_nums):
 def plot_regime_return_histograms(df, regime_col, return_col, regimes):
     import plotly.graph_objs as go
     from plotly.subplots import make_subplots
+    from scipy.stats import norm, kurtosis
+    import numpy as np
 
-    subplot_titles = [str(regime) for regime in regimes]
+    subplot_titles = []
+    for regime in regimes:
+        subdata = df[df[regime_col] == regime][return_col].dropna()
+        k_value = kurtosis(subdata, fisher=True, nan_policy='omit')
+        subplot_titles.append(f"{regime} (kurt={k_value:.2f})")
+
     default_colors = ['#28a745', '#90ee90', '#dc3545', '#ffc107']
     regime_colors = {regimes[i]: default_colors[i % len(default_colors)] for i in range(len(regimes))}
 
@@ -315,33 +322,54 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
         rows=2,
         cols=2,
         subplot_titles=subplot_titles,
-        horizontal_spacing=0.15,  # More horizontal space
-        vertical_spacing=0.20,    # More vertical space
+        horizontal_spacing=0.15,
+        vertical_spacing=0.20,
     )
     min_bound = df[return_col].min()
     max_bound = df[return_col].max()
+    x_grid = np.linspace(min_bound, max_bound, 300)
 
     for i, regime in enumerate(regimes):
         row = i // 2 + 1
         col = i % 2 + 1
-        subdata = df[df[regime_col] == regime]
+        subdata = df[df[regime_col] == regime][return_col].dropna()
+        mean, std = subdata.mean(), subdata.std()
+        # Plot histogram
         fig.add_trace(
             go.Histogram(
-                x=subdata[return_col].dropna(),
-                name=subplot_titles[i],
+                x=subdata,
+                name=f"{regime} hist",
                 marker=dict(
                     color=regime_colors[regime],
                     line=dict(
-                        width=1,         # Thinner bar lines for separation
+                        width=1,
                         color='#444'
                     )
                 ),
                 opacity=0.7,
                 nbinsx=30,
+                showlegend=False
             ),
             row=row,
             col=col
         )
+        # Overlay Gaussian fit
+        if std > 0:
+            pdf = norm.pdf(x_grid, mean, std)
+            # Scale the PDF to match histogram count scale
+            pdf_scaled = pdf * len(subdata) * (x_grid[1] - x_grid[0])
+            fig.add_trace(
+                go.Scatter(
+                    x=x_grid,
+                    y=pdf_scaled,
+                    mode='lines',
+                    line=dict(color='navy', width=2, dash='solid'),
+                    name=f"{regime} fit",
+                    showlegend=False
+                ),
+                row=row,
+                col=col
+            )
         fig.update_xaxes(
             title_text="Equity % Return",
             row=row,
@@ -370,7 +398,14 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
         paper_bgcolor='white',
         font=dict(family="Arial", size=14, color="#222"),
         margin=dict(l=60, r=60, t=80, b=60),
+        title=dict(
+            text="Regime Return Distributions",
+            font=dict(size=18, family="Arial"),
+            x=0.5,
+            y=0.98,
+        ),
     )
     st.plotly_chart(fig, use_container_width=True)
+
 
 
