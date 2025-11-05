@@ -214,9 +214,9 @@ grid_growth_inflation_agg['regime_color'] = grid_growth_inflation_agg['regime_co
 def grid_backtest(row):
     regime_weights = {
         'Goldilocks': 1,
-        'Reflation': 1,
-        'Deflation': 1,
-        'Stagflation': 1
+        'Reflation': 0.75,
+        'Deflation': 0.5,
+        'Stagflation': 0.25
     }
     return regime_weights.get(row['regime_label'], np.nan)
 
