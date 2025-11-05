@@ -41,7 +41,7 @@ def return_metrics(backtest_returns_data, benchmark_data, ann_factor):
         col = backtest_returns_data.columns[x]
         data = pd.DataFrame(backtest_returns_data[col]).ffill().dropna()
         data.columns = ['returns']
-        total_return = (1 + data['returns']).prod() - 1
+        total_return = (1 + data['returns']).cumprod()
         mean_return = data['returns'].mean()
         avg_win_return = data[data['returns'] > 0]['returns'].mean()
         avg_lose_return = data[data['returns'] < 0]['returns'].mean()
