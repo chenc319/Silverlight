@@ -74,10 +74,10 @@ menu = st.sidebar.radio(
      'GRID Model',
      'Growth Predictor',
      'Inflation Predictor',
-     'Yield Curve Regimes',
-     'Barra Factor Model',
      'Equity Positioning',
-     'Tail Hedge Portfolio']
+     'Yield Curve Regimes',
+     'Barra Factor Model'
+     ]
 )
 
 ### ---------------------------------------------------------------------------------------- ###
