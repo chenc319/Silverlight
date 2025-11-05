@@ -273,6 +273,14 @@ def mock_daily_sam_ce_portfolio():
                    graph_title='Historical Cumulative Performance',
                    y_axis_label='%')
 
+    merge_df['sam_drawdown'] = compute_drawdown(merge_df['SAM CE'])
+    merge_df['spx_drawdown'] = compute_drawdown(merge_df['SPX'])
+    streamlit_drawdown_plot(df=merge_df,
+                            graph_labels=['SAM CE', 'SPX'],
+                            df_columns_to_plot=['sam_drawdown', 'spx_drawdown'],
+                            line_colors=['rgba(95,179,255,1)', 'rgba(45,205,178,1)'],
+                            fill_colors=['rgba(95,179,255,0.3)', 'rgba(45,205,178,0.3)'])
+
 
 
 
