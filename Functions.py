@@ -304,24 +304,19 @@ def streamlit_subplot(df, columns_array, colors_array, row_nums, col_nums):
 
 
 def plot_regime_return_histograms(df, regime_col, return_col, regimes):
-    """
-    Plots subplot histograms for a set of regimes' return distributions.
-
-    Args:
-        df: pd.DataFrame containing your data.
-        regime_col: str, name of regime label column.
-        return_col: str, name of return column.
-        regimes: list of regime names, defines subplot order.
-    """
     import plotly.graph_objs as go
     from plotly.subplots import make_subplots
 
-    # Auto-title and color for up to 4 regimes
     subplot_titles = [str(regime) for regime in regimes]
     default_colors = ['#28a745', '#90ee90', '#dc3545', '#ffc107']
     regime_colors = {regimes[i]: default_colors[i % len(default_colors)] for i in range(len(regimes))}
 
-    fig = make_subplots(rows=2, cols=2, subplot_titles=subplot_titles)
+    fig = make_subplots(
+        rows=2, cols=2,
+        subplot_titles=subplot_titles,
+        horizontal_spacing=0.08,
+        vertical_spacing=0.08,
+    )
     min_bound = df[return_col].min()
     max_bound = df[return_col].max()
 
@@ -333,14 +328,52 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
             go.Histogram(
                 x=subdata[return_col].dropna(),
                 name=subplot_titles[i],
-                marker_color=regime_colors[regime],
-                opacity=0.8,
+                marker=dict(
+                    color=regime_colors[regime],
+                    line=dict(width=0), # No border lines
+                ),
+                opacity=0.7,
                 nbinsx=30
             ),
             row=row,
             col=col
         )
-        fig.update_xaxes(title_text="Equity % Return", row=row, col=col, range=[min_bound, max_bound])
-        fig.update_yaxes(title_text="Count", row=row, col=col)
-    fig.update_layout(showlegend=False, height=600)
+        fig.update_xaxes(
+            title_text="Equity % Return",
+            row=row,
+            col=col,
+            range=[min_bound, max_bound],
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='rgba(200,200,200,0.25)',
+            zeroline=True,
+            zerolinecolor="rgba(50,50,50,0.20)",
+            ticks="outside",
+            tickfont=dict(size=12, family='Arial'),
+        )
+        fig.update_yaxes(
+            title_text="Count",
+            row=row,
+            col=col,
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='rgba(200,200,200,0.25)',
+            ticks="outside",
+            tickfont=dict(size=12, family='Arial'),
+        )
+    fig.update_layout(
+        showlegend=False,
+        height=700,
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(family="Arial", size=14, color="#222"),
+        margin=dict(l=40, r=40, t=60, b=40),
+        title=dict(
+            text="Regime Return Distributions",
+            font=dict(size=18, family="Arial"),
+            x=0.5,
+            y=0.98,
+        ),
+    )
     st.plotly_chart(fig, use_container_width=True)
+
