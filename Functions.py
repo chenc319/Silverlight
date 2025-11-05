@@ -169,7 +169,9 @@ def streamlit_return_metrics_table(df):
 
     return st.dataframe(styler)
 
-def compute_drawdown(cumret):
+def compute_drawdown(daily_returns):
+    # Assume daily_returns is a pandas Series or numpy array of percent returns, e.g., 0.01 for 1%
+    cumret = (1 + pd.Series(daily_returns)).cumprod()
     roll_max = cumret.cummax()
     drawdown = cumret / roll_max - 1
     return drawdown

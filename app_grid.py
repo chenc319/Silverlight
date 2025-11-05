@@ -481,8 +481,8 @@ def grid_mags_backtest():
     grid_growth_inflation_mags['cumsum_bt'] = (1 + grid_growth_inflation_mags['bt_returns']).cumprod() -1
 
     # Drawdown calculations using your helper
-    grid_growth_inflation_mags['drawdown_bt'] = compute_drawdown(grid_growth_inflation_mags['cumsum_bt'])
-    grid_growth_inflation_mags['drawdown_mags'] = compute_drawdown(grid_growth_inflation_mags['cumsum_mags'])
+    grid_growth_inflation_mags['drawdown_bt'] = compute_drawdown(grid_growth_inflation_mags['bt_returns'])
+    grid_growth_inflation_mags['drawdown_mags'] = compute_drawdown(grid_growth_inflation_mags['mags'])
 
     # Performance metrics table with your helper function
     grid_metrics = return_metrics(
