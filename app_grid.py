@@ -81,6 +81,37 @@ with open(Path(DATA_DIR) / 'AGG.csv', 'rb') as file:
 agg.index = pd.to_datetime(agg['Date']).values
 agg = pd.DataFrame(agg['Close']).resample('ME').last()
 
+### MAGS DATA ###
+mags_tickers = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA']
+each_mags_df = pd.DataFrame()
+for mag_ticker in mags_tickers:
+    mag_string = mag_ticker + '.csv'
+    with open(Path(DATA_DIR) / mag_string, 'rb') as file:
+        mag_df = pd.read_csv(file)
+        mag_df.index = pd.to_datetime(mag_df['Date'].values)
+        close_df = pd.DataFrame(mag_df['Close'])
+        close_df.columns = [mag_ticker]
+    each_mags_df = merge_dfs([each_mags_df, close_df])
+each_mags_df = each_mags_df.dropna()
+mags_monthly_pct = each_mags_df.resample('ME').last().pct_change().dropna()
+
+### MAGS WEIGHTS ###
+with open(Path(DATA_DIR) / 'mags_weights.xlsx', 'rb') as file:
+    mags_weights_df = pd.read_excel(file,sheet_name='Sheet1')
+    mags_weights_df.index = mags_weights_df['Date'].values
+    mags_weights_df.drop('Date', axis=1, inplace=True)
+    mags_weights_df['sum'] = mags_weights_df.sum(axis=1)
+normalized_mags_weights = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA'])
+normalized_mags_pct = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA'])
+for col in normalized_mags_weights.columns:
+    normalized_mags_weights[col] = (mags_weights_df[col] / mags_weights_df['sum']).resample('ME').last()
+    col_df = merge_dfs([mags_monthly_pct[col],normalized_mags_weights[col]]).ffill().dropna()
+    col_df.columns = ['pct','weights']
+    normalized_mags_pct[col] = col_df['pct'] * col_df['weights']
+
+mock_mags_monthly_pct = pd.DataFrame(normalized_mags_pct.sum(axis=1))
+mock_mags_monthly_pct.columns = ['mags']
+
 ### SECTOR DATA ###
 spx_sectors_merge = pd.DataFrame()
 for each_factor in list(spx_sectors.keys()):
@@ -148,22 +179,6 @@ inflation_prediction['inflation_signal'] = inflation_prediction['prediction'].di
 ### -------------------------------------- PREPARE BACKTEST DATAFRAMES --------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-grid_growth_inflation_spx = merge_dfs([
-    cli.pct_change(),
-    inflation_prediction['inflation_signal'].resample('ME').last(),
-    spx_monthly.pct_change().shift(-1)
-]).dropna()
-grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
-grid_growth_inflation_spx = grid_growth_inflation_spx['2005-01-01':]
-
-grid_growth_inflation_agg = merge_dfs([
-    cli.pct_change(),
-    inflation_prediction['inflation_signal'].resample('ME').last(),
-    agg.pct_change().shift(-1)
-]).dropna()
-grid_growth_inflation_agg.columns = ['growth', 'inflation', 'bonds']
-grid_growth_inflation_agg = grid_growth_inflation_agg['2005-01-01':]
-
 def regime_label(row):
     if row['inflation'] > 0 and row['growth'] > 0:
         return 0  # Reflation
@@ -187,6 +202,30 @@ regime_colors = {
     2: '#28a745',  # Goldilocks (green)
     3: '#dc3545'  # Deflation (blue)
     }
+
+grid_growth_inflation_spx = merge_dfs([
+    cli.pct_change(),
+    inflation_prediction['inflation_signal'].resample('ME').last(),
+    spx_monthly.pct_change().shift(-1)
+]).dropna()
+grid_growth_inflation_spx.columns = ['growth', 'inflation', 'spx']
+grid_growth_inflation_spx = grid_growth_inflation_spx['2005-01-01':]
+
+grid_growth_inflation_agg = merge_dfs([
+    cli.pct_change(),
+    inflation_prediction['inflation_signal'].resample('ME').last(),
+    agg.pct_change().shift(-1)
+]).dropna()
+grid_growth_inflation_agg.columns = ['growth', 'inflation', 'bonds']
+grid_growth_inflation_agg = grid_growth_inflation_agg['2005-01-01':]
+
+grid_growth_inflation_mags = merge_dfs([
+    cli.pct_change(),
+    inflation_prediction['inflation_signal'].resample('ME').last(),
+    mock_mags_monthly_pct.shift(-1)
+]).dropna()
+grid_growth_inflation_mags.columns = ['growth', 'inflation', 'mags']
+grid_growth_inflation_mags = grid_growth_inflation_mags['2005-01-01':]
 
 grid_growth_inflation_spx['regime_code'] = grid_growth_inflation_spx.apply(regime_label, axis=1)
 grid_growth_inflation_spx['regime_label'] = grid_growth_inflation_spx['regime_code'].map(regime_labels)
@@ -433,18 +472,18 @@ def grid_bonds_backtest():
 def grid_mags_backtest():
     grid_growth_inflation_mags['weights'] = grid_growth_inflation_mags.apply(grid_bond_weights, axis=1)
     grid_growth_inflation_mags['bt_returns'] = (
-                grid_growth_inflation_mags['weights'] * grid_growth_inflation_mags['bonds']).shift(1)
-    grid_growth_inflation_mags['cumsum_bonds'] = (1 + grid_growth_inflation_mags['bonds']).cumprod()
+                grid_growth_inflation_mags['weights'] * grid_growth_inflation_mags['mags']).shift(1)
+    grid_growth_inflation_mags['cumsum_mags'] = (1 + grid_growth_inflation_mags['mags']).cumprod()
     grid_growth_inflation_mags['cumsum_bt'] = (1 + grid_growth_inflation_mags['bt_returns']).cumprod()
 
     # Drawdown calculations using your helper
     grid_growth_inflation_mags['drawdown_bt'] = compute_drawdown(grid_growth_inflation_mags['cumsum_bt'])
-    grid_growth_inflation_mags['drawdown_bonds'] = compute_drawdown(grid_growth_inflation_mags['cumsum_bonds'])
+    grid_growth_inflation_mags['drawdown_mags'] = compute_drawdown(grid_growth_inflation_mags['cumsum_mags'])
 
     # Performance metrics table with your helper function
     grid_metrics = return_metrics(
-        backtest_returns_data=grid_growth_inflation_mags[['bt_returns', 'bonds']],
-        benchmark_data=grid_growth_inflation_mags[['bonds']],
+        backtest_returns_data=grid_growth_inflation_mags[['bt_returns', 'mags']],
+        benchmark_data=grid_growth_inflation_mags[['mags']],
         ann_factor=12
     )
 
@@ -453,7 +492,7 @@ def grid_mags_backtest():
 
     regime_stats_df = return_metrics_by_regime(base_df=grid_growth_inflation_mags,
                                                return_col='bt_returns',
-                                               benchmark_col='bonds',
+                                               benchmark_col='mags',
                                                regime_col='regime_label', ann_factor=12)
     desired_order = ['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
     regime_stats_df = regime_stats_df.reindex(desired_order)
@@ -464,7 +503,7 @@ def grid_mags_backtest():
     # Cum return plot
     streamlit_plot(
         df=grid_growth_inflation_mags,
-        columns_array=['cumsum_bt', 'cumsum_bonds'],
+        columns_array=['cumsum_bt', 'cumsum_mags'],
         colors_array=['#5FB3FF', '#2DCDB2'],
         graph_title="GRID Z-Score Backtest",
         y_axis_label="Cumulative Return"
@@ -473,8 +512,8 @@ def grid_mags_backtest():
     # Drawdown plot
     streamlit_drawdown_plot(
         df=grid_growth_inflation_mags,
-        graph_labels=['GRID', 'Bonds'],
-        df_columns_to_plot=['drawdown_bt', 'drawdown_bonds'],
+        graph_labels=['GRID', 'MAGS'],
+        df_columns_to_plot=['drawdown_bt', 'drawdown_mags'],
         line_colors=['rgba(95,179,255,1)', 'rgba(45,205,178,1)'],
         fill_colors=['rgba(95,179,255,0.3)', 'rgba(45,205,178,0.3)']
     )
@@ -483,7 +522,7 @@ def grid_mags_backtest():
     plot_regime_return_histograms(
         grid_growth_inflation_mags,
         regime_col='regime_label',
-        return_col='bonds',
+        return_col='mags',
         regimes=['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
     )
 
