@@ -481,6 +481,7 @@ def grid_mags_backtest():
     grid_growth_inflation_mags['cumsum_bt'] = grid_growth_inflation_mags['bt_returns'].cumsum()
 
     # Drawdown calculations using your helper
+    grid_growth_inflation_mags = grid_growth_inflation_mags.dropna()
     grid_growth_inflation_mags['drawdown_bt'] = compute_drawdown(grid_growth_inflation_mags['cumsum_bt'])
     grid_growth_inflation_mags['drawdown_mags'] = compute_drawdown(grid_growth_inflation_mags['cumsum_mags'])
 
