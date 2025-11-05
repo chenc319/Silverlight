@@ -308,7 +308,7 @@ def grid_regime_nowcast():
 
 def grid_equity_backtest():
     grid_growth_inflation_spx['weights'] = grid_growth_inflation_spx.apply(grid_backtest, axis=1)
-    grid_growth_inflation_spx['bt_returns'] = grid_growth_inflation_spx['weights'] * grid_growth_inflation_spx['spx'].shift(1)
+    grid_growth_inflation_spx['bt_returns'] = (grid_growth_inflation_spx['weights'] * grid_growth_inflation_spx['spx']).shift(1)
     grid_growth_inflation_spx['cumsum_spx'] = (1 + grid_growth_inflation_spx['spx']).cumprod()
     grid_growth_inflation_spx['cumsum_bt'] = (1 + grid_growth_inflation_spx['bt_returns']).cumprod()
 
