@@ -235,6 +235,10 @@ grid_growth_inflation_agg['regime_code'] = grid_growth_inflation_agg.apply(regim
 grid_growth_inflation_agg['regime_label'] = grid_growth_inflation_agg['regime_code'].map(regime_labels)
 grid_growth_inflation_agg['regime_color'] = grid_growth_inflation_agg['regime_code'].map(regime_colors)
 
+grid_growth_inflation_mags['regime_code'] = grid_growth_inflation_mags.apply(regime_label, axis=1)
+grid_growth_inflation_mags['regime_label'] = grid_growth_inflation_mags['regime_code'].map(regime_labels)
+grid_growth_inflation_mags['regime_color'] = grid_growth_inflation_mags['regime_code'].map(regime_colors)
+
 def grid_equity_weights(row):
     regime_weights = {
         'Goldilocks': 1,
