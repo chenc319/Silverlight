@@ -370,12 +370,6 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
         paper_bgcolor='white',
         font=dict(family="Arial", size=14, color="#222"),
         margin=dict(l=60, r=60, t=80, b=60),
-        title=dict(
-            text="Regime Return Distributions",
-            font=dict(size=18, family="Arial"),
-            x=0.5,
-            y=0.98,
-        ),
     )
     st.plotly_chart(fig, use_container_width=True)
 
