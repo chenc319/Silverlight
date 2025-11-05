@@ -256,7 +256,8 @@ def mock_daily_sam_ce_portfolio():
     return_metrics_df = return_metrics_df[return_metrics_df.columns[:-1]]
     streamlit_return_metrics_table(return_metrics_df)
 
-    cumulative_return_stream = merge_dfs([daily_cumulative_ce,spx_daily_pct]).dropna()
+    cumulative_return_stream = merge_dfs([(1 + merge_df['SAM CE']).cumprod(),spx_daily_pct]).dropna()
+    # cumulative_return_stream = merge_dfs([daily_cumulative_ce,spx_daily_pct]).dropna()
     cumulative_return_stream.columns = ['SAM CE','SPX']
     cumulative_return_stream['SPX'] = (1 + cumulative_return_stream['SPX']).cumprod() - 1
 
