@@ -367,8 +367,8 @@ def grid_equity_backtest():
     grid_growth_inflation_spx['cumsum_bt'] = (1 + grid_growth_inflation_spx['bt_returns']).cumprod() -1
 
     # Drawdown calculations using your helper
-    grid_growth_inflation_spx['drawdown_bt'] = compute_drawdown(grid_growth_inflation_spx['cumsum_bt'])
-    grid_growth_inflation_spx['drawdown_spx'] = compute_drawdown(grid_growth_inflation_spx['cumsum_spx'])
+    grid_growth_inflation_spx['drawdown_bt'] = compute_drawdown(grid_growth_inflation_spx['bt_returns'])
+    grid_growth_inflation_spx['drawdown_spx'] = compute_drawdown(grid_growth_inflation_spx['spx'])
 
     # Performance metrics table with your helper function
     grid_metrics = return_metrics(
@@ -424,8 +424,8 @@ def grid_bonds_backtest():
     grid_growth_inflation_agg['cumsum_bt'] = (1 + grid_growth_inflation_agg['bt_returns']).cumprod() -1
 
     # Drawdown calculations using your helper
-    grid_growth_inflation_agg['drawdown_bt'] = compute_drawdown(grid_growth_inflation_agg['cumsum_bt'])
-    grid_growth_inflation_agg['drawdown_bonds'] = compute_drawdown(grid_growth_inflation_agg['cumsum_bonds'])
+    grid_growth_inflation_agg['drawdown_bt'] = compute_drawdown(grid_growth_inflation_agg['bt_returns'])
+    grid_growth_inflation_agg['drawdown_bonds'] = compute_drawdown(grid_growth_inflation_agg['bonds'])
 
     # Performance metrics table with your helper function
     grid_metrics = return_metrics(
