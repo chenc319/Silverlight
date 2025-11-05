@@ -211,7 +211,7 @@ grid_growth_inflation_agg['regime_code'] = grid_growth_inflation_agg.apply(regim
 grid_growth_inflation_agg['regime_label'] = grid_growth_inflation_agg['regime_code'].map(regime_labels)
 grid_growth_inflation_agg['regime_color'] = grid_growth_inflation_agg['regime_code'].map(regime_colors)
 
-def grid_equity_backtest(row):
+def grid_equity_weights(row):
     regime_weights = {
         'Goldilocks': 1,
         'Reflation': 0.75,
@@ -220,7 +220,7 @@ def grid_equity_backtest(row):
     }
     return regime_weights.get(row['regime_label'], np.nan)
 
-def grid_bond_backtest(row):
+def grid_bond_weights(row):
     regime_weights = {
         'Goldilocks': 1,
         'Reflation': 0.75,
@@ -316,7 +316,7 @@ def grid_regime_nowcast():
             st.caption("Growth - Inflation +")
 
 def grid_equity_backtest():
-    grid_growth_inflation_spx['weights'] = grid_growth_inflation_spx.apply(grid_equity_backtest, axis=1)
+    grid_growth_inflation_spx['weights'] = grid_growth_inflation_spx.apply(grid_equity_weights, axis=1)
     grid_growth_inflation_spx['bt_returns'] = (grid_growth_inflation_spx['weights'] * grid_growth_inflation_spx['spx']).shift(1)
     grid_growth_inflation_spx['cumsum_spx'] = (1 + grid_growth_inflation_spx['spx']).cumprod()
     grid_growth_inflation_spx['cumsum_bt'] = (1 + grid_growth_inflation_spx['bt_returns']).cumprod()
@@ -373,7 +373,7 @@ def grid_equity_backtest():
 
 
 def grid_bonds_backtest():
-    grid_growth_inflation_agg['weights'] = grid_growth_inflation_agg.apply(grid_bond_backtest, axis=1)
+    grid_growth_inflation_agg['weights'] = grid_growth_inflation_agg.apply(grid_bond_weights, axis=1)
     grid_growth_inflation_agg['bt_returns'] = (grid_growth_inflation_agg['weights'] * grid_growth_inflation_agg['bonds']).shift(1)
     grid_growth_inflation_agg['cumsum_bonds'] = (1 + grid_growth_inflation_agg['bonds']).cumprod()
     grid_growth_inflation_agg['cumsum_bt'] = (1 + grid_growth_inflation_agg['bt_returns']).cumprod()
