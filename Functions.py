@@ -304,9 +304,18 @@ def streamlit_subplot(df, columns_array, colors_array, row_nums, col_nums):
 
 
 def plot_regime_return_histograms(df, regime_col, return_col, regimes):
+    """
+    Plots subplot histograms for a set of regimes' return distributions, with KDE overlay for each regime.
+
+    Args:
+        df: pd.DataFrame containing your data.
+        regime_col: str, name of regime label column.
+        return_col: str, name of return column.
+        regimes: list of regime names, defines subplot order.
+    """
     import plotly.graph_objs as go
     from plotly.subplots import make_subplots
-    from scipy.stats import norm, kurtosis
+    from scipy.stats import gaussian_kde, kurtosis
     import numpy as np
 
     subplot_titles = []
@@ -333,7 +342,6 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
         row = i // 2 + 1
         col = i % 2 + 1
         subdata = df[df[regime_col] == regime][return_col].dropna()
-        mean, std = subdata.mean(), subdata.std()
         # Plot histogram
         fig.add_trace(
             go.Histogram(
@@ -343,7 +351,7 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
                     color=regime_colors[regime],
                     line=dict(
                         width=1,
-                        color='#444'
+                        color='#444'   # Subtle separation
                     )
                 ),
                 opacity=0.7,
@@ -353,18 +361,17 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
             row=row,
             col=col
         )
-        # Overlay Gaussian fit
-        if std > 0:
-            pdf = norm.pdf(x_grid, mean, std)
-            # Scale the PDF to match histogram count scale
-            pdf_scaled = pdf * len(subdata) * (x_grid[1] - x_grid[0])
+        # KDE overlay
+        if len(subdata) > 1:
+            kde = gaussian_kde(subdata)
+            density = kde(x_grid) * len(subdata) * (x_grid[1] - x_grid[0])  # Scale to histogram
             fig.add_trace(
                 go.Scatter(
                     x=x_grid,
-                    y=pdf_scaled,
+                    y=density,
                     mode='lines',
-                    line=dict(color='navy', width=2, dash='solid'),
-                    name=f"{regime} fit",
+                    line=dict(color='navy', width=2),
+                    name=f"{regime} KDE",
                     showlegend=False
                 ),
                 row=row,
@@ -406,6 +413,7 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
         ),
     )
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
