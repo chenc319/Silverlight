@@ -312,10 +312,11 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
     regime_colors = {regimes[i]: default_colors[i % len(default_colors)] for i in range(len(regimes))}
 
     fig = make_subplots(
-        rows=2, cols=2,
+        rows=2,
+        cols=2,
         subplot_titles=subplot_titles,
-        horizontal_spacing=0.08,
-        vertical_spacing=0.08,
+        horizontal_spacing=0.15,  # More horizontal space
+        vertical_spacing=0.20,    # More vertical space
     )
     min_bound = df[return_col].min()
     max_bound = df[return_col].max()
@@ -330,10 +331,13 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
                 name=subplot_titles[i],
                 marker=dict(
                     color=regime_colors[regime],
-                    line=dict(width=0), # No border lines
+                    line=dict(
+                        width=1,         # Thinner bar lines for separation
+                        color='#444'
+                    )
                 ),
                 opacity=0.7,
-                nbinsx=30
+                nbinsx=30,
             ),
             row=row,
             col=col
@@ -345,9 +349,7 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
             range=[min_bound, max_bound],
             showgrid=True,
             gridwidth=1,
-            gridcolor='rgba(200,200,200,0.25)',
-            zeroline=True,
-            zerolinecolor="rgba(50,50,50,0.20)",
+            gridcolor='rgba(190, 190, 190, 0.2)',
             ticks="outside",
             tickfont=dict(size=12, family='Arial'),
         )
@@ -357,17 +359,17 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
             col=col,
             showgrid=True,
             gridwidth=1,
-            gridcolor='rgba(200,200,200,0.25)',
+            gridcolor='rgba(190, 190, 190, 0.2)',
             ticks="outside",
             tickfont=dict(size=12, family='Arial'),
         )
     fig.update_layout(
         showlegend=False,
-        height=700,
+        height=750,
         plot_bgcolor='white',
         paper_bgcolor='white',
         font=dict(family="Arial", size=14, color="#222"),
-        margin=dict(l=40, r=40, t=60, b=40),
+        margin=dict(l=60, r=60, t=80, b=60),
         title=dict(
             text="Regime Return Distributions",
             font=dict(size=18, family="Arial"),
@@ -376,4 +378,5 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
         ),
     )
     st.plotly_chart(fig, use_container_width=True)
+
 
