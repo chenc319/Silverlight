@@ -109,6 +109,8 @@ elif menu == 'GRID Model':
     app_grid.grid_equity_backtest()
     st.title('GRID Bonds Backtest')
     app_grid.grid_bonds_backtest()
+    st.title('GRID MAGS Backtest')
+    app_grid.grid_mags_backtest()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- GROWTH ---------------------------------------- ###
