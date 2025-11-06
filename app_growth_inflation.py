@@ -136,15 +136,17 @@ growth_inflation_df = assign_regime_labels(growth_inflation_df)
 
 def calculate_regime_statistics(df, return_cols=['sp500_pct', 'bonds_pct']):
     """Calculate average returns and occurrence frequencies by regime."""
-    regimes = ['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+    # UPDATED ORDER: Goldilocks, Reflation, Stagflation, Deflation
+    regimes = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
+    quad_labels = ['Quad 1', 'Quad 2', 'Quad 3', 'Quad 4']
     results = []
 
-    for regime in regimes:
+    for regime, quad in zip(regimes, quad_labels):
         regime_data = df[df['regime_label'] == regime]
         regime_returns = (regime_data[return_cols].mean() * 100).values
 
         results.append({
-            'Regime': f"{regime} ({'I-G+' if regime == 'Goldilocks' else 'I+G+' if regime == 'Reflation' else 'I-G-' if regime == 'Deflation' else 'I+G-'})",
+            'Regime': f"{quad}: {regime} ({'I-G+' if regime == 'Goldilocks' else 'I+G+' if regime == 'Reflation' else 'I+G-' if regime == 'Stagflation' else 'I-G-'})",
             'Equities': regime_returns[0],
             'Bonds': regime_returns[1],
             '% of Occurrences': (len(regime_data) / len(df.dropna(subset=['regime_label']))) * 100
@@ -159,7 +161,8 @@ def calculate_regime_statistics(df, return_cols=['sp500_pct', 'bonds_pct']):
 
 def calculate_regime_performance(base_df, asset_returns_df, regime_col='regime_label'):
     """Calculate average returns by regime for multiple assets."""
-    regimes = ['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+    # UPDATED ORDER
+    regimes = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
     combined_df = merge_dfs([base_df, asset_returns_df])
 
     results = {}
@@ -305,13 +308,14 @@ def plot_growth_inflation(start=None, end=None, **kwargs):
         st.write(styled, unsafe_allow_html=True)
 
     # ===== Return Distributions =====
+    # UPDATED ORDER
+    regimes = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
+
     st.title("Equity Return Distributions")
-    regimes = ['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
     plot_regime_return_histograms(df, 'regime_label', 'sp500_pct', regimes)
 
     st.title("Bonds Return Distributions")
     plot_regime_return_histograms(df, 'regime_label', 'bonds_pct', regimes)
-
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ----------------------------------------- SECTOR/FACTOR PLOTTING ----------------------------------------- ###
@@ -349,15 +353,21 @@ def plot_spx_sector_regimes(start=None, end=None, **kwargs):
         return df.style.format({col: "{:.2f}%"}).applymap(highlight_red_green, subset=[col])
 
     # ===== Sector Performance =====
+    # UPDATED ORDER with Quad labels
     st.title("Top/Bottom SPX Sector Performance")
     cols = st.columns(4)
-    for i, regime in enumerate(['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']):
+    regimes = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
+    quad_labels = ['Quad 1', 'Quad 2', 'Quad 3', 'Quad 4']
+
+    for i, (regime, quad) in enumerate(zip(regimes, quad_labels)):
         with cols[i]:
+            st.subheader(f"{quad}: {regime}")
             st.write(style_percent_table(sector_performance[regime]), unsafe_allow_html=True)
 
     # ===== Factor Performance =====
     st.title("Top/Bottom SPX Factor Performance")
     cols = st.columns(4)
-    for i, regime in enumerate(['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']):
+    for i, (regime, quad) in enumerate(zip(regimes, quad_labels)):
         with cols[i]:
+            st.subheader(f"{quad}: {regime}")
             st.write(style_percent_table(factor_performance[regime]), unsafe_allow_html=True)
