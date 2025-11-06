@@ -6,588 +6,348 @@
 from Functions import *
 from pathlib import Path
 import os
+
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
+# Configuration dictionaries
 spx_sectors = {
-    "XLC": "Comm Services",
-    "XLY": "Cons Disc",
-    "XLP": "Cons Stap",
-    "XLE": "Energy",
-    "XLF": "Financial",
-    "XLV": "Healthcare",
-    "XLI": "Industrial",
-    "XLB": "Materials",
-    "XLRE": "Real Estate",
-    "XLK": "Tech",
-    "XLU": "utilities"
+    "XLC": "comm_serv", "XLY": "cons_disc", "XLP": "cons_stap",
+    "XLE": "energy", "XLF": "financials", "XLV": "healthcare",
+    "XLI": "industrial", "XLB": "materials", "XLRE": "real_estate",
+    "XLK": "tech", "XLU": "utilities"
 }
 
 quad_regime_factors = {
-    "SPHB": "high_beta",
-    "SPLV": "low_beta",
-    "IWM": "small_caps",
-    "IWR": "mid_caps",
-    "MGK": "mega_cap_growth",
-    "IYT": "cyclicals", # or IWN
-    "DEF": "defensives",
-    "OEF": "size",
-    "QUAL": "quality",
-    "SPHD": "dividends",
-    "MTUM": "momentum",
-    "IWD": "value",
-    "IWF": "equity_growth",
-    "IWB": "large_caps"
+    "SPHB": "high_beta", "SPLV": "low_beta", "IWM": "small_caps",
+    "IWR": "mid_caps", "MGK": "mega_cap_growth", "IYT": "cyclicals",
+    "DEF": "defensives", "OEF": "size", "QUAL": "quality",
+    "SPHD": "dividends", "MTUM": "momentum", "IWD": "value",
+    "IWF": "equity_growth", "IWB": "large_caps"
 }
 
+regime_colors = {
+    "Goldilocks": "#28a745",  # Green
+    "Reflation": "#90ee90",  # Light green
+    "Deflation": "#dc3545",  # Red
+    "Stagflation": "#ffc107"  # Yellow
+}
+
+regime_code_map = {
+    0: 'Reflation',
+    1: 'Stagflation',
+    2: 'Goldilocks',
+    3: 'Deflation'
+}
+
+
 ### ---------------------------------------------------------------------------------------------------------- ###
-### ------------------------------------------------ DATA PULL ----------------------------------------------- ###
+### ------------------------------------------------ DATA LOADING -------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-### SPX DATA ###
-with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
-    sp500 = pd.read_csv(file)
-sp500.index = pd.to_datetime(sp500['Date']).values
-sp500.drop('Date', axis=1, inplace=True)
-spx_monthly = pd.DataFrame(sp500['Close']).resample('ME').last()
-spx_monthly.columns = ['spx']
-spx_monthly_pct = spx_monthly.pct_change().dropna()
+def load_price_data(filename, resample_freq='ME'):
+    """Load and resample price data from CSV."""
+    with open(Path(DATA_DIR) / filename, 'rb') as file:
+        df = pd.read_csv(file)
+    df.index = pd.to_datetime(df['Date'])
+    df = pd.DataFrame(df['Close']).resample(resample_freq).last()
+    return df
 
-### BOND AGGREGATE DATA ###
-with open(Path(DATA_DIR) / 'AGG.csv', 'rb') as file:
-    agg = pd.read_csv(file)
-agg.index = pd.to_datetime(agg['Date']).values
-agg = pd.DataFrame(agg['Close']).resample('ME').last()
 
-### GROWTH INFLATION DATA ###
+def load_multiple_tickers(ticker_dict, resample_freq='ME'):
+    """Load multiple ticker CSVs and merge into single DataFrame."""
+    merged_df = pd.DataFrame()
+    for ticker, label in ticker_dict.items():
+        df = load_price_data(f'{ticker}.csv', resample_freq)
+        df.columns = [label]
+        merged_df = merge_dfs([merged_df, df])
+    return merged_df
+
+
+# Load core data
+sp500 = load_price_data('SPX.csv')
+sp500.columns = ['spx']
+agg = load_price_data('AGG.csv')
+agg.columns = ['bonds']
+
 with open(Path(DATA_DIR) / 'growth.pkl', 'rb') as file:
     growth = pd.read_pickle(file)
 with open(Path(DATA_DIR) / 'inflation.pkl', 'rb') as file:
     inflation = pd.read_pickle(file)
 
-### SECTOR DATA ###
-spx_sectors_merge = pd.DataFrame()
-for each_factor in list(spx_sectors.keys()):
-    with open(Path(DATA_DIR) / (each_factor + '.csv'), 'rb') as file:
-        df = pd.read_csv(file)
-    df.index = pd.to_datetime(df['Date']).values
-    df = pd.DataFrame(df['Close'])
-    df.columns = [spx_sectors[each_factor]]
-    spx_sectors_merge = merge_dfs([spx_sectors_merge, df])
+# Load sector and factor data
+spx_sectors_df = load_multiple_tickers(spx_sectors)
+quad_factors_df = load_multiple_tickers(quad_regime_factors)
 
-### GROWTH INFLATION DATA ###
-growth_inflation_df = merge_dfs([growth.shift(-1),inflation.shift(-1),spx_monthly,agg]).dropna()
 
-growth_inflation_df.columns = ['growth','inflation','sp500','bonds']
-growth_inflation_df['growth_roc'] = growth_inflation_df['growth'].diff(3)
-growth_inflation_df['growth_roc_2'] = growth_inflation_df['growth_roc'].diff()
-growth_inflation_df['inflation_roc'] = growth_inflation_df['inflation'].diff(12)
-growth_inflation_df['inflation_roc_2'] = growth_inflation_df['inflation_roc'].diff(3)
-growth_inflation_df['sp500_pct'] = growth_inflation_df['sp500'].pct_change()
-growth_inflation_df['bonds_pct'] = growth_inflation_df['bonds'].pct_change()
-growth_inflation_df = growth_inflation_df.dropna()
+### ---------------------------------------------------------------------------------------------------------- ###
+### ----------------------------------------- REGIME CLASSIFICATION ------------------------------------------ ###
+### ---------------------------------------------------------------------------------------------------------- ###
 
-def plot_growth_inflation(start, end, **kwargs):
+def create_growth_inflation_df(growth, inflation, equities, bonds):
+    """Create combined growth/inflation dataframe with derived features."""
+    df = merge_dfs([
+        growth.shift(-1),
+        inflation.shift(-1),
+        equities,
+        bonds
+    ]).dropna()
+
+    df.columns = ['growth', 'inflation', 'sp500', 'bonds']
+
+    # Calculate rates of change
+    df['growth_roc'] = df['growth'].diff(3)
+    df['growth_roc_2'] = df['growth_roc'].diff()
+    df['inflation_roc'] = df['inflation'].diff(12)
+    df['inflation_roc_2'] = df['inflation_roc'].diff(3)
+
+    # Calculate returns
+    df['sp500_pct'] = df['sp500'].pct_change()
+    df['bonds_pct'] = df['bonds'].pct_change()
+
+    return df.dropna()
+
+
+def assign_regime_labels(df):
+    """Assign regime labels based on growth and inflation ROC."""
 
     def regime_label(row):
-        if row['inflation'] > 0 and row['growth'] > 0:
-            return 0  # Reflation
-        elif row['inflation'] > 0 and row['growth'] < 0:
-            return 1  # Stagflation
-        elif row['inflation'] < 0 and row['growth'] > 0:
-            return 2  # Goldilocks
-        elif row['inflation'] < 0 and row['growth'] < 0:
-            return 3  # Deflation
-        else:
-            return np.nan
+        if row['inflation_roc_2'] > 0 and row['growth_roc'] > 0:
+            return 'Reflation'
+        elif row['inflation_roc_2'] > 0 and row['growth_roc'] < 0:
+            return 'Stagflation'
+        elif row['inflation_roc_2'] < 0 and row['growth_roc'] > 0:
+            return 'Goldilocks'
+        elif row['inflation_roc_2'] < 0 and row['growth_roc'] < 0:
+            return 'Deflation'
+        return np.nan
 
-    reflation_regime = growth_inflation_df[
-        (growth_inflation_df['inflation_roc_2'] > 0) &
-        (growth_inflation_df['growth_roc'] > 0)
-    ]
-    stagflation_regime = growth_inflation_df[
-        (growth_inflation_df['inflation_roc_2'] > 0) &
-        (growth_inflation_df['growth_roc'] < 0)
-    ]
-    goldilocks_regime = growth_inflation_df[
-        (growth_inflation_df['inflation_roc_2'] < 0) &
-        (growth_inflation_df['growth_roc'] > 0)
-    ]
-    deflation_regime = growth_inflation_df[
-        (growth_inflation_df['inflation_roc_2'] < 0) &
-        (growth_inflation_df['growth_roc'] < 0)
-    ]
-    growth_inflation_df['regime_code'] = growth_inflation_df.apply(regime_label, axis=1)
+    df['regime_label'] = df.apply(regime_label, axis=1)
+    return df
 
-    regime_colors = {
-        0: '#90ee90',  # Reflation (red)
-        1: '#ffc107',  # Stagflation (yellow)
-        2: '#28a745',  # Goldilocks (green)
-        3: '#dc3545'  # Deflation (blue)
-    }
+
+# Create main dataframe
+growth_inflation_df = create_growth_inflation_df(growth, inflation, sp500, agg)
+growth_inflation_df = assign_regime_labels(growth_inflation_df)
+
+
+### ---------------------------------------------------------------------------------------------------------- ###
+### ----------------------------------------- REGIME STATISTICS ---------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
+def calculate_regime_statistics(df, return_cols=['sp500_pct', 'bonds_pct']):
+    """Calculate average returns and occurrence frequencies by regime."""
+    regimes = ['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+    results = []
+
+    for regime in regimes:
+        regime_data = df[df['regime_label'] == regime]
+        regime_returns = (regime_data[return_cols].mean() * 100).values
+
+        results.append({
+            'Regime': f"{regime} ({'I-G+' if regime == 'Goldilocks' else 'I+G+' if regime == 'Reflation' else 'I-G-' if regime == 'Deflation' else 'I+G-'})",
+            'Equities': regime_returns[0],
+            'Bonds': regime_returns[1],
+            '% of Occurrences': (len(regime_data) / len(df.dropna(subset=['regime_label']))) * 100
+        })
+
+    return pd.DataFrame(results)
+
+
+### ---------------------------------------------------------------------------------------------------------- ###
+### --------------------------------------- SECTOR/FACTOR ANALYSIS ------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
+def calculate_regime_performance(base_df, asset_returns_df, regime_col='regime_label'):
+    """Calculate average returns by regime for multiple assets."""
+    regimes = ['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+    combined_df = merge_dfs([base_df, asset_returns_df])
+
+    results = {}
+    for regime in regimes:
+        regime_data = combined_df[combined_df[regime_col] == regime]
+        avg_returns = (regime_data[asset_returns_df.columns].mean() * 100).sort_values(ascending=False)
+        results[regime] = pd.DataFrame({regime: avg_returns.round(2)})
+
+    return results
+
+
+### ---------------------------------------------------------------------------------------------------------- ###
+### -------------------------------------------- PLOTTING FUNCTIONS ------------------------------------------ ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
+def streamlit_regime_colored_line(df, y_col, regime_col='regime_label',
+                                  title="Asset Price by Regime"):
+    """
+    Plot a line chart with points colored by regime.
+
+    Args:
+        df: DataFrame with index as dates
+        y_col: Column name for y-axis values
+        regime_col: Column name containing regime labels
+        title: Chart title
+    """
+    fig = go.Figure()
+
+    # Add black line
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df[y_col],
+        mode='lines',
+        line=dict(color='black', width=2),
+        name=y_col,
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+
+    # Add colored markers by regime
+    for regime, color in regime_colors.items():
+        mask = df[regime_col] == regime
+        fig.add_trace(go.Scatter(
+            x=df.index[mask],
+            y=df[y_col][mask],
+            mode='markers',
+            marker=dict(color=color, size=8),
+            name=regime,
+            showlegend=True,
+            hovertemplate=f"Regime: {regime}<br>{y_col}: %{{y}}<br>Date: %{{x}}<extra></extra>"
+        ))
+
+    fig.update_layout(
+        title=title,
+        hovermode='closest',
+        legend=dict(title='Regime', orientation='h', y=-0.15),
+        template='plotly_white',
+        height=500
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def plot_growth_inflation(start=None, end=None, **kwargs):
+    """Main plotting function for growth/inflation regime analysis."""
 
     df = growth_inflation_df.copy()
-    df = df.dropna(subset=['regime_code']).copy()
-    df = df[~df.index.duplicated(keep='first')]
-    df['regime_code'] = df['regime_code'].astype(int)
-    df['regime_color'] = df['regime_code'].map(regime_colors)
+    if start:
+        df = df[df.index >= start]
+    if end:
+        df = df[df.index <= end]
 
-    reflation_averages = reflation_regime[['sp500_pct','bonds_pct']].mean(axis=0) * 100
-    stagflation_averages = stagflation_regime[['sp500_pct','bonds_pct']].mean(axis=0)*  100
-    goldilocks_averages = goldilocks_regime[['sp500_pct','bonds_pct']].mean(axis=0) * 100
-    deflation_averages = deflation_regime[['sp500_pct','bonds_pct']].mean(axis=0) * 100
-
-    gi_2_factor_results = pd.DataFrame()
-    gi_2_factor_results['Regime'] = [
-        'Goldilocks (I-G+)',
-        'Reflation (I+G+)',
-        'Deflation (I-G-)',
-        'Stagflation (I+G-)',
-    ]
-    gi_2_factor_results['Equities'] = [goldilocks_averages[0],
-                                       reflation_averages[0],
-                                       deflation_averages[0],
-                                       stagflation_averages[0],]
-    gi_2_factor_results['Bonds'] = [goldilocks_averages[1],
-                                    reflation_averages[1],
-                                    deflation_averages[1],
-                                    stagflation_averages[1]]
-    total_rows = len(goldilocks_regime) + len(reflation_regime) + len(deflation_regime) + len(stagflation_regime)
-    gi_2_factor_results['% of Occurrences'] = [
-        len(goldilocks_regime)/ total_rows,
-        len(reflation_regime) / total_rows,
-        len(deflation_regime) / total_rows,
-        len(stagflation_regime) / total_rows
-    ]
-    gi_2_factor_results['% of Occurrences'] = (gi_2_factor_results['% of Occurrences'] * 100)
-
-    ### ------------------------------------------------- PLOTS -------------------------------------------------- ###
-
-    ### PLOT ###
+    # ===== CLI/CPI Dual Y-Axis Plot =====
     st.title("Growth and Inflation Inputs")
-    cli_col = 'growth'
-    cli_diff_col = 'growth_roc'
-    cpi_col = 'inflation'
-    cpi_diff_col = 'inflation_roc'
-    colors = {
-        'CLI': '#2056AE',
-        'CLI 1st Change': '#6AC47E',
-        'CPI': '#F2552C',
-        'CPI 1st Change': '#F7BC38'
-    }
+
     fig = make_subplots(
         rows=1, cols=2,
         subplot_titles=['CLI (Growth)', 'CPI (Inflation)'],
         specs=[[{"secondary_y": True}, {"secondary_y": True}]]
     )
+
+    colors = {
+        'CLI': '#2056AE',
+        'CLI ROC': '#6AC47E',
+        'CPI': '#F2552C',
+        'CPI ROC': '#F7BC38'
+    }
+
+    # CLI subplot
     fig.add_trace(
-        go.Scatter(
-            x=growth_inflation_df.index,
-            y=growth_inflation_df[cli_col],
-            name='CLI Outright',
-            mode='lines',
-            line=dict(color=colors['CLI'], width=2)
-        ),
+        go.Scatter(x=df.index, y=df['growth'], name='CLI Outright',
+                   mode='lines', line=dict(color=colors['CLI'], width=2)),
         row=1, col=1, secondary_y=False
     )
     fig.add_trace(
-        go.Scatter(
-            x=growth_inflation_df.index,
-            y=growth_inflation_df[cli_diff_col],
-            name='CLI ROC',
-            mode='lines',
-            line=dict(color=colors['CLI 1st Change'], dash='dot', width=2)
-        ),
+        go.Scatter(x=df.index, y=df['growth_roc'], name='CLI ROC',
+                   mode='lines', line=dict(color=colors['CLI ROC'], dash='dot', width=2)),
         row=1, col=1, secondary_y=True
     )
+
+    # CPI subplot
     fig.add_trace(
-        go.Scatter(
-            x=growth_inflation_df.index,
-            y=growth_inflation_df[cpi_col],
-            name='CPI Outright',
-            mode='lines',
-            line=dict(color=colors['CPI'], width=2)
-        ),
+        go.Scatter(x=df.index, y=df['inflation'], name='CPI Outright',
+                   mode='lines', line=dict(color=colors['CPI'], width=2)),
         row=1, col=2, secondary_y=False
     )
     fig.add_trace(
-        go.Scatter(
-            x=growth_inflation_df.index,
-            y=growth_inflation_df[cpi_diff_col],
-            name='CPI ROC',
-            mode='lines',
-            line=dict(color=colors['CPI 1st Change'], dash='dot', width=2)
-        ),
+        go.Scatter(x=df.index, y=df['inflation_roc'], name='CPI ROC',
+                   mode='lines', line=dict(color=colors['CPI ROC'], dash='dot', width=2)),
         row=1, col=2, secondary_y=True
     )
+
     fig.update_layout(
         height=500,
-        width=1100,
         hovermode='x unified',
-        legend=dict(title='Series', orientation='h', y=-0.2),
-        margin=dict(t=50, b=50)
+        legend=dict(orientation='h', y=-0.2)
     )
     fig.update_yaxes(title_text="Outright", row=1, col=1, secondary_y=False)
     fig.update_yaxes(title_text="ROC", row=1, col=1, secondary_y=True)
     fig.update_yaxes(title_text="Outright", row=1, col=2, secondary_y=False)
     fig.update_yaxes(title_text="ROC", row=1, col=2, secondary_y=True)
+
     st.plotly_chart(fig, use_container_width=True)
 
-    ### PLOT ###
+    # ===== Regime-Colored Asset Charts =====
     st.title("Equity and Fixed Income by Regime")
-    regime_colors = {
-        0: '#90ee90',  # Reflation (red)
-        1: '#ffc107',  # Stagflation (yellow)
-        2: '#28a745',  # Goldilocks (green)
-        3: '#dc3545'  # Deflation (blue)
-    }
-    regime_labels = {
-        0: 'Reflation',
-        1: 'Stagflation',
-        2: 'Goldilocks',
-        3: 'Deflation'
-    }
-    df = growth_inflation_df.copy()
-    df = df.dropna(subset=['regime_code']).copy()
-    df = df[~df.index.duplicated(keep='first')]
-    df['regime_code'] = df['regime_code'].astype(int)
-    df['regime_color'] = df['regime_code'].map(regime_colors)
-    df['regime_label'] = df['regime_code'].map(regime_labels)
+    streamlit_regime_colored_line(df, 'sp500', title="SP500 by Regime")
+    streamlit_regime_colored_line(df, 'bonds', title="Bonds by Regime")
 
-    ### EQUITY REGIME GRAPH ###
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=df.index,
-        y=df['sp500'],
-        mode='lines',
-        line=dict(color='black', width=2),
-        name='SP500',
-        showlegend=False,
-        hoverinfo='skip'  # Suppress hover for line
-    ))
-    for code, color in regime_colors.items():
-        mask = df['regime_code'] == code
-        fig.add_trace(go.Scatter(
-            x=df.index[mask],
-            y=df['sp500'][mask],
-            mode='markers',
-            marker=dict(color=color, size=8),
-            name=regime_labels[code],
-            showlegend=True,
-            hovertemplate=(
-                "Regime: %{text}<br>SP500: %{y}<br>Date: %{x}"
-            ),
-            text=[regime_labels[code]] * sum(mask)
-        ))
-    fig.update_layout(
-        title="SP500 by Regime",
-        hovermode='x',  # Only show one trace at a time
-        legend=dict(title='Regime')
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    ### BOND REGIME GRAPH ###
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=df.index,
-        y=df['bonds'],
-        mode='lines',
-        line=dict(color='black', width=2),
-        name='Bonds',
-        showlegend=False,
-        hoverinfo='skip'  # Suppress hover for line
-    ))
-    for code, color in regime_colors.items():
-        mask = df['regime_code'] == code
-        fig.add_trace(go.Scatter(
-            x=df.index[mask],
-            y=df['bonds'][mask],
-            mode='markers',
-            marker=dict(color=color, size=8),
-            name=regime_labels[code],
-            showlegend=True,
-            hovertemplate=(
-                "Regime: %{text}<br>SP500: %{y}<br>Date: %{x}"
-            ),
-            text=[regime_labels[code]] * sum(mask)
-        ))
-    fig.update_layout(
-        title="Bonds by Regime",
-        hovermode='x',  # Only show one trace at a time
-        legend=dict(title='Regime')
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    ### TABLE ###
-    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
-    styled = gi_2_factor_results.style \
-        .format({'Equities': "{:.2f}%",
-                 'Bonds': "{:.2f}%",
-                 '% of Occurrences': "{:.2f}%"}) \
-        .set_properties(subset=['Equities', 'Bonds', '% of Occurrences'], **{'width': '80px'}) \
-        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
+    # ===== Statistics Table =====
     st.title("Growth and Inflation Historical Performance")
+    stats_df = calculate_regime_statistics(df)
+
+    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
+    styled = stats_df.style \
+        .format({'Equities': "{:.2f}%", 'Bonds': "{:.2f}%", '% of Occurrences': "{:.2f}%"}) \
+        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
+
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.write(styled, unsafe_allow_html=True)
 
-    ### EQUITY RETURN DISTRIBUTION ###
+    # ===== Return Distributions =====
     st.title("Equity Return Distributions")
-    regimes = [
-        'Reflation',
-        'Stagflation',
-        'Goldilocks',
-        'Deflation'
-    ]
-    regime_colors = {
-        "Reflation": "#90ee90",
-        "Stagflation": "#ffc107",
-        "Goldilocks": "#28a745",
-        "Deflation": "#dc3545"
-    }
+    regimes = ['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+    plot_regime_return_histograms(df, 'regime_label', 'sp500_pct', regimes)
 
-    fig = sp.make_subplots(
-        rows=2, cols=2,
-        subplot_titles=regimes
-    )
-    min_bound = df['sp500_pct'].min()
-    max_bound = df['sp500_pct'].max()
-    for i, regime in enumerate(regimes):
-        row = i // 2 + 1
-        col = i % 2 + 1
-        subdata = df[df['regime_label'] == regime]
-        fig.add_trace(
-            go.Histogram(
-                x=subdata['sp500_pct'].dropna(),
-                name=regime,
-                marker_color=regime_colors.get(regime, "#AAAAAA"),
-                opacity=0.8,
-                nbinsx=30,
-                xbins=dict(
-                    start=min_bound,
-                    end=max_bound
-                )
-            ),
-            row=row,
-            col=col
-        )
-    for row in [1, 2]:
-        for col in [1, 2]:
-            fig.update_xaxes(title_text="SPX % Return", row=row, col=col, range=[min_bound, max_bound])
-            fig.update_yaxes(title_text="Count", row=row, col=col)
-    fig.update_layout(
-        showlegend=False,
-        height=600
-    )
-    fig.show()
-    st.plotly_chart(fig, use_container_width=True)
-
-    ### BONDS RETURN DISTRIBUTION ###
     st.title("Bonds Return Distributions")
-    regimes = [
-        'Reflation',
-        'Stagflation',
-        'Goldilocks',
-        'Deflation'
-    ]
-    regime_colors = {
-        "Reflation": "#90ee90",
-        "Stagflation": "#ffc107",
-        "Goldilocks": "#28a745",
-        "Deflation": "#dc3545"
-    }
+    plot_regime_return_histograms(df, 'regime_label', 'bonds_pct', regimes)
 
-    fig = sp.make_subplots(
-        rows=2, cols=2,
-        subplot_titles=regimes
-    )
-    min_bound = df['bonds_pct'].min()
-    max_bound = df['bonds_pct'].max()
-    for i, regime in enumerate(regimes):
-        row = i // 2 + 1
-        col = i % 2 + 1
-        subdata = df[df['regime_label'] == regime]
-        fig.add_trace(
-            go.Histogram(
-                x=subdata['bonds_pct'].dropna(),
-                name=regime,
-                marker_color=regime_colors.get(regime, "#AAAAAA"),
-                opacity=0.8,
-                nbinsx=30,
-                xbins=dict(
-                    start=min_bound,
-                    end=max_bound
-                )
-            ),
-            row=row,
-            col=col
-        )
-    for row in [1, 2]:
-        for col in [1, 2]:
-            fig.update_xaxes(title_text="Bond % Return", row=row, col=col, range=[min_bound, max_bound])
-            fig.update_yaxes(title_text="Count", row=row, col=col)
-    fig.update_layout(
-        showlegend=False,
-        height=600
-    )
-    fig.show()
-    st.plotly_chart(fig, use_container_width=True)
 
 ### ---------------------------------------------------------------------------------------------------------- ###
-### ------------------------------------------------ SECTORS ------------------------------------------------- ###
+### ----------------------------------------- SECTOR/FACTOR PLOTTING ----------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-def plot_spx_sector_regimes(start,end,**kwargs):
-    spx_sector_pct = spx_sectors_merge.resample('ME').last().pct_change()
-    spx_sector_pct.columns = ['comm_serv','cons_disc', 'cons_stap', 'energy',
-                            'financials', 'healthcare', 'industrial', 'materials',
-                            'real_estate', 'tech', 'utilities']
-    growth_inflation_sector = merge_dfs([growth_inflation_df,spx_sector_pct])
+def plot_spx_sector_regimes(start=None, end=None, **kwargs):
+    """Plot sector and factor performance by regime."""
 
-    reflation_sector_regime = growth_inflation_sector[
-        (growth_inflation_sector['inflation_roc'] > 0) &
-        (growth_inflation_sector['growth_roc'] > 0)
-        ]
-    stagflation_sector_regime = growth_inflation_sector[
-        (growth_inflation_sector['inflation_roc'] > 0) &
-        (growth_inflation_sector['growth_roc'] < 0)
-        ]
-    goldilocks_sector_regime = growth_inflation_sector[
-        (growth_inflation_sector['inflation_roc'] < 0) &
-        (growth_inflation_sector['growth_roc'] > 0)
-        ]
-    deflation_sector_regime = growth_inflation_sector[
-        (growth_inflation_sector['inflation_roc'] < 0) &
-        (growth_inflation_sector['growth_roc'] < 0)
-        ]
+    # Calculate returns
+    sector_returns = spx_sectors_df.resample('ME').last().pct_change()
+    factor_returns = quad_factors_df.resample('ME').last().pct_change()
 
-    reflation_sector_averages = pd.DataFrame((reflation_sector_regime[
-        spx_sector_pct.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
-    reflation_sector_averages.columns = ['Reflation']
-    stagflation_sector_averages = pd.DataFrame((stagflation_sector_regime[
-        spx_sector_pct.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
-    stagflation_sector_averages.columns = ['Stagflation']
-    goldilocks_sector_averages = pd.DataFrame((goldilocks_sector_regime[
-        spx_sector_pct.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
-    goldilocks_sector_averages.columns = ['Goldilocks']
-    deflation_sector_averages = pd.DataFrame((deflation_sector_regime[
-        spx_sector_pct.columns].mean(axis=0).sort_values(ascending=False) * 100).round(2))
-    deflation_sector_averages.columns = ['Deflation']
+    # Calculate regime performance
+    sector_performance = calculate_regime_performance(growth_inflation_df, sector_returns)
+    factor_performance = calculate_regime_performance(growth_inflation_df, factor_returns)
 
-    cmap = LinearSegmentedColormap.from_list("red_white_green", ["#ff3333", "#ffffff", "#33cc33"])
-    def highlight_red_green(val):
-        if val < 0:
-            color = 'background-color: #ffcccc'  # light red
-        elif val > 0:
-            color = 'background-color: #ccffcc'  # light green
-        else:
-            color = ''  # no highlight for zero
-        return color
+    # Styling function
+    def style_percent_table(df):
+        def highlight_red_green(val):
+            if val < 0:
+                return 'background-color: #ffcccc'
+            elif val > 0:
+                return 'background-color: #ccffcc'
+            return ''
 
-    def style_percent(df):
         col = df.columns[0]
-        return df.style.format({col: "{:.2f}%"}) \
-            .applymap(highlight_red_green, subset=[col])
+        return df.style.format({col: "{:.2f}%"}).applymap(highlight_red_green, subset=[col])
 
-    ### PLOT ###
-    st.title("Top Bottom SPX Sector Performance")
+    # ===== Sector Performance =====
+    st.title("Top/Bottom SPX Sector Performance")
     cols = st.columns(4)
-    with cols[0]:
-        st.write(style_percent(goldilocks_sector_averages), unsafe_allow_html=True)
-    with cols[1]:
-        st.write(style_percent(reflation_sector_averages), unsafe_allow_html=True)
-    with cols[2]:
-        st.write(style_percent(deflation_sector_averages), unsafe_allow_html=True)
-    with cols[3]:
-        st.write(style_percent(stagflation_sector_averages), unsafe_allow_html=True)
+    for i, regime in enumerate(['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']):
+        with cols[i]:
+            st.write(style_percent_table(sector_performance[regime]), unsafe_allow_html=True)
 
-    ### ---------------------------------------------------------------------------------------------------------- ###
-    ### ------------------------------------------------ SECTORS ------------------------------------------------- ###
-    ### ---------------------------------------------------------------------------------------------------------- ###
-
-    all_quad_regime_factors = pd.DataFrame()
-    for each_factor in list(quad_regime_factors.keys()):
-        with open(Path(DATA_DIR) / (each_factor + '.csv'), 'rb') as file:
-            df = pd.read_csv(file)
-        df.index = pd.to_datetime(df['Date']).values
-        final_df = pd.DataFrame(df['Close'])
-        final_df.columns = [quad_regime_factors[each_factor]]
-        all_quad_regime_factors = merge_dfs([all_quad_regime_factors, final_df])
-
-    factors_pct = all_quad_regime_factors.resample('ME').last().pct_change()
-
-    growth_inflation_factors = merge_dfs([growth_inflation_df, factors_pct])
-
-    reflation_factor_regime = growth_inflation_factors[
-        (growth_inflation_factors['inflation_roc'] > 0) &
-        (growth_inflation_factors['growth_roc'] > 0)
-        ]
-    stagflation_factor_regime = growth_inflation_factors[
-        (growth_inflation_factors['inflation_roc'] > 0) &
-        (growth_inflation_factors['growth_roc'] < 0)
-        ]
-    goldilocks_factor_regime = growth_inflation_factors[
-        (growth_inflation_factors['inflation_roc'] < 0) &
-        (growth_inflation_factors['growth_roc'] > 0)
-        ]
-    deflation_factor_regime = growth_inflation_factors[
-        (growth_inflation_factors['inflation_roc'] < 0) &
-        (growth_inflation_factors['growth_roc'] < 0)
-        ]
-
-    reflation_factor_averages = pd.DataFrame((reflation_factor_regime[
-                                                  factors_pct.columns].mean(axis=0).sort_values(
-        ascending=False) * 100).round(2))
-    reflation_factor_averages.columns = ['Reflation']
-    stagflation_factor_averages = pd.DataFrame((stagflation_factor_regime[
-                                                    factors_pct.columns].mean(axis=0).sort_values(
-        ascending=False) * 100).round(2))
-    stagflation_factor_averages.columns = ['Stagflation']
-    goldilocks_factor_averages = pd.DataFrame((goldilocks_factor_regime[
-                                                   factors_pct.columns].mean(axis=0).sort_values(
-        ascending=False) * 100).round(2))
-    goldilocks_factor_averages.columns = ['Goldilocks']
-    deflation_factor_averages = pd.DataFrame((deflation_factor_regime[
-                                                  factors_pct.columns].mean(axis=0).sort_values(
-        ascending=False) * 100).round(2))
-    deflation_factor_averages.columns = ['Deflation']
-
-    # Custom diverging colormap: red (neg), white (zero), green (pos)
-    cmap = LinearSegmentedColormap.from_list("red_white_green", ["#ff3333", "#ffffff", "#33cc33"])
-
-    def highlight_red_green(val):
-        if val < 0:
-            color = 'background-color: #ffcccc'  # light red
-        elif val > 0:
-            color = 'background-color: #ccffcc'  # light green
-        else:
-            color = ''  # no highlight for zero
-        return color
-
-    def style_percent(df):
-        col = df.columns[0]
-        return df.style.format({col: "{:.2f}%"}) \
-            .applymap(highlight_red_green, subset=[col])
-
-    ### PLOT ###
-    st.title("Top Bottom SPX Factor Performance")
+    # ===== Factor Performance =====
+    st.title("Top/Bottom SPX Factor Performance")
     cols = st.columns(4)
-    with cols[0]:
-        st.write(style_percent(goldilocks_factor_averages), unsafe_allow_html=True)
-    with cols[1]:
-        st.write(style_percent(reflation_factor_averages), unsafe_allow_html=True)
-    with cols[2]:
-        st.write(style_percent(deflation_factor_averages), unsafe_allow_html=True)
-    with cols[3]:
-        st.write(style_percent(stagflation_factor_averages), unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
+    for i, regime in enumerate(['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']):
+        with cols[i]:
+            st.write(style_percent_table(factor_performance[regime]), unsafe_allow_html=True)
