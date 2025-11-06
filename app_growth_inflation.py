@@ -44,7 +44,7 @@ regime_code_map = {
 ### ------------------------------------------------ DATA LOADING -------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-def load_price_data(filename, resample_freq='QE'):
+def load_price_data(filename, resample_freq='ME'):
     """Load and resample price data from CSV."""
     with open(Path(DATA_DIR) / filename, 'rb') as file:
         df = pd.read_csv(file)
@@ -53,7 +53,7 @@ def load_price_data(filename, resample_freq='QE'):
     return df
 
 
-def load_multiple_tickers(ticker_dict, resample_freq='QE'):
+def load_multiple_tickers(ticker_dict, resample_freq='ME'):
     """Load multiple ticker CSVs and merge into single DataFrame."""
     merged_df = pd.DataFrame()
     for ticker, label in ticker_dict.items():
@@ -321,8 +321,8 @@ def plot_spx_sector_regimes(start=None, end=None, **kwargs):
     """Plot sector and factor performance by regime."""
 
     # Calculate returns
-    sector_returns = spx_sectors_df.resample('QE').last().pct_change()
-    factor_returns = quad_factors_df.resample('QE').last().pct_change()
+    sector_returns = spx_sectors_df.resample('ME').last().pct_change()
+    factor_returns = quad_factors_df.resample('ME').last().pct_change()
 
     # Filter by date range if provided
     if start:
