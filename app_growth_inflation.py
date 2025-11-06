@@ -28,8 +28,8 @@ quad_regime_factors = {
 regime_colors = {
     "Goldilocks": "#28a745",  # Green
     "Reflation": "#90ee90",  # Light green
-    "Deflation": "#dc3545",  # Red
-    "Stagflation": "#ffc107"  # Yellow
+    "Stagflation": "#ffc107",  # Yellow
+    "Deflation": "#dc3545"  # Red
 }
 
 regime_code_map = {
