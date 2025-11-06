@@ -362,7 +362,7 @@ def grid_regime_nowcast():
 
 def grid_equity_backtest():
     grid_growth_inflation_spx['weights'] = grid_growth_inflation_spx.apply(grid_equity_weights, axis=1)
-    grid_growth_inflation_spx['bt_returns'] = (grid_growth_inflation_spx['weights'] * grid_growth_inflation_spx['spx']).shift(-1)
+    grid_growth_inflation_spx['bt_returns'] = (grid_growth_inflation_spx['weights'] * grid_growth_inflation_spx['spx']).shift(1)
     grid_growth_inflation_spx['cumsum_spx'] = (1 + grid_growth_inflation_spx['spx']).cumprod() -1
     grid_growth_inflation_spx['cumsum_bt'] = (1 + grid_growth_inflation_spx['bt_returns']).cumprod() -1
 
@@ -419,7 +419,7 @@ def grid_equity_backtest():
 
 def grid_bonds_backtest():
     grid_growth_inflation_agg['weights'] = grid_growth_inflation_agg.apply(grid_bond_weights, axis=1)
-    grid_growth_inflation_agg['bt_returns'] = (grid_growth_inflation_agg['weights'] * grid_growth_inflation_agg['bonds']).shift(-1)
+    grid_growth_inflation_agg['bt_returns'] = (grid_growth_inflation_agg['weights'] * grid_growth_inflation_agg['bonds']).shift(1)
     grid_growth_inflation_agg['cumsum_bonds'] = (1 + grid_growth_inflation_agg['bonds']).cumprod() -1
     grid_growth_inflation_agg['cumsum_bt'] = (1 + grid_growth_inflation_agg['bt_returns']).cumprod() -1
 
@@ -476,7 +476,7 @@ def grid_bonds_backtest():
 def grid_mags_backtest():
     grid_growth_inflation_mags['weights'] = grid_growth_inflation_mags.apply(grid_equity_weights, axis=1)
     grid_growth_inflation_mags['bt_returns'] = (
-                grid_growth_inflation_mags['weights'] * grid_growth_inflation_mags['mags']).shift(-1)
+                grid_growth_inflation_mags['weights'] * grid_growth_inflation_mags['mags']).shift(1)
     grid_growth_inflation_mags['cumsum_mags'] = (1 + grid_growth_inflation_mags['mags']).cumprod() -1
     grid_growth_inflation_mags['cumsum_bt'] = (1 + grid_growth_inflation_mags['bt_returns']).cumprod() -1
 
