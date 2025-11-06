@@ -32,6 +32,7 @@ regime_colors = {
     "Deflation": "#dc3545"  # Red
 }
 
+
 regime_code_map = {
     0: 'Reflation',
     1: 'Stagflation',
