@@ -145,8 +145,8 @@ with open(Path(DATA_DIR) / 'di_reserves.pkl', 'rb') as file:
     di_reserves = pd.read_pickle(file)
 with open(Path(DATA_DIR) / 'm2_money_supply.pkl', 'rb') as file:
     m2_money_supply = pd.read_pickle(file)
-inflation_variables_merge = merge_dfs([inflation_variables_merge, di_reserves, m2_money_supply])
-target_feature_df = inflation_variables_merge.pct_change(12)
+inflation_variables_merge = merge_dfs([inflation_variables_merge, di_reserves, m2_money_supply]).pct_change(12)
+target_feature_df = inflation_variables_merge.diff(3)
 target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
 target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
 target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-1)
