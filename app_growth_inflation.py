@@ -115,20 +115,20 @@ def plot_growth_inflation(start, end, **kwargs):
             return np.nan
 
     reflation_regime = growth_inflation_df[
-        (growth_inflation_df['inflation_roc'] > 0) &
-        (growth_inflation_df['growth_roc'] > 0)
+        (growth_inflation_df['inflation'] > 0) &
+        (growth_inflation_df['growth'] > 0)
     ]
     stagflation_regime = growth_inflation_df[
-        (growth_inflation_df['inflation_roc'] > 0) &
-        (growth_inflation_df['growth_roc'] < 0)
+        (growth_inflation_df['inflation'] > 0) &
+        (growth_inflation_df['growth'] < 0)
     ]
     goldilocks_regime = growth_inflation_df[
-        (growth_inflation_df['inflation_roc'] < 0) &
-        (growth_inflation_df['growth_roc'] > 0)
+        (growth_inflation_df['inflation'] < 0) &
+        (growth_inflation_df['growth'] > 0)
     ]
     deflation_regime = growth_inflation_df[
-        (growth_inflation_df['inflation_roc'] < 0) &
-        (growth_inflation_df['growth_roc'] < 0)
+        (growth_inflation_df['inflation'] < 0) &
+        (growth_inflation_df['growth'] < 0)
     ]
     growth_inflation_df['regime_code'] = growth_inflation_df.apply(regime_label, axis=1)
 
