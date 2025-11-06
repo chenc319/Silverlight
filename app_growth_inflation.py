@@ -227,10 +227,12 @@ def plot_growth_inflation(start=None, end=None, **kwargs):
     """Main plotting function for growth/inflation regime analysis."""
 
     df = growth_inflation_df.copy()
+
+    # FIX: Convert start/end to pd.Timestamp to avoid datetime comparison error
     if start:
-        df = df[df.index >= start]
+        df = df[df.index >= pd.Timestamp(start)]
     if end:
-        df = df[df.index <= end]
+        df = df[df.index <= pd.Timestamp(end)]
 
     # ===== CLI/CPI Dual Y-Axis Plot =====
     st.title("Growth and Inflation Inputs")
@@ -321,6 +323,14 @@ def plot_spx_sector_regimes(start=None, end=None, **kwargs):
     # Calculate returns
     sector_returns = spx_sectors_df.resample('ME').last().pct_change()
     factor_returns = quad_factors_df.resample('ME').last().pct_change()
+
+    # Filter by date range if provided
+    if start:
+        sector_returns = sector_returns[sector_returns.index >= pd.Timestamp(start)]
+        factor_returns = factor_returns[factor_returns.index >= pd.Timestamp(start)]
+    if end:
+        sector_returns = sector_returns[sector_returns.index <= pd.Timestamp(end)]
+        factor_returns = factor_returns[factor_returns.index <= pd.Timestamp(end)]
 
     # Calculate regime performance
     sector_performance = calculate_regime_performance(growth_inflation_df, sector_returns)
