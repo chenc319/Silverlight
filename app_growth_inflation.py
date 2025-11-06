@@ -3,16 +3,9 @@
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 ### PACKAGES ###
-import pandas as pd
-import functools as ft
-import streamlit as st
-import plotly.graph_objs as go
+from Functions import *
 from pathlib import Path
-import plotly.subplots as sp
 import os
-from matplotlib.colors import LinearSegmentedColormap
-from plotly.subplots import make_subplots
-import numpy as np
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 spx_sectors = {
@@ -46,11 +39,6 @@ quad_regime_factors = {
     "IWB": "large_caps"
 }
 
-def merge_dfs(array_of_dfs):
-    return ft.reduce(lambda left, right: pd.merge(left, right,
-                                                  left_index=True,
-                                                  right_index=True, how='outer'), array_of_dfs)
-
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ------------------------------------------------ DATA PULL ----------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
@@ -60,7 +48,7 @@ with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
     sp500 = pd.read_csv(file)
 sp500.index = pd.to_datetime(sp500['Date']).values
 sp500.drop('Date', axis=1, inplace=True)
-spx_monthly = pd.DataFrame(sp500['Close']).resample('Q').last()
+spx_monthly = pd.DataFrame(sp500['Close']).resample('ME').last()
 spx_monthly.columns = ['spx']
 spx_monthly_pct = spx_monthly.pct_change().dropna()
 
@@ -68,7 +56,7 @@ spx_monthly_pct = spx_monthly.pct_change().dropna()
 with open(Path(DATA_DIR) / 'AGG.csv', 'rb') as file:
     agg = pd.read_csv(file)
 agg.index = pd.to_datetime(agg['Date']).values
-agg = pd.DataFrame(agg['Close']).resample('Q').last()
+agg = pd.DataFrame(agg['Close']).resample('ME').last()
 
 ### GROWTH INFLATION DATA ###
 with open(Path(DATA_DIR) / 'growth.pkl', 'rb') as file:
@@ -451,7 +439,7 @@ def plot_growth_inflation(start, end, **kwargs):
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def plot_spx_sector_regimes(start,end,**kwargs):
-    spx_sector_pct = spx_sectors_merge.resample('Q').last().pct_change()
+    spx_sector_pct = spx_sectors_merge.resample('ME').last().pct_change()
     spx_sector_pct.columns = ['comm_serv','cons_disc', 'cons_stap', 'energy',
                             'financials', 'healthcare', 'industrial', 'materials',
                             'real_estate', 'tech', 'utilities']
@@ -527,7 +515,7 @@ def plot_spx_sector_regimes(start,end,**kwargs):
         final_df.columns = [quad_regime_factors[each_factor]]
         all_quad_regime_factors = merge_dfs([all_quad_regime_factors, final_df])
 
-    factors_pct = all_quad_regime_factors.resample('Q').last().pct_change()
+    factors_pct = all_quad_regime_factors.resample('ME').last().pct_change()
 
     growth_inflation_factors = merge_dfs([growth_inflation_df, factors_pct])
 
