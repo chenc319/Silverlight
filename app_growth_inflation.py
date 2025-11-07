@@ -96,7 +96,7 @@ def create_growth_inflation_df(growth, inflation, equities, bonds):
     df.columns = ['growth', 'inflation', 'sp500', 'bonds']
 
     # Calculate rates of change
-    df['growth_roc'] = df['growth'].diff(3)
+    df['growth_roc'] = df['growth'].diff(12)
     df['growth_roc_2'] = df['growth_roc'].diff()
     df['inflation_roc'] = df['inflation'].diff(12)
     df['inflation_roc_2'] = df['inflation_roc'].diff(3)
