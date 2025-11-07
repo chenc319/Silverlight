@@ -124,7 +124,7 @@ def create_growth_inflation_df(growth, inflation, equities, bonds, mags):
         mags
     ]).dropna()
 
-    df.columns = ['growth', 'inflation', 'sp500', 'bonds']
+    df.columns = ['growth', 'inflation', 'sp500', 'bonds','mags_pct']
 
     # Calculate rates of change
     df['growth_roc'] = df['growth'].diff(12)
@@ -166,7 +166,7 @@ growth_inflation_df = assign_regime_labels(growth_inflation_df)
 ### ----------------------------------------- REGIME STATISTICS ---------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-def calculate_regime_statistics(df, return_cols=['sp500_pct', 'bonds_pct','mags']):
+def calculate_regime_statistics(df, return_cols=['sp500_pct', 'bonds_pct','mags_pct']):
     """Calculate average returns and occurrence frequencies by regime."""
     # UPDATED ORDER: Goldilocks, Reflation, Stagflation, Deflation
     regimes = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
