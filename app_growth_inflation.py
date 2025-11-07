@@ -159,7 +159,7 @@ def assign_regime_labels(df):
 
 
 # Create main dataframe
-growth_inflation_df = create_growth_inflation_df(growth, inflation, sp500, agg,mags_monthly_pct)
+growth_inflation_df = create_growth_inflation_df(growth, inflation, sp500, agg, mock_mags_monthly_pct)
 growth_inflation_df = assign_regime_labels(growth_inflation_df)
 
 
