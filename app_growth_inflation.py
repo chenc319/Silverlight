@@ -63,6 +63,36 @@ def load_multiple_tickers(ticker_dict, resample_freq='ME'):
         merged_df = merge_dfs([merged_df, df])
     return merged_df
 
+### MAGS DATA ###
+mags_tickers = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA']
+each_mags_df = pd.DataFrame()
+for mag_ticker in mags_tickers:
+    mag_string = mag_ticker + '.csv'
+    with open(Path(DATA_DIR) / mag_string, 'rb') as file:
+        mag_df = pd.read_csv(file)
+        mag_df.index = pd.to_datetime(mag_df['Date'].values)
+        close_df = pd.DataFrame(mag_df['Close'])
+        close_df.columns = [mag_ticker]
+    each_mags_df = merge_dfs([each_mags_df, close_df])
+each_mags_df = each_mags_df.dropna()
+mags_monthly_pct = each_mags_df.resample('ME').last().pct_change().dropna()
+
+### MAGS WEIGHTS ###
+with open(Path(DATA_DIR) / 'mags_weights.xlsx', 'rb') as file:
+    mags_weights_df = pd.read_excel(file,sheet_name='Sheet1')
+    mags_weights_df.index = mags_weights_df['Date'].values
+    mags_weights_df.drop('Date', axis=1, inplace=True)
+    mags_weights_df['sum'] = mags_weights_df.sum(axis=1)
+normalized_mags_weights = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA'])
+normalized_mags_pct = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA'])
+for col in normalized_mags_weights.columns:
+    normalized_mags_weights[col] = (mags_weights_df[col] / mags_weights_df['sum']).resample('ME').last()
+    col_df = merge_dfs([mags_monthly_pct[col],normalized_mags_weights[col]]).ffill().dropna()
+    col_df.columns = ['pct','weights']
+    normalized_mags_pct[col] = col_df['pct'] * col_df['weights']
+
+mock_mags_monthly_pct = pd.DataFrame(normalized_mags_pct.sum(axis=1))
+mock_mags_monthly_pct.columns = ['mags']
 
 # Load core data
 sp500 = load_price_data('SPX.csv')
@@ -84,13 +114,14 @@ quad_factors_df = load_multiple_tickers(quad_regime_factors)
 ### ----------------------------------------- REGIME CLASSIFICATION ------------------------------------------ ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-def create_growth_inflation_df(growth, inflation, equities, bonds):
+def create_growth_inflation_df(growth, inflation, equities, bonds, mags):
     """Create combined growth/inflation dataframe with derived features."""
     df = merge_dfs([
         growth.shift(-1),
         inflation.shift(-1),
         equities,
-        bonds
+        bonds,
+        mags
     ]).dropna()
 
     df.columns = ['growth', 'inflation', 'sp500', 'bonds']
@@ -127,7 +158,7 @@ def assign_regime_labels(df):
 
 
 # Create main dataframe
-growth_inflation_df = create_growth_inflation_df(growth, inflation, sp500, agg)
+growth_inflation_df = create_growth_inflation_df(growth, inflation, sp500, agg, mock_mags_monthly_pct)
 growth_inflation_df = assign_regime_labels(growth_inflation_df)
 
 
@@ -135,7 +166,7 @@ growth_inflation_df = assign_regime_labels(growth_inflation_df)
 ### ----------------------------------------- REGIME STATISTICS ---------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-def calculate_regime_statistics(df, return_cols=['sp500_pct', 'bonds_pct']):
+def calculate_regime_statistics(df, return_cols=['sp500_pct', 'bonds_pct','mags']):
     """Calculate average returns and occurrence frequencies by regime."""
     # UPDATED ORDER: Goldilocks, Reflation, Stagflation, Deflation
     regimes = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
