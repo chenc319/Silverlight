@@ -181,6 +181,7 @@ def calculate_regime_statistics(df, return_cols=['sp500_pct', 'bonds_pct','mags_
             'Regime': f"{quad}: {regime} ({'I-G+' if regime == 'Goldilocks' else 'I+G+' if regime == 'Reflation' else 'I+G-' if regime == 'Stagflation' else 'I-G-'})",
             'Equities': regime_returns[0],
             'Bonds': regime_returns[1],
+            'MAGS': regime_returns[2],
             '% of Occurrences': (len(regime_data) / len(df.dropna(subset=['regime_label']))) * 100
         })
 
