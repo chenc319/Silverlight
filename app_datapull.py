@@ -23,7 +23,7 @@ DATA_DIR = os.getenv('DATA_DIR', 'data')
 start = '1900-01-01'
 end = pd.to_datetime('today')
 def refresh_data(start,end,**kwargs):
-    growth = pdr.DataReader('USALOLITOAASTSAM','fred',start,end)
+    growth = pdr.DataReader('PCEC96','fred',start,end)
     growth.index = growth.index + pd.DateOffset(months=1)
     growth = growth.resample('ME').last()
     with open(Path(DATA_DIR) / 'growth.pkl', 'wb') as file:
