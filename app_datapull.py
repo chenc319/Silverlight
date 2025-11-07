@@ -29,6 +29,15 @@ def refresh_data(start,end,**kwargs):
     with open(Path(DATA_DIR) / 'growth.pkl', 'wb') as file:
         pickle.dump(growth, file)
 
+    inflation = pdr.DataReader('CPIAUCSL',
+                               'fred',
+                               start,
+                               end)
+    inflation.index = inflation.index + pd.DateOffset(months=1)
+    inflation = inflation.resample('ME').last()
+    with open(Path(DATA_DIR) / 'inflation.pkl', 'wb') as file:
+        pickle.dump(inflation, file)
+
     cli = pdr.DataReader('USALOLITOAASTSAM', 'fred', start, end)
     cli.index = cli.index + pd.DateOffset(months=1)
     cli = cli.resample('ME').last()
@@ -162,12 +171,6 @@ def refresh_data(start,end,**kwargs):
                             end).resample('ME').last()
     with open(Path(DATA_DIR) / 'gdp.pkl', 'wb') as file:
         pickle.dump(gdp, file)
-    inflation = pdr.DataReader('CPIAUCSL',
-                               'fred',
-                               start,
-                               end).resample('ME').last().shift(1)
-    with open(Path(DATA_DIR) / 'inflation.pkl', 'wb') as file:
-        pickle.dump(inflation, file)
 
     treasury_1m = pdr.DataReader('DGS1MO', 'fred', start, end)
     with open(Path(DATA_DIR) / 'treasury_1m.pkl', 'wb') as file:
