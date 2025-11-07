@@ -97,7 +97,7 @@ def create_growth_inflation_df(growth, inflation, equities, bonds):
 
     # Calculate rates of change
     df['growth_roc'] = df['growth'].diff(12)
-    df['growth_roc_2'] = df['growth_roc'].diff()
+    df['growth_roc_2'] = df['growth_roc'].diff(3)
     df['inflation_roc'] = df['inflation'].diff(12)
     df['inflation_roc_2'] = df['inflation_roc'].diff(3)
 
@@ -112,13 +112,13 @@ def assign_regime_labels(df):
     """Assign regime labels based on growth and inflation ROC."""
 
     def regime_label(row):
-        if row['inflation_roc_2'] > 0 and row['growth_roc'] > 0:
+        if row['inflation_roc_2'] > 0 and row['growth_roc_2'] > 0:
             return 'Reflation'
-        elif row['inflation_roc_2'] > 0 and row['growth_roc'] < 0:
+        elif row['inflation_roc_2'] > 0 and row['growth_roc_2'] < 0:
             return 'Stagflation'
-        elif row['inflation_roc_2'] < 0 and row['growth_roc'] > 0:
+        elif row['inflation_roc_2'] < 0 and row['growth_roc_2'] > 0:
             return 'Goldilocks'
-        elif row['inflation_roc_2'] < 0 and row['growth_roc'] < 0:
+        elif row['inflation_roc_2'] < 0 and row['growth_roc_2'] < 0:
             return 'Deflation'
         return np.nan
 
