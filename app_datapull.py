@@ -25,7 +25,7 @@ end = pd.to_datetime('today')
 def refresh_data(start,end,**kwargs):
     growth = pdr.DataReader('PCEC96','fred',start,end)
     growth.index = growth.index + pd.DateOffset(months=1)
-    growth = growth.resample('ME').last()
+    growth = growth.resample('ME').last().shift(-1)
     with open(Path(DATA_DIR) / 'growth.pkl', 'wb') as file:
         pickle.dump(growth, file)
 
@@ -34,7 +34,7 @@ def refresh_data(start,end,**kwargs):
                                start,
                                end)
     inflation.index = inflation.index + pd.DateOffset(months=1)
-    inflation = inflation.resample('ME').last()
+    inflation = inflation.resample('ME').last().shift(-1)
     with open(Path(DATA_DIR) / 'inflation.pkl', 'wb') as file:
         pickle.dump(inflation, file)
 
