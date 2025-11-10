@@ -126,17 +126,19 @@ mock_mags_weekly_pct.columns = ['mags']
 ### -------------------------------------------------- CFTC -------------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-spx_positioning_df = spx_positioning_df.resample('W-FRI').last().dropna().diff(1)
+spx_positioning_df = spx_positioning_df.resample('W-FRI').last().dropna().diff(1).dropna()
 spx_positioning_df.columns = ['spx_dealer','spx_asset_mgr','spx_lev_funds']
-emini_spx_positioning_df = emini_spx_positioning_df.resample('W-FRI').last().dropna().diff(1)
+spx_positioning_df['spx_total'] = spx_positioning_df.sum(axis=1)
+emini_spx_positioning_df = emini_spx_positioning_df.resample('W-FRI').last().dropna().diff(1).dropna()
 emini_spx_positioning_df.columns = ['emini_dealer','emini_asset_mgr','emini_lev_funds']
-vix_positioning_df = vix_positioning_df.resample('W-FRI').last().dropna().diff(1)
+emini_spx_positioning_df['emini_total'] = emini_spx_positioning_df.sum(axis=1)
+vix_positioning_df = vix_positioning_df.resample('W-FRI').last().dropna().diff(1).dropna()
 vix_positioning_df.columns = ['vix_dealer','vix_asset_mgr','vix_lev_funds']
+vix_positioning_df['vix_total'] = vix_positioning_df.sum(axis=1)
 
 spx_weekly_pct = spx_weekly.pct_change().dropna()
 bonds_weekly_pct = bonds_weekly.pct_change().dropna()
 positioning_df = merge_dfs([spx_positioning_df, emini_spx_positioning_df, vix_positioning_df])
-positioning_df['total'] = positioning_df.sum(axis=1)
 
 rolling_cftc_mean = positioning_df.rolling(12).mean()
 rolling_cftc_std = positioning_df.rolling(12).std()
@@ -145,14 +147,6 @@ rolling_cftc_z_score = ((positioning_df - rolling_cftc_mean) / rolling_cftc_std)
 spx_spx_cftc_z = merge_dfs([rolling_cftc_z_score,spx_weekly_pct.shift(-1)]).dropna()
 bonds_spx_cftc_z = merge_dfs([rolling_cftc_z_score,bonds_weekly_pct.shift(-1)]).dropna()
 mags_spx_cftc_z = merge_dfs([rolling_cftc_z_score,mock_mags_weekly_pct.shift(-1)]).dropna()
-
-
-### ---------------------------------------------------------------------------------------------------------- ###
-### -------------------------------------------------- CFTC -------------------------------------------------- ###
-### ---------------------------------------------------------------------------------------------------------- ###
-
-return_col = 'spx'
-df = spx_spx_cftc_z.copy()
 
 def assets_cftc_description(df,return_col):
     z_cols = [col for col in df.columns if col != return_col]
@@ -173,7 +167,42 @@ spx_cftc_bucket = assets_cftc_description(spx_spx_cftc_z,'spx')
 bonds_cftc_bucket = assets_cftc_description(bonds_spx_cftc_z,'Close')
 mags_cftc_bucket = assets_cftc_description(mags_spx_cftc_z,'mags')
 
-spx_pos_bt =
+### ---------------------------------------------------------------------------------------------------------- ###
+### -------------------------------------------------- CFTC -------------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
+
+def equity_positioning_backtest(row,signal_colname):
+    if row[signal_colname] < -1:
+        return 0.5
+    elif row[signal_colname] > -1 and row[signal_colname] < 0:
+        return 0.75
+    elif row[signal_colname] > 0:
+        return 1
+
+
+spx_spx_cftc_z['weights'] = spx_spx_cftc_z.apply(
+    lambda row: equity_positioning_backtest(row, 'spx_total'), axis=1
+)
+mags_spx_cftc_z['weights'] = mags_spx_cftc_z.apply(
+    lambda row: equity_positioning_backtest(row, 'spx_total'), axis=1
+)
+spx_spx_cftc_z['bt_returns'] = (spx_spx_cftc_z['weights'] * spx_spx_cftc_z['spx'])
+mags_spx_cftc_z['bt_returns'] = (mags_spx_cftc_z['weights'] * mags_spx_cftc_z['mags'])
+
+
+
+spx_return_metrics = return_metrics(
+    spx_spx_cftc_z[['bt_returns','spx']],
+    spx_spx_cftc_z[['spx']],
+    52
+)
+mags_return_metrics = return_metrics(
+    mags_spx_cftc_z[['bt_returns','mags']],
+    mags_spx_cftc_z[['mags']],
+    52
+)
+
 
 
 
