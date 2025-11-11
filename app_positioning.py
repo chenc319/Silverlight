@@ -144,9 +144,17 @@ rolling_cftc_mean = positioning_df.rolling(12).mean()
 rolling_cftc_std = positioning_df.rolling(12).std()
 rolling_cftc_z_score = ((positioning_df - rolling_cftc_mean) / rolling_cftc_std).dropna()
 
-spx_spx_cftc_z = merge_dfs([rolling_cftc_z_score,spx_weekly_pct.shift(-1)]).dropna()
-bonds_spx_cftc_z = merge_dfs([rolling_cftc_z_score,bonds_weekly_pct.shift(-1)]).dropna()
-mags_spx_cftc_z = merge_dfs([rolling_cftc_z_score,mock_mags_weekly_pct.shift(-1)]).dropna()
+rolling_spx_cftc_mean = spx_positioning_df.rolling(12).mean()
+rolling_spx_cftc_std = spx_positioning_df.rolling(12).std()
+rolling_spx_cftc_z_score = ((spx_positioning_df - rolling_spx_cftc_mean) / rolling_spx_cftc_std).dropna()
+
+spx_total_cftc_z = merge_dfs([rolling_cftc_z_score,spx_weekly_pct.shift(-1)]).dropna()
+bonds_total_cftc_z = merge_dfs([rolling_cftc_z_score,bonds_weekly_pct.shift(-1)]).dropna()
+mags_total_cftc_z = merge_dfs([rolling_cftc_z_score,mock_mags_weekly_pct.shift(-1)]).dropna()
+
+spx_spx_cftc_z = merge_dfs([rolling_spx_cftc_z_score,spx_weekly_pct.shift(-1)]).dropna()
+bonds_spx_cftc_z = merge_dfs([rolling_spx_cftc_z_score,bonds_weekly_pct.shift(-1)]).dropna()
+mags_spx_cftc_z = merge_dfs([rolling_spx_cftc_z_score,mock_mags_weekly_pct.shift(-1)]).dropna()
 
 def assets_cftc_description(df,return_col):
     z_cols = [col for col in df.columns if col != return_col]
@@ -163,9 +171,9 @@ def assets_cftc_description(df,return_col):
 
     return result
 
-spx_cftc_bucket = assets_cftc_description(spx_spx_cftc_z,'spx')
-bonds_cftc_bucket = assets_cftc_description(bonds_spx_cftc_z,'Close')
-mags_cftc_bucket = assets_cftc_description(mags_spx_cftc_z,'mags')
+spx_cftc_bucket = assets_cftc_description(spx_total_cftc_z,'spx')
+bonds_cftc_bucket = assets_cftc_description(bonds_total_cftc_z,'Close')
+mags_cftc_bucket = assets_cftc_description(mags_total_cftc_z,'mags')
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------------- CFTC -------------------------------------------------- ###
@@ -174,12 +182,21 @@ mags_cftc_bucket = assets_cftc_description(mags_spx_cftc_z,'mags')
 
 def equity_positioning_backtest(row,signal_colname):
     if row[signal_colname] < -1:
-        return 0.5
+        return 0.33
     elif row[signal_colname] > -1 and row[signal_colname] < 0:
-        return 0.75
+        return 0.67
     elif row[signal_colname] > 0:
         return 1
 
+def equity_positioning_backtest(row,signal_colname):
+    if row[signal_colname] < -1:
+        return 1
+    elif row[signal_colname] > -1 and row[signal_colname] < 0:
+        return 1
+    elif row[signal_colname] > 0 and row[signal_colname] < 1:
+        return 1
+    elif row[signal_colname] > 1:
+        return -0.5
 
 spx_spx_cftc_z['weights'] = spx_spx_cftc_z.apply(
     lambda row: equity_positioning_backtest(row, 'spx_total'), axis=1
@@ -187,9 +204,17 @@ spx_spx_cftc_z['weights'] = spx_spx_cftc_z.apply(
 mags_spx_cftc_z['weights'] = mags_spx_cftc_z.apply(
     lambda row: equity_positioning_backtest(row, 'spx_total'), axis=1
 )
+spx_total_cftc_z['weights'] = spx_total_cftc_z.apply(
+    lambda row: equity_positioning_backtest(row, 'spx_total'), axis=1
+)
+mags_total_cftc_z['weights'] = mags_total_cftc_z.apply(
+    lambda row: equity_positioning_backtest(row, 'spx_total'), axis=1
+)
+
 spx_spx_cftc_z['bt_returns'] = (spx_spx_cftc_z['weights'] * spx_spx_cftc_z['spx'])
 mags_spx_cftc_z['bt_returns'] = (mags_spx_cftc_z['weights'] * mags_spx_cftc_z['mags'])
-
+spx_total_cftc_z['bt_returns'] = (spx_total_cftc_z['weights'] * spx_total_cftc_z['spx'])
+mags_total_cftc_z['bt_returns'] = (mags_total_cftc_z['weights'] * mags_total_cftc_z['mags'])
 
 
 spx_return_metrics = return_metrics(
@@ -197,11 +222,26 @@ spx_return_metrics = return_metrics(
     spx_spx_cftc_z[['spx']],
     52
 )
+spx_return_metrics['Return/Risk']
 mags_return_metrics = return_metrics(
     mags_spx_cftc_z[['bt_returns','mags']],
     mags_spx_cftc_z[['mags']],
     52
 )
+mags_return_metrics['Return/Risk']
+
+spx_return_metrics = return_metrics(
+    spx_total_cftc_z[['bt_returns','spx']],
+    spx_total_cftc_z[['spx']],
+    52
+)
+spx_return_metrics['Return/Risk']
+mags_return_metrics = return_metrics(
+    mags_total_cftc_z[['bt_returns','mags']],
+    mags_total_cftc_z[['mags']],
+    52
+)
+mags_return_metrics['Return/Risk']
 
 
 
