@@ -263,6 +263,104 @@ def refresh_data(start,end,**kwargs):
     with open(Path(DATA_DIR) / 'grid_inflation_variables.pkl', 'wb') as file:
         pickle.dump(grid_inflation_variables, file)
 
+    ### DAILY MAGS ###
+    mags_tickers = ['GOOGL', 'AMZN', 'AAPL', 'META', 'MSFT', 'NVDA', 'TSLA']
+    each_mags_df = pd.DataFrame()
+    for mag_ticker in mags_tickers:
+        mag_string = mag_ticker + '.csv'
+        with open(Path(DATA_DIR) / mag_string, 'rb') as file:
+            mag_df = pd.read_csv(file)
+            mag_df.index = pd.to_datetime(mag_df['Date'].values)
+            close_df = pd.DataFrame(mag_df['Close'])
+            close_df.columns = [mag_ticker]
+        each_mags_df = merge_dfs([each_mags_df, close_df])
+    each_mags_df = each_mags_df.dropna()
+
+    with open(Path(DATA_DIR) / 'mags_weights.xlsx', 'rb') as file:
+        mags_weights_df = pd.read_excel(file, sheet_name='Sheet1')
+        mags_weights_df.index = mags_weights_df['Date'].values
+        mags_weights_df.drop('Date', axis=1, inplace=True)
+        mags_weights_df['sum'] = mags_weights_df.sum(axis=1)
+    normalized_mags_weights = pd.DataFrame(columns=['GOOGL', 'AMZN', 'AAPL', 'META', 'MSFT', 'NVDA', 'TSLA'])
+    normalized_mags_pct = pd.DataFrame(columns=['GOOGL', 'AMZN', 'AAPL', 'META', 'MSFT', 'NVDA', 'TSLA'])
+    for col in normalized_mags_weights.columns:
+        normalized_mags_weights[col] = (mags_weights_df[col] / mags_weights_df['sum'])
+        col_df = merge_dfs([each_mags_df[col].pct_change(), normalized_mags_weights[col]]).ffill().dropna()
+        col_df.columns = ['pct', 'weights']
+        normalized_mags_pct[col] = col_df['pct'] * col_df['weights']
+
+    mock_mags_daily_pct = pd.DataFrame(normalized_mags_pct.sum(axis=1))
+    mock_mags_daily_pct.columns = ['mags']
+
+    ### WEEKLY MAGS DATA ###
+    mags_tickers = ['GOOGL', 'AMZN', 'AAPL', 'META', 'MSFT', 'NVDA', 'TSLA']
+    each_mags_df = pd.DataFrame()
+    for mag_ticker in mags_tickers:
+        mag_string = mag_ticker + '.csv'
+        with open(Path(DATA_DIR) / mag_string, 'rb') as file:
+            mag_df = pd.read_csv(file)
+            mag_df.index = pd.to_datetime(mag_df['Date'].values)
+            close_df = pd.DataFrame(mag_df['Close'])
+            close_df.columns = [mag_ticker]
+        each_mags_df = merge_dfs([each_mags_df, close_df])
+    each_mags_df = each_mags_df.dropna()
+    mags_weekly_pct = each_mags_df.resample('W-FRI').last().pct_change().dropna()
+
+    ### MAGS WEIGHTS ###
+    with open(Path(DATA_DIR) / 'mags_weights.xlsx', 'rb') as file:
+        mags_weights_df = pd.read_excel(file, sheet_name='Sheet1')
+        mags_weights_df.index = mags_weights_df['Date'].values
+        mags_weights_df.drop('Date', axis=1, inplace=True)
+        mags_weights_df['sum'] = mags_weights_df.sum(axis=1)
+    normalized_mags_weights = pd.DataFrame(columns=['GOOGL', 'AMZN', 'AAPL', 'META', 'MSFT', 'NVDA', 'TSLA'])
+    normalized_mags_pct = pd.DataFrame(columns=['GOOGL', 'AMZN', 'AAPL', 'META', 'MSFT', 'NVDA', 'TSLA'])
+    for col in normalized_mags_weights.columns:
+        normalized_mags_weights[col] = (mags_weights_df[col] / mags_weights_df['sum']).resample('W-FRI').last()
+        col_df = merge_dfs([mags_weekly_pct[col], normalized_mags_weights[col]]).ffill().dropna()
+        col_df.columns = ['pct', 'weights']
+        normalized_mags_pct[col] = col_df['pct'] * col_df['weights']
+
+    mock_mags_weekly_pct = pd.DataFrame(normalized_mags_pct.sum(axis=1))
+    mock_mags_weekly_pct.columns = ['mags']
+
+    ### MONTHLY MAGS DATA ###
+    mags_tickers = ['GOOGL', 'AMZN', 'AAPL', 'META', 'MSFT', 'NVDA', 'TSLA']
+    each_mags_df = pd.DataFrame()
+    for mag_ticker in mags_tickers:
+        mag_string = mag_ticker + '.csv'
+        with open(Path(DATA_DIR) / mag_string, 'rb') as file:
+            mag_df = pd.read_csv(file)
+            mag_df.index = pd.to_datetime(mag_df['Date'].values)
+            close_df = pd.DataFrame(mag_df['Close'])
+            close_df.columns = [mag_ticker]
+        each_mags_df = merge_dfs([each_mags_df, close_df])
+    each_mags_df = each_mags_df.dropna()
+    mags_monthly_pct = each_mags_df.resample('ME').last().pct_change().dropna()
+
+    with open(Path(DATA_DIR) / 'mags_weights.xlsx', 'rb') as file:
+        mags_weights_df = pd.read_excel(file, sheet_name='Sheet1')
+        mags_weights_df.index = mags_weights_df['Date'].values
+        mags_weights_df.drop('Date', axis=1, inplace=True)
+        mags_weights_df['sum'] = mags_weights_df.sum(axis=1)
+    normalized_mags_weights = pd.DataFrame(columns=['GOOGL', 'AMZN', 'AAPL', 'META', 'MSFT', 'NVDA', 'TSLA'])
+    normalized_mags_pct = pd.DataFrame(columns=['GOOGL', 'AMZN', 'AAPL', 'META', 'MSFT', 'NVDA', 'TSLA'])
+    for col in normalized_mags_weights.columns:
+        normalized_mags_weights[col] = (mags_weights_df[col] / mags_weights_df['sum']).resample('ME').last()
+        col_df = merge_dfs([mags_monthly_pct[col], normalized_mags_weights[col]]).ffill().dropna()
+        col_df.columns = ['pct', 'weights']
+        normalized_mags_pct[col] = col_df['pct'] * col_df['weights']
+
+    mock_mags_monthly_pct = pd.DataFrame(normalized_mags_pct.sum(axis=1))
+    mock_mags_monthly_pct.columns = ['mags']
+
+    with open(Path(DATA_DIR) / 'mock_mags_daily_pct.pkl', 'wb') as file:
+        pickle.dump(mock_mags_daily_pct, file)
+    with open(Path(DATA_DIR) / 'mock_mags_weekly_pct.pkl', 'wb') as file:
+        pickle.dump(mock_mags_weekly_pct, file)
+    with open(Path(DATA_DIR) / 'mock_mags_monthly_pct.pkl', 'wb') as file:
+        pickle.dump(mock_mags_monthly_pct, file)
+
+
 
 
 

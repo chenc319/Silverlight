@@ -14,6 +14,7 @@ import app_barra
 import app_inflation
 import app_tail_hedge
 import app_sam_coreequity
+import app_positioning
 
 ### FUNCTIONS ###
 def merge_dfs(array_of_dfs):
@@ -74,7 +75,7 @@ menu = st.sidebar.radio(
      'GRID Model',
      'Growth Predictor',
      'Inflation Predictor',
-     'Equity Positioning',
+     'SPX Positioning',
      'Yield Curve Regimes',
      'Barra Factor Model'
      ]
@@ -151,8 +152,14 @@ elif menu == 'Barra Factor Model':
 ### --------------------------------- TAIL HEDGE PORTFOLIO --------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'Tail Hedge Portfolio':
-    st.title('Realized and Implied Volatility')
-    app_tail_hedge.plot_veqtor_vix(start_date,end_date)
+elif menu == 'CFTC Positioning':
+    st.title('Underlying Signals')
+    app_positioning.plot_positioning_data()
+    st.title('SPX OW/UW Backtest')
+    app_positioning.plot_equity_pos_backtest()
+    st.title('Bonds OW/UW Backtest')
+    app_positioning.plot_bonds_pos_backtest()
+    st.title('MAGS OW/UW Backtest')
+    app_positioning.plot_mags_pos_backtest()
 
 
