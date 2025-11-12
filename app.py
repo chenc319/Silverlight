@@ -152,7 +152,7 @@ elif menu == 'Barra Factor Model':
 ### --------------------------------- TAIL HEDGE PORTFOLIO --------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'CFTC Positioning':
+elif menu == 'SPX Positioning':
     st.title('Underlying Signals')
     app_positioning.plot_positioning_data()
     st.title('SPX OW/UW Backtest')
