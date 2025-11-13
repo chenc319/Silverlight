@@ -102,13 +102,13 @@ with open(Path(DATA_DIR) / 'mock_mags_monthly_pct.pkl', 'rb') as file:
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 ### CALCULATE MONTHLY DIFFERENCES ###
-spx_positioning_diff = spx_positioning_df.resample('ME').mean().dropna().diff(1).diff(1).dropna()
+spx_positioning_diff = spx_positioning_df.resample('ME').mean().dropna().diff(3).diff(1).dropna()
 spx_positioning_diff.columns = ['spx_dealer','spx_asset_mgr','spx_lev_funds']
 spx_positioning_diff['spx_total'] = spx_positioning_diff.sum(axis=1)
-emini_spx_positioning_diff = emini_spx_positioning_df.resample('ME').mean().dropna().diff(1).diff(1).dropna()
+emini_spx_positioning_diff = emini_spx_positioning_df.resample('ME').mean().dropna().diff(3).diff(1).dropna()
 emini_spx_positioning_diff.columns = ['emini_dealer','emini_asset_mgr','emini_lev_funds']
 emini_spx_positioning_diff['emini_total'] = emini_spx_positioning_diff.sum(axis=1)
-vix_positioning_diff = vix_positioning_df.resample('ME').mean().dropna().diff(1).diff(1).dropna()
+vix_positioning_diff = vix_positioning_df.resample('ME').mean().dropna().diff(3).diff(1).dropna()
 vix_positioning_diff.columns = ['vix_dealer','vix_asset_mgr','vix_lev_funds']
 vix_positioning_diff['vix_total'] = vix_positioning_diff.sum(axis=1)
 
