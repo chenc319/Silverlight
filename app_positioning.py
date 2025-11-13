@@ -102,9 +102,14 @@ with open(Path(DATA_DIR) / 'mock_mags_monthly_pct.pkl', 'rb') as file:
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 ### CALCULATE MONTHLY DIFFERENCES ###
-spx_positioning_diff = spx_positioning_df.resample('ME').mean().dropna().diff(1).diff(1).dropna()
+spx_positioning_diff = spx_positioning_df.resample('ME').mean().dropna()
 spx_positioning_diff.columns = ['spx_dealer','spx_asset_mgr','spx_lev_funds']
 spx_positioning_diff['spx_total'] = spx_positioning_diff.sum(axis=1)
+spx_positioning_diff['spx_lev_funds_1st_diff'] = spx_positioning_diff['spx_lev_funds'].diff(1)
+spx_positioning_diff['spx_lev_funds_2nd_diff'] = spx_positioning_diff['spx_lev_funds_1st_diff'].diff(1)
+
+spx_positioning_diff = spx_positioning_diff.dropna()
+
 emini_spx_positioning_diff = emini_spx_positioning_df.resample('ME').mean().dropna().diff(1).diff(1).dropna()
 emini_spx_positioning_diff.columns = ['emini_dealer','emini_asset_mgr','emini_lev_funds']
 emini_spx_positioning_diff['emini_total'] = emini_spx_positioning_diff.sum(axis=1)
@@ -180,11 +185,15 @@ def ow_uw_positioning_backtest(row,signal_colname):
     elif row[signal_colname] > 1:
         return 0.25
 
-def ow_uw_positioning_backtest(row,signal_colname):
-    if row[signal_colname] < 0:
-        return 1
-    elif row[signal_colname] > 0:
+def ow_uw_positioning_backtest(row,signal_colname_1,signal_colname_2):
+    if row[signal_colname_1] > 0 and row[signal_colname_2] > 0:
+        return 0.25
+    elif row[signal_colname_1] > 0 and row[signal_colname_2] <0:
         return 0.5
+    elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
+        return 0.75
+    elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
+        return 1
 
 ### BACKTESTS ###
 spx_spx_cftc_z['weights'] = spx_spx_cftc_z.apply(
