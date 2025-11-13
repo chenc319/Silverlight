@@ -79,3 +79,13 @@ def plot_fed_plumbing():
                    colors_array=['#f8b62d', '#f8772d', '#2f90c5'],
                    graph_title='Repo Venues',
                    y_axis_label='Dollars')
+    streamlit_plot(df=repo_venues_df.diff(1),
+                   columns_array=['tri', 'gcf', 'dvp'],
+                   colors_array=['#f8b62d', '#f8772d', '#2f90c5'],
+                   graph_title='Repo Venues 1st ROC',
+                   y_axis_label='Dollars')
+    streamlit_plot(df=repo_venues_df.diff(1).diff(1),
+                   columns_array=['tri', 'gcf', 'dvp'],
+                   colors_array=['#f8b62d', '#f8772d', '#2f90c5'],
+                   graph_title='Repo Venues 2nd ROC',
+                   y_axis_label='Dollars')
