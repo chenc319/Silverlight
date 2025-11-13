@@ -245,6 +245,7 @@ def plot_equity_fed_plumbing_backtest():
                    y_axis_label='%')
     streamlit_return_metrics_table(spx_fed_plumbing_return_metrics)
 
+def plot_equity_repo_venue_backtest():
     streamlit_plot(df=(1 + repo_venues_spx_merge).cumprod() - 1,
                    columns_array=['bt_returns', 'spx'],
                    colors_array=["#8B0000", "#000000"],
@@ -253,4 +254,3 @@ def plot_equity_fed_plumbing_backtest():
     streamlit_return_metrics_table(spx_repo_venues_return_metrics)
 
 
-    

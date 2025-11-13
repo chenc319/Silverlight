@@ -172,6 +172,8 @@ elif menu == 'Liquidity Monitor':
     app_liquidity.plot_fed_plumbing()
     st.title('Equity Fed Plumbing Backtest')
     app_liquidity.plot_equity_fed_plumbing_backtest()
+    st.title('Equity Repo Venue Backtest')
+    app_liquidity.plot_equity_repo_venue_backtest()
 
 
 
