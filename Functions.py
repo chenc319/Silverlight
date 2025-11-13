@@ -61,7 +61,7 @@ def return_metrics(backtest_returns_data, benchmark_data, ann_factor):
         # Capture Ratio: Upside / |Downside|
         capture_ratio = (upside_capture / abs(downside_capture)) if (upside_capture is not None and downside_capture not in (None, 0)) else None
 
-        beta = static_beta(benchmark_data, data['returns'])
+        beta = static_beta(data['returns'],benchmark_data)
 
         return_metrics_df.loc[col] = [
             total_return, mean_return, avg_win_return, avg_lose_return, win_ratio,
