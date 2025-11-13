@@ -235,7 +235,7 @@ def plot_positioning_data():
 def plot_equity_pos_backtest():
     streamlit_plot(df=(1 + spx_spx_cftc_z).cumprod() -1,
                    columns_array=['bt_returns','spx'],
-                   colors_array=["#7393B3", "#57666A"],
+                   colors_array=["#8B0000", "#000000"],
                    graph_title='Equities Historical Performance',
                    y_axis_label='%')
     streamlit_return_metrics_table(spx_return_metrics)
@@ -243,7 +243,7 @@ def plot_equity_pos_backtest():
 def plot_bonds_pos_backtest():
     streamlit_plot(df=(1 + bonds_spx_cftc_z).cumprod() -1,
                    columns_array=['bt_returns','Close'],
-                   colors_array=["#7393B3", "#57666A"],
+                   colors_array=["#8B0000", "#000000"],
                    graph_title='Bonds Historical Performance',
                    y_axis_label='%')
     streamlit_return_metrics_table(bonds_return_metrics)
@@ -251,7 +251,7 @@ def plot_bonds_pos_backtest():
 def plot_mags_pos_backtest():
     streamlit_plot(df=(1 + mags_spx_cftc_z).cumprod() -1,
                    columns_array=['bt_returns','mags'],
-                   colors_array=["#7393B3", "#57666A"],
+                   colors_array=["#8B0000", "#000000"],
                    graph_title='MAGS Historical Performance',
                    y_axis_label='%')
     streamlit_return_metrics_table(mags_return_metrics)
