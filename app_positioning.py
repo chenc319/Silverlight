@@ -120,16 +120,16 @@ bonds_monthly_pct = bonds_monthly.pct_change().dropna()
 positioning_merge_diff = merge_dfs([spx_positioning_diff, emini_spx_positioning_diff, vix_positioning_diff])
 
 ### Z SCORE ALL DATA ###
-rolling_cftc_mean = positioning_merge_diff.rolling(36).mean()
-rolling_cftc_std = positioning_merge_diff.rolling(36).std()
+rolling_cftc_mean = positioning_merge_diff.rolling(12).mean()
+rolling_cftc_std = positioning_merge_diff.rolling(12).std()
 rolling_cftc_z_score = ((positioning_merge_diff - rolling_cftc_mean) / rolling_cftc_std).dropna()
 
-rolling_spx_cftc_mean = spx_positioning_diff.rolling(36).mean()
-rolling_spx_cftc_std = spx_positioning_diff.rolling(36).std()
-rolling_spx_cftc_z_score = ((spx_positioning_diff - rolling_spx_cftc_mean) / rolling_spx_cftc_std).dropna()
+rolling_spx_cftc_mean = spx_positioning_diff.rolling(12).mean()
+rolling_spx_cftc_std = spx_positioning_diff.rolling(12).std()
+rolling_spx_cftc_z_score = spx_positioning_diff.copy()
 
-rolling_vix_cftc_mean = vix_positioning_diff.rolling(36).mean()
-rolling_vix_cftc_std = vix_positioning_diff.rolling(36).std()
+rolling_vix_cftc_mean = vix_positioning_diff.rolling(12).mean()
+rolling_vix_cftc_std = vix_positioning_diff.rolling(12).std()
 rolling_vix_cftc_z_score = ((vix_positioning_diff - rolling_vix_cftc_mean) / rolling_vix_cftc_std).dropna()
 
 ### MERGE DATA ###
@@ -179,6 +179,12 @@ def ow_uw_positioning_backtest(row,signal_colname):
         return 0.5
     elif row[signal_colname] > 1:
         return 0.25
+
+def ow_uw_positioning_backtest(row,signal_colname):
+    if row[signal_colname] < 0:
+        return 1
+    elif row[signal_colname] > 0:
+        return 0.5
 
 ### BACKTESTS ###
 spx_spx_cftc_z['weights'] = spx_spx_cftc_z.apply(
