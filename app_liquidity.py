@@ -105,6 +105,15 @@ liquidity_spx_merge['onrrp_1st_roc'] = liquidity_spx_merge['onrrp'].diff()
 liquidity_spx_merge['onrrp_2nd_roc'] = liquidity_spx_merge['onrrp_1st_roc'].diff()
 liquidity_spx_merge = liquidity_spx_merge.dropna()
 
+### MERGE DFS ###
+repo_venues_spx_merge['tri_1st_roc'] = repo_venues_spx_merge['tri'].diff()
+repo_venues_spx_merge['tri_2nd_roc'] = repo_venues_spx_merge['tri_1st_roc'].diff()
+repo_venues_spx_merge['gcf_1st_roc'] = repo_venues_spx_merge['gcf'].diff()
+repo_venues_spx_merge['gcf_2nd_roc'] = repo_venues_spx_merge['gcf_1st_roc'].diff()
+repo_venues_spx_merge['dvp_1st_roc'] = repo_venues_spx_merge['dvp'].diff()
+repo_venues_spx_merge['dvp_2nd_roc'] = repo_venues_spx_merge['dvp_1st_roc'].diff()
+repo_venues_spx_merge = repo_venues_spx_merge.dropna()
+
 def bucket_signal_means(df, signal1_col, signal2_col, returns_col):
     buckets = {
         'above_0_above_0': (df[signal1_col] > 0) & (df[signal2_col] > 0),
@@ -134,6 +143,19 @@ bucket_signal_means(liquidity_spx_merge,
                     'onrrp_2nd_roc',
                     'spx')
 
+bucket_signal_means(repo_venues_spx_merge,
+                    'tri_1st_roc',
+                    'tri_2nd_roc',
+                    'spx')
+bucket_signal_means(repo_venues_spx_merge,
+                    'gcf_1st_roc',
+                    'gcf_2nd_roc',
+                    'spx')
+bucket_signal_means(repo_venues_spx_merge,
+                    'dvp_1st_roc',
+                    'dvp_2nd_roc',
+                    'spx')
+
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ----------------------------------------------- LIQUIDITY ------------------------------------------------ ###
 ### ---------------------------------------------------------------------------------------------------------- ###
@@ -149,14 +171,30 @@ def ow_uw_fed_plumbing_backtest(row,signal_colname_1,signal_colname_2):
     elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
         return 0.25
 
+def ow_uw_repo_venue_backtest(row,signal_colname_1,signal_colname_2):
+    if row[signal_colname_1] > 0 and row[signal_colname_2] > 0:
+        return 0.5
+    elif row[signal_colname_1] > 0 and row[signal_colname_2] < 0:
+        return 1
+    elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
+        return 0.25
+    elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
+        return 0.75
+
 ### BACKTESTS ###
 liquidity_spx_merge['weights'] = liquidity_spx_merge.apply(
     lambda row: ow_uw_fed_plumbing_backtest(row,
                                            'treasury_1st_roc',
                                            'treasury_2nd_roc'), axis=1
 )
-
 liquidity_spx_merge['bt_returns'] = (liquidity_spx_merge['weights'] * liquidity_spx_merge['spx'])
+
+repo_venues_spx_merge['weights'] = liquidity_spx_merge.apply(
+    lambda row: ow_uw_repo_venue_backtest(row,
+                                           'dvp_1st_roc',
+                                           'dvp_2nd_roc'), axis=1
+)
+repo_venues_spx_merge['bt_returns'] = (repo_venues_spx_merge['weights'] * liquidity_spx_merge['spx'])
 
 ### RETURN METRICS ###
 spx_fed_plumbing_return_metrics = return_metrics(
@@ -165,6 +203,13 @@ spx_fed_plumbing_return_metrics = return_metrics(
     12
 )
 spx_fed_plumbing_return_metrics['Return/Risk']
+
+spx_repo_venues_return_metrics = return_metrics(
+    repo_venues_spx_merge[['bt_returns','spx']],
+    repo_venues_spx_merge[['spx']],
+    12
+)
+spx_repo_venues_return_metrics['Return/Risk']
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ----------------------------------------------- LIQUIDITY ------------------------------------------------ ###
@@ -199,3 +244,10 @@ def plot_equity_fed_plumbing_backtest():
                    graph_title='Equities Historical Performance',
                    y_axis_label='%')
     streamlit_return_metrics_table(spx_fed_plumbing_return_metrics)
+
+    streamlit_plot(df=(1 + repo_venues_spx_merge).cumprod() - 1,
+                   columns_array=['bt_returns', 'spx'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Equities Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(spx_repo_venues_return_metrics)
