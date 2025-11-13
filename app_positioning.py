@@ -181,23 +181,29 @@ mags_cftc_bucket = bucket_signal_means(mags_spx_cftc,
 ### BACKTEST WEIGHTS FUNCTION ###
 def ow_uw_positioning_backtest(row,signal_colname_1,signal_colname_2):
     if row[signal_colname_1] > 0 and row[signal_colname_2] > 0:
-        return 0.50
-    elif row[signal_colname_1] > 0 and row[signal_colname_2] < 0:
-        return 0.75
-    elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
         return 0.25
+    elif row[signal_colname_1] > 0 and row[signal_colname_2] < 0:
+        return 0.50
+    elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
+        return 0.75
     elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
         return 1
 
 ### BACKTESTS ###
 spx_spx_cftc['weights'] = spx_spx_cftc.apply(
-    lambda row: ow_uw_positioning_backtest(row, 'spx_lev_funds_1st_diff','spx_lev_funds_2nd_diff'), axis=1
+    lambda row: ow_uw_positioning_backtest(row,
+                                           'spx_lev_funds_1st_diff',
+                                           'spx_lev_funds_2nd_diff'), axis=1
 )
 bonds_spx_cftc['weights'] = bonds_spx_cftc.apply(
-    lambda row: ow_uw_positioning_backtest(row, 'spx_lev_funds_1st_diff','spx_lev_funds_2nd_diff'), axis=1
+    lambda row: ow_uw_positioning_backtest(row,
+                                           'spx_lev_funds_1st_diff',
+                                           'spx_lev_funds_2nd_diff'), axis=1
 )
 mags_spx_cftc['weights'] = mags_spx_cftc.apply(
-    lambda row: ow_uw_positioning_backtest(row, 'spx_lev_funds_1st_diff','spx_lev_funds_2nd_diff'), axis=1
+    lambda row: ow_uw_positioning_backtest(row,
+                                           'spx_lev_funds_1st_diff',
+                                           'spx_lev_funds_2nd_diff'), axis=1
 )
 spx_spx_cftc['bt_returns'] = (spx_spx_cftc['weights'] * spx_spx_cftc['spx'])
 bonds_spx_cftc['bt_returns'] = (bonds_spx_cftc['weights'] * bonds_spx_cftc['Close'])
