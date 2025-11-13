@@ -162,16 +162,16 @@ def bucket_signal_means(df, signal1_col, signal2_col, returns_col):
 
 spx_spx_cftc.columns
 spx_cftc_bucket = bucket_signal_means(spx_spx_cftc,
-                                        'spx_dealer_1st_diff',
-                                        'spx_dealer_2nd_diff',
+                                        'spx_lev_funds_1st_diff',
+                                        'spx_lev_funds_2nd_diff',
                                         'spx')
 bonds_cftc_bucket = bucket_signal_means(bonds_spx_cftc,
-                                        'spx_dealer_1st_diff',
-                                        'spx_dealer_2nd_diff',
+                                        'spx_lev_funds_1st_diff',
+                                        'spx_lev_funds_2nd_diff',
                                         'Close')
 mags_cftc_bucket = bucket_signal_means(mags_spx_cftc,
-                                        'spx_dealer_1st_diff',
-                                        'spx_dealer_2nd_diff',
+                                        'spx_lev_funds_1st_diff',
+                                        'spx_lev_funds_2nd_diff',
                                         'mags')
 
 ### ---------------------------------------------------------------------------------------------------------- ###
