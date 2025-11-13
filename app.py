@@ -170,6 +170,8 @@ elif menu == 'SPX Positioning':
 elif menu == 'Liquidity Monitor':
     st.title('Fed Plumbing')
     app_liquidity.plot_fed_plumbing()
+    st.title('Equity Fed Plumbing Backtest')
+    app_liquidity.plot_equity_fed_plumbing_backtest()
 
 
 

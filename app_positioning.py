@@ -120,7 +120,6 @@ def bucket_signal_means(df, signal1_col, signal2_col, returns_col):
 
     return means
 
-spx_spx_cftc.columns
 spx_cftc_bucket = bucket_signal_means(spx_spx_cftc,
                                         'spx_lev_funds_1st_diff',
                                         'spx_lev_funds_2nd_diff',
