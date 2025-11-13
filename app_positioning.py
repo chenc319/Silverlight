@@ -133,17 +133,17 @@ bonds_monthly_pct = bonds_monthly.pct_change().dropna()
 positioning_merge_diff = merge_dfs([spx_positioning_diff, emini_spx_positioning_diff, vix_positioning_diff])
 
 ### MERGE DATA ###
-spx_spx_cftc_z = merge_dfs([spx_positioning_diff,spx_monthly_pct.shift(-1)]).dropna()
-bonds_spx_cftc_z = merge_dfs([spx_positioning_diff,bonds_monthly_pct.shift(-1)]).dropna()
-mags_spx_cftc_z = merge_dfs([spx_positioning_diff,mock_mags_monthly_pct.shift(-1)]).dropna()
+spx_spx_cftc = merge_dfs([spx_positioning_diff,spx_monthly_pct.shift(-1)]).dropna()
+bonds_spx_cftc = merge_dfs([spx_positioning_diff,bonds_monthly_pct.shift(-1)]).dropna()
+mags_spx_cftc = merge_dfs([spx_positioning_diff,mock_mags_monthly_pct.shift(-1)]).dropna()
 
-spx_emini_cftc_z = merge_dfs([emini_spx_positioning_diff,spx_monthly_pct.shift(-1)]).dropna()
-bonds_emini_cftc_z = merge_dfs([emini_spx_positioning_diff,bonds_monthly_pct.shift(-1)]).dropna()
-mags_emini_cftc_z = merge_dfs([emini_spx_positioning_diff,mock_mags_monthly_pct.shift(-1)]).dropna()
+spx_emini_cftc = merge_dfs([emini_spx_positioning_diff,spx_monthly_pct.shift(-1)]).dropna()
+bonds_emini_cftc = merge_dfs([emini_spx_positioning_diff,bonds_monthly_pct.shift(-1)]).dropna()
+mags_emini_cftc = merge_dfs([emini_spx_positioning_diff,mock_mags_monthly_pct.shift(-1)]).dropna()
 
-spx_vix_cftc_z = merge_dfs([vix_spx_positioning_diff,spx_monthly_pct.shift(-1)]).dropna()
-bonds_vix_cftc_z = merge_dfs([vix_spx_positioning_diff,bonds_monthly_pct.shift(-1)]).dropna()
-mags_vix_cftc_z = merge_dfs([vix_spx_positioning_diff,mock_mags_monthly_pct.shift(-1)]).dropna()
+spx_vix_cftc = merge_dfs([vix_spx_positioning_diff,spx_monthly_pct.shift(-1)]).dropna()
+bonds_vix_cftc = merge_dfs([vix_spx_positioning_diff,bonds_monthly_pct.shift(-1)]).dropna()
+mags_vix_cftc = merge_dfs([vix_spx_positioning_diff,mock_mags_monthly_pct.shift(-1)]).dropna()
 
 ### ANALYTICS ###
 def bucket_signal_means(df, signal1_col, signal2_col, returns_col):
@@ -160,16 +160,16 @@ def bucket_signal_means(df, signal1_col, signal2_col, returns_col):
 
     return means
 
-spx_spx_cftc_z.columns
-spx_cftc_bucket = bucket_signal_means(spx_spx_cftc_z,
+spx_spx_cftc.columns
+spx_cftc_bucket = bucket_signal_means(spx_spx_cftc,
                                         'spx_dealer_1st_diff',
                                         'spx_dealer_2nd_diff',
                                         'spx')
-bonds_cftc_bucket = bucket_signal_means(bonds_spx_cftc_z,
+bonds_cftc_bucket = bucket_signal_means(bonds_spx_cftc,
                                         'spx_dealer_1st_diff',
                                         'spx_dealer_2nd_diff',
                                         'Close')
-mags_cftc_bucket = bucket_signal_means(mags_spx_cftc_z,
+mags_cftc_bucket = bucket_signal_means(mags_spx_cftc,
                                         'spx_dealer_1st_diff',
                                         'spx_dealer_2nd_diff',
                                         'mags')
@@ -191,42 +191,42 @@ def ow_uw_positioning_backtest(row,signal_colname):
 
 def ow_uw_positioning_backtest(row,signal_colname_1,signal_colname_2):
     if row[signal_colname_1] > 0 and row[signal_colname_2] > 0:
-        return 0.75
+        return 0.25
     elif row[signal_colname_1] > 0 and row[signal_colname_2] <0:
         return 0.5
     elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
-        return 0.25
+        return 0.75
     elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
         return 1
 
 ### BACKTESTS ###
-spx_spx_cftc_z['weights'] = spx_spx_cftc_z.apply(
+spx_spx_cftc['weights'] = spx_spx_cftc.apply(
     lambda row: ow_uw_positioning_backtest(row, 'spx_dealer_1st_diff','spx_dealer_2nd_diff'), axis=1
 )
-bonds_spx_cftc_z['weights'] = bonds_spx_cftc_z.apply(
+bonds_spx_cftc['weights'] = bonds_spx_cftc.apply(
     lambda row: ow_uw_positioning_backtest(row, 'spx_lev_funds_1st_diff','spx_lev_funds_2nd_diff'), axis=1
 )
-mags_spx_cftc_z['weights'] = mags_spx_cftc_z.apply(
+mags_spx_cftc['weights'] = mags_spx_cftc.apply(
     lambda row: ow_uw_positioning_backtest(row, 'spx_lev_funds_1st_diff','spx_lev_funds_2nd_diff'), axis=1
 )
-spx_spx_cftc_z['bt_returns'] = (spx_spx_cftc_z['weights'] * spx_spx_cftc_z['spx'])
-bonds_spx_cftc_z['bt_returns'] = (bonds_spx_cftc_z['weights'] * bonds_spx_cftc_z['Close'])
-mags_spx_cftc_z['bt_returns'] = (mags_spx_cftc_z['weights'] * mags_spx_cftc_z['mags'])
+spx_spx_cftc['bt_returns'] = (spx_spx_cftc['weights'] * spx_spx_cftc['spx'])
+bonds_spx_cftc['bt_returns'] = (bonds_spx_cftc['weights'] * bonds_spx_cftc['Close'])
+mags_spx_cftc['bt_returns'] = (mags_spx_cftc['weights'] * mags_spx_cftc['mags'])
 
 ### RETURN METRICS ###
 spx_return_metrics = return_metrics(
-    spx_spx_cftc_z[['bt_returns','spx']],
-    spx_spx_cftc_z[['spx']],
+    spx_spx_cftc[['bt_returns','spx']],
+    spx_spx_cftc[['spx']],
     12
 )
 bonds_return_metrics = return_metrics(
-    bonds_spx_cftc_z[['bt_returns','Close']],
-    bonds_spx_cftc_z[['Close']],
+    bonds_spx_cftc[['bt_returns','Close']],
+    bonds_spx_cftc[['Close']],
     12
 )
 mags_return_metrics = return_metrics(
-    mags_spx_cftc_z[['bt_returns','mags']],
-    mags_spx_cftc_z[['mags']],
+    mags_spx_cftc[['bt_returns','mags']],
+    mags_spx_cftc[['mags']],
     12
 )
 
@@ -252,7 +252,7 @@ def plot_positioning_data():
                    y_axis_label='%')
 
 def plot_equity_pos_backtest():
-    streamlit_plot(df=(1 + spx_spx_cftc_z).cumprod() -1,
+    streamlit_plot(df=(1 + spx_spx_cftc).cumprod() -1,
                    columns_array=['bt_returns','spx'],
                    colors_array=["#8B0000", "#000000"],
                    graph_title='Equities Historical Performance',
@@ -260,7 +260,7 @@ def plot_equity_pos_backtest():
     streamlit_return_metrics_table(spx_return_metrics)
 
 def plot_bonds_pos_backtest():
-    streamlit_plot(df=(1 + bonds_spx_cftc_z).cumprod() -1,
+    streamlit_plot(df=(1 + bonds_spx_cftc).cumprod() -1,
                    columns_array=['bt_returns','Close'],
                    colors_array=["#8B0000", "#000000"],
                    graph_title='Bonds Historical Performance',
@@ -268,7 +268,7 @@ def plot_bonds_pos_backtest():
     streamlit_return_metrics_table(bonds_return_metrics)
 
 def plot_mags_pos_backtest():
-    streamlit_plot(df=(1 + mags_spx_cftc_z).cumprod() -1,
+    streamlit_plot(df=(1 + mags_spx_cftc).cumprod() -1,
                    columns_array=['bt_returns','mags'],
                    colors_array=["#8B0000", "#000000"],
                    graph_title='MAGS Historical Performance',
