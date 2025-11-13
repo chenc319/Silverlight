@@ -201,7 +201,7 @@ def ow_uw_positioning_backtest(row,signal_colname_1,signal_colname_2):
 
 ### BACKTESTS ###
 spx_spx_cftc['weights'] = spx_spx_cftc.apply(
-    lambda row: ow_uw_positioning_backtest(row, 'spx_dealer_1st_diff','spx_dealer_2nd_diff'), axis=1
+    lambda row: ow_uw_positioning_backtest(row, 'spx_lev_funds_1st_diff','spx_lev_funds_2nd_diff'), axis=1
 )
 bonds_spx_cftc['weights'] = bonds_spx_cftc.apply(
     lambda row: ow_uw_positioning_backtest(row, 'spx_lev_funds_1st_diff','spx_lev_funds_2nd_diff'), axis=1
