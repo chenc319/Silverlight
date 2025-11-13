@@ -75,6 +75,7 @@ menu = st.sidebar.radio(
      'GRID Model',
      'Growth Predictor',
      'Inflation Predictor',
+     'Liquidity Monitor',
      'SPX Positioning',
      'Yield Curve Regimes',
      'Barra Factor Model'

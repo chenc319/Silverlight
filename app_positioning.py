@@ -1,7 +1,6 @@
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------------- CFTC -------------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
-import pandas as pd
 
 ### PACKAGES ###
 from Functions import *
@@ -102,25 +101,14 @@ with open(Path(DATA_DIR) / 'mock_mags_monthly_pct.pkl', 'rb') as file:
 ### -------------------------------------------------- CFTC -------------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-### CALCULATE WEEKLY DIFFERENCES ###
-spx_positioning_diff = spx_positioning_df.resample('W-FRI').last().dropna().diff(1).dropna()
-spx_positioning_diff.columns = ['spx_dealer','spx_asset_mgr','spx_lev_funds']
-spx_positioning_diff['spx_total'] = spx_positioning_diff.sum(axis=1)
-emini_spx_positioning_diff = emini_spx_positioning_df.resample('W-FRI').last().dropna().diff(1).dropna()
-emini_spx_positioning_diff.columns = ['emini_dealer','emini_asset_mgr','emini_lev_funds']
-emini_spx_positioning_diff['emini_total'] = emini_spx_positioning_diff.sum(axis=1)
-vix_positioning_diff = vix_positioning_df.resample('W-FRI').last().dropna().diff(1).dropna()
-vix_positioning_diff.columns = ['vix_dealer','vix_asset_mgr','vix_lev_funds']
-vix_positioning_diff['vix_total'] = vix_positioning_diff.sum(axis=1)
-
 ### CALCULATE MONTHLY DIFFERENCES ###
-spx_positioning_diff = spx_positioning_df.resample('ME').mean().dropna().diff(1).dropna()
+spx_positioning_diff = spx_positioning_df.resample('ME').mean().dropna().diff(1).diff(1).dropna()
 spx_positioning_diff.columns = ['spx_dealer','spx_asset_mgr','spx_lev_funds']
 spx_positioning_diff['spx_total'] = spx_positioning_diff.sum(axis=1)
-emini_spx_positioning_diff = emini_spx_positioning_df.resample('ME').mean().dropna().diff(1).dropna()
+emini_spx_positioning_diff = emini_spx_positioning_df.resample('ME').mean().dropna().diff(1).diff(1).dropna()
 emini_spx_positioning_diff.columns = ['emini_dealer','emini_asset_mgr','emini_lev_funds']
 emini_spx_positioning_diff['emini_total'] = emini_spx_positioning_diff.sum(axis=1)
-vix_positioning_diff = vix_positioning_df.resample('ME').mean().dropna().diff(1).dropna()
+vix_positioning_diff = vix_positioning_df.resample('ME').mean().dropna().diff(1).diff(1).dropna()
 vix_positioning_diff.columns = ['vix_dealer','vix_asset_mgr','vix_lev_funds']
 vix_positioning_diff['vix_total'] = vix_positioning_diff.sum(axis=1)
 
@@ -192,16 +180,6 @@ def ow_uw_positioning_backtest(row,signal_colname):
     elif row[signal_colname] > 1:
         return 0.25
 
-def long_short_positioning_backtest(row,signal_colname):
-    if row[signal_colname] < -1:
-        return 1
-    elif row[signal_colname] > -1 and row[signal_colname] < 0:
-        return 0.5
-    elif row[signal_colname] > 0 and row[signal_colname] < 1:
-        return -0.5
-    elif row[signal_colname] > 1:
-        return -1
-
 ### BACKTESTS ###
 spx_spx_cftc_z['weights'] = spx_spx_cftc_z.apply(
     lambda row: ow_uw_positioning_backtest(row, 'spx_lev_funds'), axis=1
@@ -222,21 +200,16 @@ spx_return_metrics = return_metrics(
     spx_spx_cftc_z[['spx']],
     12
 )
-spx_return_metrics['Return/Risk']
-
 bonds_return_metrics = return_metrics(
     bonds_spx_cftc_z[['bt_returns','Close']],
     bonds_spx_cftc_z[['Close']],
     12
 )
-bonds_return_metrics['Return/Risk']
-
 mags_return_metrics = return_metrics(
     mags_spx_cftc_z[['bt_returns','mags']],
     mags_spx_cftc_z[['mags']],
     12
 )
-mags_return_metrics['Return/Risk']
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------------- CFTC -------------------------------------------------- ###
