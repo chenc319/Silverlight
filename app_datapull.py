@@ -16,12 +16,19 @@ from datetime import datetime
 
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
+def ofr_to_df(mnemonic):
+    base_url = 'https://data.financialresearch.gov/v1/series/timeseries?mnemonic='
+    df = pd.DataFrame(requests.get(base_url + mnemonic).json(), columns=["date", "value"])
+    df['date'] = pd.to_datetime(df['date'])
+    return df.set_index('date')
+
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ---------------------------------------------- DATA PULLS ------------------------------------------------ ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 start = '1900-01-01'
 end = pd.to_datetime('today')
+
 def refresh_data(start,end,**kwargs):
     growth = pdr.DataReader('PCEC96','fred',start,end)
     growth.index = growth.index + pd.DateOffset(months=1)
@@ -359,6 +366,35 @@ def refresh_data(start,end,**kwargs):
         pickle.dump(mock_mags_weekly_pct, file)
     with open(Path(DATA_DIR) / 'mock_mags_monthly_pct.pkl', 'wb') as file:
         pickle.dump(mock_mags_monthly_pct, file)
+
+    ### LIQUIDITY DATA PULL ###
+    treasury = pdr.DataReader('TREAST', 'fred', start, end) * 1e6
+    with open(Path(DATA_DIR) / 'treasury.pkl', 'wb') as file:
+        pickle.dump(treasury, file)
+    mbs = pdr.DataReader('WSHOMCB', 'fred', start, end) * 1e6
+    with open(Path(DATA_DIR) / 'mbs.pkl', 'wb') as file:
+        pickle.dump(mbs, file)
+    reserves = pdr.DataReader('WRESBAL', 'fred', start, end) * 1e9
+    with open(Path(DATA_DIR) / 'reserves.pkl', 'wb') as file:
+        pickle.dump(reserves, file)
+    tga = pdr.DataReader('WTREGEN', 'fred', start, end) * 1e9
+    with open(Path(DATA_DIR) / 'tga.pkl', 'wb') as file:
+        pickle.dump(tga, file)
+    rrp_on_volume = pdr.DataReader('RRPONTSYD', 'fred', start, end) * 1e9
+    with open(Path(DATA_DIR) / 'rrp_on_volume.pkl', 'wb') as file:
+        pickle.dump(rrp_on_volume, file)
+    rrp_volume = pdr.DataReader('WLRRAL', 'fred', start, end) * 1e6
+    with open(Path(DATA_DIR) / 'rrp_volume.pkl', 'wb') as file:
+        pickle.dump(rrp_volume, file)
+    tri_volume_df = ofr_to_df('REPO-TRI_TV_TOT-P')
+    with open(Path(DATA_DIR) / 'tri_volume_df.pkl', 'wb') as file:
+        pickle.dump(tri_volume_df, file)
+    gcf_volume_df = ofr_to_df('REPO-GCF_TV_TOT-P')
+    with open(Path(DATA_DIR) / 'gcf_volume_df.pkl', 'wb') as file:
+        pickle.dump(gcf_volume_df, file)
+    dvp_volume_df = ofr_to_df('REPO-DVP_TV_TOT-P')
+    with open(Path(DATA_DIR) / 'dvp_volume_df.pkl', 'wb') as file:
+        pickle.dump(dvp_volume_df, file)
 
 
 

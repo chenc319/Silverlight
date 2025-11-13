@@ -21,46 +21,6 @@ spx_sectors = {
     "XLK": "Tech",
     "XLU": "utilities"
 }
-growth_dict = {
-    'USALOLITOAASTSAM': 'cli_amplitude_adjusted',
-    'INDPRO': 'industrial_production',
-    'BOPGSTB': 'trade_balance_goods_and_services',
-    'RSXFS': 'advanced_retail_sales_retail_trade',
-    'TLMFGCONS': 'manufacturing_spending',
-    'PAYEMS': 'all_employees_total_nonfarm',
-    'USGOOD': 'goods_producing_employment',
-    'MANEMP': 'all_employees_manufacturing',
-    'CES0500000011': 'avg_earnings_all_private_employees',
-    'PCEC96': 'real_personal_consumption_expenditures',
-    'RRSFS': 'real_retail_food_services_sales',
-    'TOTALSA': 'total_vehicle_sales'
-}
-inflation_dict = {
-    'CPIAUCSL': 'cpi_all_items',
-    'CPILFESL': 'cpi_less_food_energy',
-    'CPIUFDSL': 'cpi_food',
-    'CPIENGSL': 'cpi_energy',
-    'CUSR0000SAH3': 'cpi_household_furnishings',
-    'CPIAPPSL': 'cpi_apparel',
-    'CPIMEDSL': 'cpi_medical_care',
-    'CPITRNSL': 'cpi_transportation',
-    'CUSR0000SAF116': 'cpi_alcohol',
-    'CUSR0000SETB': 'cpi_motor_fuel',
-    'CUSR0000SASLE': 'cpi_services_less_energy'
-}
-spx_sectors = {
-    "XLC": "Comm Services",
-    "XLY": "Cons Disc",
-    "XLP": "Cons Stap",
-    "XLE": "Energy",
-    "XLF": "Financial",
-    "XLV": "Healthcare",
-    "XLI": "Industrial",
-    "XLB": "Materials",
-    "XLRE": "Real Estate",
-    "XLK": "Tech",
-    "XLU": "utilities"
-}
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------------- CFTC -------------------------------------------------- ###

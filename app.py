@@ -12,7 +12,7 @@ import app_growth_inflation
 import app_firv_regime
 import app_barra
 import app_inflation
-import app_tail_hedge
+import app_liquidity
 import app_sam_coreequity
 import app_positioning
 
@@ -123,7 +123,7 @@ elif menu == 'Growth Predictor':
     app_growth.plot_growth_nowcast()
 
 ### ---------------------------------------------------------------------------------------- ###
-### ---------------------------------------- INFLATION ---------------------------------------- ###
+### --------------------------------------- INFLATION -------------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
 elif menu == 'Inflation Predictor':
@@ -162,5 +162,14 @@ elif menu == 'SPX Positioning':
     app_positioning.plot_bonds_pos_backtest()
     st.title('MAGS OW/UW Backtest')
     app_positioning.plot_mags_pos_backtest()
+
+### ---------------------------------------------------------------------------------------- ###
+### --------------------------------- TAIL HEDGE PORTFOLIO --------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif menu == 'Liquidity Monitor':
+    st.title('Fed Plumbing')
+    app_liquidity.plot_fed_plumbing()
+
 
 
