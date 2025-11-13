@@ -126,6 +126,7 @@ def bucket_signal_means(df, signal1_col, signal2_col, returns_col):
         means[name] = df.loc[mask, returns_col].mean()
     return means
 
+### LIQUIDITY ###
 bucket_signal_means(liquidity_spx_merge,
                     'treasury_1st_roc',
                     'treasury_2nd_roc',
@@ -143,6 +144,7 @@ bucket_signal_means(liquidity_spx_merge,
                     'onrrp_2nd_roc',
                     'spx')
 
+### REPO VENUES ###
 bucket_signal_means(repo_venues_spx_merge,
                     'tri_1st_roc',
                     'tri_2nd_roc',
@@ -189,12 +191,12 @@ liquidity_spx_merge['weights'] = liquidity_spx_merge.apply(
 )
 liquidity_spx_merge['bt_returns'] = (liquidity_spx_merge['weights'] * liquidity_spx_merge['spx'])
 
-repo_venues_spx_merge['weights'] = liquidity_spx_merge.apply(
+repo_venues_spx_merge['weights'] = repo_venues_spx_merge.apply(
     lambda row: ow_uw_repo_venue_backtest(row,
                                            'dvp_1st_roc',
                                            'dvp_2nd_roc'), axis=1
 )
-repo_venues_spx_merge['bt_returns'] = (repo_venues_spx_merge['weights'] * liquidity_spx_merge['spx'])
+repo_venues_spx_merge['bt_returns'] = (repo_venues_spx_merge['weights'] * repo_venues_spx_merge['spx'])
 
 ### RETURN METRICS ###
 spx_fed_plumbing_return_metrics = return_metrics(
