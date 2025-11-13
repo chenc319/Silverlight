@@ -251,3 +251,6 @@ def plot_equity_fed_plumbing_backtest():
                    graph_title='Equities Historical Performance',
                    y_axis_label='%')
     streamlit_return_metrics_table(spx_repo_venues_return_metrics)
+
+
+    
