@@ -122,7 +122,7 @@ positioning_merge_diff = merge_dfs([spx_positioning_diff, emini_spx_positioning_
 ### Z SCORE ALL DATA ###
 rolling_cftc_mean = positioning_merge_diff.rolling(12).mean()
 rolling_cftc_std = positioning_merge_diff.rolling(12).std()
-rolling_cftc_z_score = ((positioning_merge_diff - rolling_cftc_mean) / rolling_cftc_std).dropna()
+rolling_cftc_z_score = positioning_merge_diff.copy()
 
 rolling_spx_cftc_mean = spx_positioning_diff.rolling(12).mean()
 rolling_spx_cftc_std = spx_positioning_diff.rolling(12).std()
@@ -130,7 +130,7 @@ rolling_spx_cftc_z_score = spx_positioning_diff.copy()
 
 rolling_vix_cftc_mean = vix_positioning_diff.rolling(12).mean()
 rolling_vix_cftc_std = vix_positioning_diff.rolling(12).std()
-rolling_vix_cftc_z_score = ((vix_positioning_diff - rolling_vix_cftc_mean) / rolling_vix_cftc_std).dropna()
+rolling_vix_cftc_z_score = vix_positioning_diff.copy()
 
 ### MERGE DATA ###
 spx_total_cftc_z = merge_dfs([rolling_cftc_z_score,spx_monthly_pct.shift(-1)]).dropna()
