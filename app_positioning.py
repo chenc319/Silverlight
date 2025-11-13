@@ -182,13 +182,13 @@ def ow_uw_positioning_backtest(row,signal_colname):
 
 ### BACKTESTS ###
 spx_spx_cftc_z['weights'] = spx_spx_cftc_z.apply(
-    lambda row: ow_uw_positioning_backtest(row, 'spx_total'), axis=1
+    lambda row: ow_uw_positioning_backtest(row, 'spx_lev_funds'), axis=1
 )
 bonds_spx_cftc_z['weights'] = bonds_spx_cftc_z.apply(
-    lambda row: ow_uw_positioning_backtest(row, 'spx_total'), axis=1
+    lambda row: ow_uw_positioning_backtest(row, 'spx_lev_funds'), axis=1
 )
 mags_spx_cftc_z['weights'] = mags_spx_cftc_z.apply(
-    lambda row: ow_uw_positioning_backtest(row, 'spx_total'), axis=1
+    lambda row: ow_uw_positioning_backtest(row, 'spx_lev_funds'), axis=1
 )
 spx_spx_cftc_z['bt_returns'] = (spx_spx_cftc_z['weights'] * spx_spx_cftc_z['spx'])
 bonds_spx_cftc_z['bt_returns'] = (bonds_spx_cftc_z['weights'] * bonds_spx_cftc_z['Close'])
