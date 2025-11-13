@@ -399,19 +399,3 @@ def refresh_data(start,end,**kwargs):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
