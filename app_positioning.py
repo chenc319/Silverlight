@@ -165,8 +165,14 @@ spx_cftc_bucket = bucket_signal_means(spx_spx_cftc_z,
                                         'spx_dealer_1st_diff',
                                         'spx_dealer_2nd_diff',
                                         'spx')
-bonds_cftc_bucket = bucket_signal_means(bonds_spx_cftc_z,'Close')
-mags_cftc_bucket = bucket_signal_means(mags_spx_cftc_z,'mags')
+bonds_cftc_bucket = bucket_signal_means(bonds_spx_cftc_z,
+                                        'spx_dealer_1st_diff',
+                                        'spx_dealer_2nd_diff',
+                                        'Close')
+mags_cftc_bucket = bucket_signal_means(mags_spx_cftc_z,
+                                        'spx_dealer_1st_diff',
+                                        'spx_dealer_2nd_diff',
+                                        'mags')
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------------- CFTC -------------------------------------------------- ###
