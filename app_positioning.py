@@ -255,5 +255,3 @@ def plot_mags_pos_backtest():
                    graph_title='MAGS Historical Performance',
                    y_axis_label='%')
     streamlit_return_metrics_table(mags_return_metrics)
-
-
