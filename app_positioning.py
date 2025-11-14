@@ -140,11 +140,11 @@ mags_cftc_bucket = bucket_signal_means(mags_spx_cftc,
 ### BACKTEST WEIGHTS FUNCTION ###
 def ow_uw_positioning_backtest(row,signal_colname_1,signal_colname_2):
     if row[signal_colname_1] > 0 and row[signal_colname_2] > 0:
-        return 0.25
+        return 0.65
     elif row[signal_colname_1] > 0 and row[signal_colname_2] < 0:
-        return 0.50
-    elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
         return 0.75
+    elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
+        return 0.85
     elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
         return 1
 

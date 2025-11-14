@@ -88,7 +88,11 @@ repo_venues_df = repo_venues_df.resample('ME').last()
 
 ### MERGE DFS ###
 liquidity_spx_merge = merge_dfs([liquidity_df,spx_monthly.pct_change().shift(-1)])
+liquidity_bonds_merge = merge_dfs([liquidity_df,bonds_monthly.pct_change().shift(-1)])
+liquidity_mags_merge = merge_dfs([liquidity_df,mock_mags_monthly_pct.pct_change().shift(-1)])
 repo_venues_spx_merge = merge_dfs([repo_venues_df,spx_monthly.pct_change().shift(-1)])
+repo_venues_bonds_merge = merge_dfs([repo_venues_df,bonds_monthly.pct_change().shift(-1)])
+repo_venues_mags_merge = merge_dfs([repo_venues_df,mock_mags_monthly_pct.pct_change().shift(-1)])
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ----------------------------------------------- LIQUIDITY ------------------------------------------------ ###
@@ -105,6 +109,26 @@ liquidity_spx_merge['onrrp_1st_roc'] = liquidity_spx_merge['onrrp'].diff()
 liquidity_spx_merge['onrrp_2nd_roc'] = liquidity_spx_merge['onrrp_1st_roc'].diff()
 liquidity_spx_merge = liquidity_spx_merge.dropna()
 
+liquidity_bonds_merge['treasury_1st_roc'] = liquidity_bonds_merge['treasury'].diff()
+liquidity_bonds_merge['treasury_2nd_roc'] = liquidity_bonds_merge['treasury_1st_roc'].diff()
+liquidity_bonds_merge['reserves_1st_roc'] = liquidity_bonds_merge['reserves'].diff()
+liquidity_bonds_merge['reserves_2nd_roc'] = liquidity_bonds_merge['reserves_1st_roc'].diff()
+liquidity_bonds_merge['tga_1st_roc'] = liquidity_bonds_merge['tga'].diff()
+liquidity_bonds_merge['tga_2nd_roc'] = liquidity_bonds_merge['tga_1st_roc'].diff()
+liquidity_bonds_merge['onrrp_1st_roc'] = liquidity_bonds_merge['onrrp'].diff()
+liquidity_bonds_merge['onrrp_2nd_roc'] = liquidity_bonds_merge['onrrp_1st_roc'].diff()
+liquidity_bonds_merge = liquidity_bonds_merge.dropna()
+
+liquidity_mags_merge['treasury_1st_roc'] = liquidity_mags_merge['treasury'].diff()
+liquidity_mags_merge['treasury_2nd_roc'] = liquidity_mags_merge['treasury_1st_roc'].diff()
+liquidity_mags_merge['reserves_1st_roc'] = liquidity_mags_merge['reserves'].diff()
+liquidity_mags_merge['reserves_2nd_roc'] = liquidity_mags_merge['reserves_1st_roc'].diff()
+liquidity_mags_merge['tga_1st_roc'] = liquidity_mags_merge['tga'].diff()
+liquidity_mags_merge['tga_2nd_roc'] = liquidity_mags_merge['tga_1st_roc'].diff()
+liquidity_mags_merge['onrrp_1st_roc'] = liquidity_mags_merge['onrrp'].diff()
+liquidity_mags_merge['onrrp_2nd_roc'] = liquidity_mags_merge['onrrp_1st_roc'].diff()
+liquidity_mags_merge = liquidity_mags_merge.dropna()
+
 ### MERGE DFS ###
 repo_venues_spx_merge['tri_1st_roc'] = repo_venues_spx_merge['tri'].diff()
 repo_venues_spx_merge['tri_2nd_roc'] = repo_venues_spx_merge['tri_1st_roc'].diff()
@@ -113,6 +137,22 @@ repo_venues_spx_merge['gcf_2nd_roc'] = repo_venues_spx_merge['gcf_1st_roc'].diff
 repo_venues_spx_merge['dvp_1st_roc'] = repo_venues_spx_merge['dvp'].diff()
 repo_venues_spx_merge['dvp_2nd_roc'] = repo_venues_spx_merge['dvp_1st_roc'].diff()
 repo_venues_spx_merge = repo_venues_spx_merge.dropna()
+
+repo_venues_bonds_merge['tri_1st_roc'] = repo_venues_bonds_merge['tri'].diff()
+repo_venues_bonds_merge['tri_2nd_roc'] = repo_venues_bonds_merge['tri_1st_roc'].diff()
+repo_venues_bonds_merge['gcf_1st_roc'] = repo_venues_bonds_merge['gcf'].diff()
+repo_venues_bonds_merge['gcf_2nd_roc'] = repo_venues_bonds_merge['gcf_1st_roc'].diff()
+repo_venues_bonds_merge['dvp_1st_roc'] = repo_venues_bonds_merge['dvp'].diff()
+repo_venues_bonds_merge['dvp_2nd_roc'] = repo_venues_bonds_merge['dvp_1st_roc'].diff()
+repo_venues_bonds_merge = repo_venues_bonds_merge.dropna()
+
+repo_venues_mags_merge['tri_1st_roc'] = repo_venues_mags_merge['tri'].diff()
+repo_venues_mags_merge['tri_2nd_roc'] = repo_venues_mags_merge['tri_1st_roc'].diff()
+repo_venues_mags_merge['gcf_1st_roc'] = repo_venues_mags_merge['gcf'].diff()
+repo_venues_mags_merge['gcf_2nd_roc'] = repo_venues_mags_merge['gcf_1st_roc'].diff()
+repo_venues_mags_merge['dvp_1st_roc'] = repo_venues_mags_merge['dvp'].diff()
+repo_venues_mags_merge['dvp_2nd_roc'] = repo_venues_mags_merge['dvp_1st_roc'].diff()
+repo_venues_mags_merge = repo_venues_mags_merge.dropna()
 
 def bucket_signal_means(df, signal1_col, signal2_col, returns_col):
     buckets = {
@@ -127,36 +167,54 @@ def bucket_signal_means(df, signal1_col, signal2_col, returns_col):
     return means
 
 ### LIQUIDITY ###
-bucket_signal_means(liquidity_spx_merge,
-                    'treasury_1st_roc',
-                    'treasury_2nd_roc',
-                    'spx')
-bucket_signal_means(liquidity_spx_merge,
-                    'reserves_1st_roc',
-                    'reserves_2nd_roc',
-                    'spx')
-bucket_signal_means(liquidity_spx_merge,
-                    'tga_1st_roc',
-                    'tga_2nd_roc',
-                    'spx')
-bucket_signal_means(liquidity_spx_merge,
-                    'onrrp_1st_roc',
-                    'onrrp_2nd_roc',
-                    'spx')
+bucket_signal_means(
+    liquidity_spx_merge,'treasury_1st_roc','treasury_2nd_roc','spx')
+bucket_signal_means(
+    liquidity_spx_merge,'reserves_1st_roc','reserves_2nd_roc','spx')
+bucket_signal_means(
+    liquidity_spx_merge,'tga_1st_roc','tga_2nd_roc','spx')
+bucket_signal_means(
+    liquidity_spx_merge,'onrrp_1st_roc','onrrp_2nd_roc','spx')
+
+bucket_signal_means(
+    liquidity_bonds_merge,'treasury_1st_roc','treasury_2nd_roc','bonds')
+bucket_signal_means(
+    liquidity_bonds_merge,'reserves_1st_roc','reserves_2nd_roc','bonds')
+bucket_signal_means(
+    liquidity_bonds_merge,'tga_1st_roc','tga_2nd_roc','bonds')
+bucket_signal_means(
+    liquidity_bonds_merge,'onrrp_1st_roc','onrrp_2nd_roc','bonds')
+
+bucket_signal_means(
+    liquidity_mags_merge,'treasury_1st_roc','treasury_2nd_roc','mags')
+bucket_signal_means(
+    liquidity_mags_merge,'reserves_1st_roc','reserves_2nd_roc','mags')
+bucket_signal_means(
+    liquidity_mags_merge,'tga_1st_roc','tga_2nd_roc','mags')
+bucket_signal_means(
+    liquidity_mags_merge,'onrrp_1st_roc','onrrp_2nd_roc','mags')
 
 ### REPO VENUES ###
-bucket_signal_means(repo_venues_spx_merge,
-                    'tri_1st_roc',
-                    'tri_2nd_roc',
-                    'spx')
-bucket_signal_means(repo_venues_spx_merge,
-                    'gcf_1st_roc',
-                    'gcf_2nd_roc',
-                    'spx')
-bucket_signal_means(repo_venues_spx_merge,
-                    'dvp_1st_roc',
-                    'dvp_2nd_roc',
-                    'spx')
+bucket_signal_means(
+    repo_venues_spx_merge,'tri_1st_roc','tri_2nd_roc','spx')
+bucket_signal_means(
+    repo_venues_spx_merge,'gcf_1st_roc','gcf_2nd_roc','spx')
+bucket_signal_means(
+    repo_venues_spx_merge,'dvp_1st_roc','dvp_2nd_roc','spx')
+
+bucket_signal_means(
+    repo_venues_bonds_merge,'tri_1st_roc','tri_2nd_roc','bonds')
+bucket_signal_means(
+    repo_venues_bonds_merge,'gcf_1st_roc','gcf_2nd_roc','bonds')
+bucket_signal_means(
+    repo_venues_bonds_merge,'dvp_1st_roc','dvp_2nd_roc','bonds')
+
+bucket_signal_means(
+    repo_venues_mags_merge,'tri_1st_roc','tri_2nd_roc','mags')
+bucket_signal_means(
+    repo_venues_mags_merge,'gcf_1st_roc','gcf_2nd_roc','mags')
+bucket_signal_means(
+    repo_venues_mags_merge,'dvp_1st_roc','dvp_2nd_roc','mags')
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ----------------------------------------------- LIQUIDITY ------------------------------------------------ ###
