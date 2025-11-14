@@ -225,21 +225,21 @@ def ow_uw_fed_plumbing_backtest(row,signal_colname_1,signal_colname_2):
     if row[signal_colname_1] > 0 and row[signal_colname_2] > 0:
         return 1
     elif row[signal_colname_1] > 0 and row[signal_colname_2] < 0:
-        return 0.50
-    elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
         return 0.75
+    elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
+        return 0.85
     elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
-        return 0.25
+        return 0.65
 
 def ow_uw_repo_venue_backtest(row,signal_colname_1,signal_colname_2):
     if row[signal_colname_1] > 0 and row[signal_colname_2] > 0:
-        return 0.5
+        return 0.75
     elif row[signal_colname_1] > 0 and row[signal_colname_2] < 0:
         return 1
     elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
-        return 0.25
+        return 0.65
     elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
-        return 0.75
+        return 0.85
 
 ### BACKTESTS ###
 liquidity_spx_merge['weights'] = liquidity_spx_merge.apply(
