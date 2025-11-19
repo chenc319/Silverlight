@@ -63,7 +63,7 @@ regime_archetypes = {
 asset_cols = ['spx', 'bonds', 'bcom']
 
 ### Z SCORE CALCULATION ###
-window = 12
+window = 36
 df = cross_asset_monthly_merge.pct_change().dropna()
 df_rolling_mean = df.rolling(window).mean()
 df_rolling_std = df.rolling(window).std()
