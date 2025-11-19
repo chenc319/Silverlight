@@ -170,7 +170,6 @@ def plot_colorcoded_regime():
         spx_monthly,
         pd.DataFrame(regime_backtest['equity_bt'])
     ]).dropna()
-    regime_merge['closest_regime'] = regime_merge['closest_regime'].astype('category')
     color_coded_regime_plot(regime_merge,
                             y_col='spx',
                             regime_col='closest_regime',
