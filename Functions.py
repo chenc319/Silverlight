@@ -416,12 +416,12 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
 
 def color_coded_regime_plot(df, y_col, regime_col,
                                   title="Asset Price by Regime"):
-    df[regime_col].astype(regime_col)
+    df[regime_col] = df[regime_col].astype(regime_col)
     regime_colors = {
-        'Goldilocks': '#1f77b4',
-        'Reflation': '#ff7f0e',
-        'Deflation': '#2ca02c',
-        'Stagflation': '#d62728'
+        "Goldilocks": "#28a745",  # Green
+        "Reflation": "#90ee90",  # Light green
+        "Stagflation": "#ffc107",  # Yellow
+        "Deflation": "#dc3545"  # Red
     }
 
     fig = go.Figure()
