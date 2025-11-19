@@ -77,10 +77,10 @@ menu = st.sidebar.radio(
      'Grid Model',
      'FlowCluster Model',
      'Prometheus Model',
-     'Growth Predictor',
-     'Inflation Predictor',
+     'Growth Monitor',
+     'Inflation Monitor',
      'Liquidity Monitor',
-     'SPX Positioning',
+     'Positioning Monitor',
      'Yield Curve Regimes',
      'Barra Factor Model'
      ]
@@ -142,7 +142,7 @@ elif menu == 'Prometheus Model':
 ### ---------------------------------------- GROWTH ---------------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'Growth Predictor':
+elif menu == 'Growth Monitor':
     app_growth.plot_growth_predictor()
     app_growth.plot_growth_nowcast()
 
@@ -150,7 +150,7 @@ elif menu == 'Growth Predictor':
 ### --------------------------------------- INFLATION -------------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'Inflation Predictor':
+elif menu == 'Inflation Monitor':
     app_inflation.plot_inflation_predictor()
     st.title('Inflation Nowcast')
     app_inflation.plot_cpi_nowcast()
@@ -177,7 +177,7 @@ elif menu == 'Barra Factor Model':
 ### --------------------------------- TAIL HEDGE PORTFOLIO --------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'SPX Positioning':
+elif menu == 'SPX Monitor':
     st.title('Underlying Signals')
     app_positioning.plot_positioning_data()
     st.title('SPX OW/UW Backtest')
