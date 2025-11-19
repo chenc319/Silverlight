@@ -15,6 +15,8 @@ import app_inflation
 import app_liquidity
 import app_sam_coreequity
 import app_positioning
+import app_prometheus
+import app_pos_liq_regime
 
 ### FUNCTIONS ###
 def merge_dfs(array_of_dfs):
@@ -72,7 +74,9 @@ menu = st.sidebar.radio(
     "Go to section:",
     ['SAM Core Equity',
      'Growth & Inflation Study',
-     'GRID Model',
+     'Grid Model',
+     'FlowCluster Model'
+     'Prometheus Model',
      'Growth Predictor',
      'Inflation Predictor',
      'Liquidity Monitor',
@@ -113,6 +117,26 @@ elif menu == 'GRID Model':
     app_grid.grid_bonds_backtest()
     st.title('GRID MAGS Backtest')
     app_grid.grid_mags_backtest()
+
+### ---------------------------------------------------------------------------------------- ###
+### ----------------------------------- FLOWCLUSTER MODEL ---------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif menu == 'FlowCluster Model':
+    st.title('Upcoming FlowCluster Regime')
+
+
+### ---------------------------------------------------------------------------------------- ###
+### ----------------------------------- PROMETHEUS MODEL ----------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif menu == 'Prometheus Model':
+    st.title('Equity Backtest')
+    app_prometheus.equity_prometheus_results()
+    st.title('Bonds Backtest')
+    app_prometheus.bonds_prometheus_results()
+    st.title('BCOM Backtest')
+    app_prometheus.bcom_prometheus_results()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- GROWTH ---------------------------------------- ###
