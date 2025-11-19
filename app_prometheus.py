@@ -165,21 +165,31 @@ def bcom_prometheus_results():
     streamlit_return_metrics_table(bcom_prometheus_return_metrics)
 
 def plot_colorcoded_regime():
-    # Ensure regime is treated as a category for coloring
-    df_reset = regime_backtest.reset_index().rename(columns={'index': 'Date'})
+    regime_colors = {
+        'Goldilocks': '#1f77b4',
+        'Reflation': '#ff7f0e',
+        'Deflation': '#2ca02c',
+        'Stagflation': '#d62728'
+    }
 
+    # Assuming your dataframe is named df and has columns 'closest_regime' and 'spx', with datetime index
+    df_reset = df.reset_index().rename(columns={'index': 'Date'})
     df_reset['closest_regime'] = df_reset['closest_regime'].astype('category')
 
-    # Example: Plotting equity_bt returns colored by regime
+    color_scale = alt.Scale(
+        domain=list(regime_colors.keys()),
+        range=list(regime_colors.values())
+    )
+
     chart = alt.Chart(df_reset).mark_circle(size=60).encode(
         x='Date:T',
-        y='equity_bt:Q',
-        color=alt.Color('closest_regime:N', legend=alt.Legend(title='Regime')),
-        tooltip=['Date', 'equity_bt', 'closest_regime']
+        y='spx:Q',
+        color=alt.Color('closest_regime:N', scale=color_scale, legend=alt.Legend(title='Regime')),
+        tooltip=['Date:T', 'spx:Q', 'closest_regime:N']
     ).properties(
         width=800,
         height=400,
-        title='Equity Returns by Macro Regime'
+        title='S&P 500 Level by Macro Regime'
     ).interactive()
 
     st.altair_chart(chart, use_container_width=True)
