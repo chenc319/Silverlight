@@ -140,6 +140,17 @@ bcom_prometheus_return_metrics['Return/Risk']
 ### ---------------------------------------- PROMETHEUS REGIME MODEL ----------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
+def plot_colorcoded_regime():
+    regime_merge = merge_dfs([
+        pd.DataFrame(regime_backtest['closest_regime']),
+        spx_monthly,
+        pd.DataFrame(regime_backtest['equity_bt'])
+    ]).dropna()
+    color_coded_regime_plot(regime_merge,
+                            y_col='spx',
+                            regime_col='closest_regime',
+                            title="S&P 500 Level by Macro Regime")
+
 def equity_prometheus_results():
     streamlit_plot(df=(1 + regime_backtest[['equity_bt', 'spx']]).cumprod() - 1,
                    columns_array=['equity_bt', 'spx'],
@@ -163,16 +174,5 @@ def bcom_prometheus_results():
                    graph_title='BCOM Historical Performance',
                    y_axis_label='%')
     streamlit_return_metrics_table(bcom_prometheus_return_metrics)
-
-def plot_colorcoded_regime():
-    regime_merge = merge_dfs([
-        pd.DataFrame(regime_backtest['closest_regime']),
-        spx_monthly,
-        pd.DataFrame(regime_backtest['equity_bt'])
-    ]).dropna()
-    color_coded_regime_plot(regime_merge,
-                            y_col='spx',
-                            regime_col='closest_regime',
-                            title="S&P 500 Level by Macro Regime")
 
 

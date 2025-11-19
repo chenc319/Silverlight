@@ -131,14 +131,15 @@ elif menu == 'FlowCluster Model':
 ### ---------------------------------------------------------------------------------------- ###
 
 elif menu == 'Prometheus Model':
+    st.title('Prometheus Macro Regimes')
+    app_prometheus.plot_colorcoded_regime()
     st.title('Equity Backtest')
     app_prometheus.equity_prometheus_results()
     st.title('Bonds Backtest')
     app_prometheus.bonds_prometheus_results()
     st.title('BCOM Backtest')
     app_prometheus.bcom_prometheus_results()
-    st.title('Regimes')
-    app_prometheus.plot_colorcoded_regime()
+
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- GROWTH ---------------------------------------- ###
