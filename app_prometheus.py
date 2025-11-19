@@ -93,15 +93,15 @@ regime_backtest['bonds_bt'] = np.nan
 regime_backtest['bcom_bt'] = np.nan
 for row in regime_backtest.index:
     if regime_backtest.loc[row, 'closest_regime'] == 'Goldilocks':
-        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx'] * 1
+        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx'] * 1.5
         regime_backtest.loc[row,'bonds_bt'] = regime_backtest.loc[row,'bonds'] * 0.8
         regime_backtest.loc[row,'bcom_bt'] = regime_backtest.loc[row,'bcom'] * 0.6
     elif regime_backtest.loc[row, 'closest_regime'] == 'Reflation':
-        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx'] * 0.8
+        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx'] * 1
         regime_backtest.loc[row,'bonds_bt'] = regime_backtest.loc[row,'bonds'] * 0.6
         regime_backtest.loc[row,'bcom_bt'] = regime_backtest.loc[row,'bcom'] * 1
     elif regime_backtest.loc[row, 'closest_regime'] == 'Stagflation':
-        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx'] * 0.6
+        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx'] * 0.8
         regime_backtest.loc[row,'bonds_bt'] = regime_backtest.loc[row,'bonds'] * 0.8
         regime_backtest.loc[row,'bcom_bt'] = regime_backtest.loc[row,'bcom'] * 1
     elif regime_backtest.loc[row, 'closest_regime'] == 'Deflation':
