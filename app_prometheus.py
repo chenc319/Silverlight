@@ -6,6 +6,7 @@
 from Functions import *
 from pathlib import Path
 import os
+import altair as alt
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 ### ---------------------------------------------------------------------------------------------------------- ###
@@ -163,6 +164,24 @@ def bcom_prometheus_results():
                    y_axis_label='%')
     streamlit_return_metrics_table(bcom_prometheus_return_metrics)
 
+def plot_colorcoded_regime():
+    # Ensure regime is treated as a category for coloring
+    df_reset = df.reset_index().rename(columns={'index': 'Date'})
 
+    df_reset['closest_regime'] = df_reset['closest_regime'].astype('category')
+
+    # Example: Plotting equity_bt returns colored by regime
+    chart = alt.Chart(df_reset).mark_circle(size=60).encode(
+        x='Date:T',
+        y='equity_bt:Q',
+        color=alt.Color('closest_regime:N', legend=alt.Legend(title='Regime')),
+        tooltip=['Date', 'equity_bt', 'closest_regime']
+    ).properties(
+        width=800,
+        height=400,
+        title='Equity Returns by Macro Regime'
+    ).interactive()
+
+    st.altair_chart(chart, use_container_width=True)
 
 

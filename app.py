@@ -137,6 +137,8 @@ elif menu == 'Prometheus Model':
     app_prometheus.bonds_prometheus_results()
     st.title('BCOM Backtest')
     app_prometheus.bcom_prometheus_results()
+    st.title('Regimes')
+    app_prometheus.plot_colorcoded_regime()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- GROWTH ---------------------------------------- ###
@@ -198,6 +200,7 @@ elif menu == 'Liquidity Monitor':
     app_liquidity.plot_equity_fed_plumbing_backtest()
     st.title('Equity Repo Venue Backtest')
     app_liquidity.plot_equity_repo_venue_backtest()
+
 
 
 
