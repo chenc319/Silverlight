@@ -414,6 +414,44 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
     )
     st.plotly_chart(fig, use_container_width=True)
 
+def color_coded_regime_plot(df, y_col, regime_col,
+                                  title="Asset Price by Regime"):
+    df[regime_col].astype(regime_col)
+    regime_colors = {
+        'Goldilocks': '#1f77b4',
+        'Reflation': '#ff7f0e',
+        'Deflation': '#2ca02c',
+        'Stagflation': '#d62728'
+    }
 
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df[y_col],
+        mode='lines',
+        line=dict(color='black', width=2),
+        name=y_col,
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+    for regime, color in regime_colors.items():
+        mask = df[regime_col] == regime
+        fig.add_trace(go.Scatter(
+            x=df.index[mask],
+            y=df[y_col][mask],
+            mode='markers',
+            marker=dict(color=color, size=8),
+            name=regime,
+            showlegend=True,
+            hovertemplate=f"Regime: {regime}<br>{y_col}: %{{y}}<br>Date: %{{x}}<extra></extra>"
+        ))
+    fig.update_layout(
+        title=title,
+        hovermode='closest',
+        legend=dict(title='Regime', orientation='h', y=-0.15),
+        template='plotly_white',
+        height=500
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 
