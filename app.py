@@ -75,7 +75,7 @@ menu = st.sidebar.radio(
     ['SAM Core Equity',
      'Growth & Inflation Study',
      'Grid Model',
-     'FlowCluster Model'
+     'FlowCluster Model',
      'Prometheus Model',
      'Growth Predictor',
      'Inflation Predictor',
