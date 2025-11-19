@@ -172,7 +172,57 @@ def plot_colorcoded_regime():
         'Stagflation': '#d62728'
     }
 
-    # Assuming your dataframe is named df and has columns 'closest_regime' and 'spx', with datetime index
+    def streamlit_regime_colored_line(df, y_col, regime_col='regime_label',
+                                      title="Asset Price by Regime"):
+        """
+        Plot a line chart with points colored by regime.
+
+        Args:
+            df: DataFrame with index as dates
+            y_col: Column name for y-axis values
+            regime_col: Column name containing regime labels
+            title: Chart title
+        """
+        fig = go.Figure()
+
+        # Add black line for the full time series
+        fig.add_trace(go.Scatter(
+            x=df.index,
+            y=df[y_col],
+            mode='lines',
+            line=dict(color='black', width=2),
+            name=y_col,
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+
+        # Overlay colored markers for each regime
+        for regime, color in regime_colors.items():
+            mask = df[regime_col] == regime
+            fig.add_trace(go.Scatter(
+                x=df.index[mask],
+                y=df[y_col][mask],
+                mode='markers',
+                marker=dict(color=color, size=8),
+                name=regime,
+                showlegend=True,
+                hovertemplate=f"Regime: {regime}<br>{y_col}: %{{y}}<br>Date: %{{x}}<extra></extra>"
+            ))
+
+        fig.update_layout(
+            title=title,
+            hovermode='closest',
+            legend=dict(title='Regime', orientation='h', y=-0.15),
+            template='plotly_white',
+            height=500
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+    # Example usage:
+    # Prepare your DataFrame (df) to have 'spx' as the Y column and 'regime_label' as the regime column
+    # If your column is named 'closest_regime', rename it:
+
     regime_merge = merge_dfs([
         pd.DataFrame(regime_backtest['closest_regime']),
         spx_monthly,
@@ -181,22 +231,7 @@ def plot_colorcoded_regime():
     df_reset = regime_merge.reset_index().rename(columns={'index': 'Date'})
     df_reset['closest_regime'] = df_reset['closest_regime'].astype('category')
 
-    color_scale = alt.Scale(
-        domain=list(regime_colors.keys()),
-        range=list(regime_colors.values())
-    )
-
-    chart = alt.Chart(df_reset).mark_circle(size=60).encode(
-        x='Date:T',
-        y='spx:Q',
-        color=alt.Color('closest_regime:N', scale=color_scale, legend=alt.Legend(title='Regime')),
-        tooltip=['Date:T', 'spx:Q', 'closest_regime:N']
-    ).properties(
-        width=800,
-        height=400,
-        title='S&P 500 Level by Macro Regime'
-    ).interactive()
-
-    st.altair_chart(chart, use_container_width=True)
+    df_reset['regime_label'] = df_reset['closest_regime']
+    streamlit_regime_colored_line(df_reset, y_col='spx', regime_col='regime_label', title="S&P 500 Level by Macro Regime")
 
 
