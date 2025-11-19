@@ -173,7 +173,12 @@ def plot_colorcoded_regime():
     }
 
     # Assuming your dataframe is named df and has columns 'closest_regime' and 'spx', with datetime index
-    df_reset = df.reset_index().rename(columns={'index': 'Date'})
+    regime_merge = merge_dfs([
+        pd.DataFrame(regime_backtest['closest_regime']),
+        spx_monthly,
+        pd.DataFrame(regime_backtest['equity_bt'])
+    ]).dropna()
+    df_reset = regime_merge.reset_index().rename(columns={'index': 'Date'})
     df_reset['closest_regime'] = df_reset['closest_regime'].astype('category')
 
     color_scale = alt.Scale(
