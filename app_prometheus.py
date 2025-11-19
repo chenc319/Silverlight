@@ -166,7 +166,7 @@ def bcom_prometheus_results():
 
 def plot_colorcoded_regime():
     # Ensure regime is treated as a category for coloring
-    df_reset = df.reset_index().rename(columns={'index': 'Date'})
+    df_reset = regime_backtest.reset_index().rename(columns={'index': 'Date'})
 
     df_reset['closest_regime'] = df_reset['closest_regime'].astype('category')
 
