@@ -70,28 +70,89 @@ st.sidebar.title("SAM Research")
 start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime('1999-12-31'))
 end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 
-menu = st.sidebar.radio(
-    "Go to section:",
-    ['SAM Core Equity',
-     'Growth & Inflation Study',
-     'GRID Model',
-     'FlowCluster Model',
-     'Cross-Asset Model',
-     'Prometheus Model',
-     'Growth Monitor',
-     'Inflation Monitor',
-     'Liquidity Monitor',
-     'Positioning Monitor',
-     'Yield Curve Regimes',
-     'Barra Factor Model'
-     ]
-)
+def reset_other_selections(current_section):
+    sections = ["Macro Regime Models",
+                "Monitors",
+                "Analysis"
+                ]
+    for section in sections:
+        if section != current_section:
+            st.session_state[f"{section}_selection"] = "Select an option..."
+
+with st.sidebar:
+    # Create a dictionary mapping sections to their options
+    sections = {
+        "Macro Regime Models": {
+            "Select an option...": "Select an option...",
+            "GRID Model": "GRID Model",
+            "FlowCluster Model": "FlowCluster Model",
+            "Cross-Asset Model": "Cross-Asset Model",
+            "Prometheus Model": "Prometheus Model",
+        },
+        "Monitors": {
+            "Select an option...": "Select an option...",
+            "Growth Monitor": "Growth Monitor",
+            "Inflation Monitor": "Inflation Monitor",
+            "Liquidity Monitor": "Liquidity Monitor",
+            "Positioning Monitor": "Positioning Monitor",
+        },
+        "Analysis": {
+            "Select an option...": "Select an option...",
+            "Growth & Inflation Study": "Growth & Inflation Study",
+            "SAM Core Equity": "SAM Core Equity",
+            "Yield Curve Regimes": "Yield Curve Regimes",
+            "Barra Factor Model": "Barra Factor Model"
+        }
+    }
+
+    # Initialize session state for each section if not exists
+    for section in sections:
+        if f"{section}_selection" not in st.session_state:
+            st.session_state[f"{section}_selection"] = "Select an option..."
+
+    # Create section headers and selectboxes
+    st.markdown("### Macro Regime Models")
+    macro_regime_models = st.selectbox(
+        "Macro Regime Models",
+        list(sections["Macro Regime Models"].keys()),
+        key="Macro Regime Models_selection",
+        on_change=lambda: reset_other_selections("Macro Regime Models"),
+        label_visibility="collapsed"
+    )
+
+    st.markdown("### Monitors")
+    monitors_selection = st.selectbox(
+        "Monitors",
+        list(sections["Monitors"].keys()),
+        key="Monitors_selection",
+        on_change=lambda: reset_other_selections("Monitors"),
+        label_visibility="collapsed"
+    )
+
+    st.markdown("### Analysis")
+    analysis_selection = st.selectbox(
+        "Analysis",
+        list(sections["Analysis"].keys()),
+        key="Analysis_selection",
+        on_change=lambda: reset_other_selections("Analysis"),
+        label_visibility="collapsed"
+    )
+
+    # Set the current page based on any non-default selection
+    page = "Select an option..."
+    for selection in [macro_regime_models,
+                      monitors_selection,
+                      analysis_selection,
+                      ]:
+        if selection != "Select an option...":
+            page = selection
+            break
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ----------------------------------- SAM CORE EQUITY ------------------------------------ ###
 ### ---------------------------------------------------------------------------------------- ###
 
-if menu == 'SAM Core Equity':
+if page == 'SAM Core Equity':
     st.title('Historical Performance')
     app_sam_coreequity.core_equity_mags_spx()
     st.title('Rolling Alpha')
@@ -101,7 +162,11 @@ if menu == 'SAM Core Equity':
     st.title('Daily SAM CE vs. SPX')
     app_sam_coreequity.mock_daily_sam_ce_portfolio()
 
-elif menu == 'Growth & Inflation Study':
+### ---------------------------------------------------------------------------------------- ###
+### ----------------------------------- SAM CORE EQUITY ------------------------------------ ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif page == 'Growth & Inflation Study':
     app_growth_inflation.plot_growth_inflation(start_date,end_date)
     app_growth_inflation.plot_spx_sector_regimes(start_date,end_date)
 
@@ -109,7 +174,7 @@ elif menu == 'Growth & Inflation Study':
 ### --------------------------------- GROWTH AND INFLATION --------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'GRID Model':
+elif page == 'GRID Model':
     st.title('Upcoming GRID Regime')
     app_grid.grid_regime_nowcast()
     st.title('GRID Equities Backtest')
@@ -123,7 +188,7 @@ elif menu == 'GRID Model':
 ### ----------------------------------- FLOWCLUSTER MODEL ---------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'FlowCluster Model':
+elif page == 'FlowCluster Model':
     st.title('Upcoming FlowCluster Regime')
     app_flowcluster.plot_colorcoded_regime()
     st.title('Equity Backtest')
@@ -135,7 +200,7 @@ elif menu == 'FlowCluster Model':
 ### ----------------------------------- PROMETHEUS MODEL ----------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'Cross-Asset Model':
+elif page == 'Cross-Asset Model':
     st.title('Prometheus Macro Regimes')
     app_cross_asset.plot_colorcoded_regime()
     st.title('Equity Backtest')
@@ -150,7 +215,7 @@ elif menu == 'Cross-Asset Model':
 ### ---------------------------------------- GROWTH ---------------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'Growth Monitor':
+elif page == 'Growth Monitor':
     app_growth.plot_growth_predictor()
     app_growth.plot_growth_nowcast()
 
@@ -158,7 +223,7 @@ elif menu == 'Growth Monitor':
 ### --------------------------------------- INFLATION -------------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'Inflation Monitor':
+elif page == 'Inflation Monitor':
     app_inflation.plot_inflation_predictor()
     st.title('Inflation Nowcast')
     app_inflation.plot_cpi_nowcast()
@@ -167,7 +232,7 @@ elif menu == 'Inflation Monitor':
 ### ------------------------------- YIELD CURVE REGIME MODEL ------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'Yield Curve Regimes':
+elif page == 'Yield Curve Regimes':
     st.title("Yield Curve Tenors by Regime")
     app_firv_regime.plot_treasury_yield_curves(start_date, end_date)
 
@@ -175,7 +240,7 @@ elif menu == 'Yield Curve Regimes':
 ### ---------------------------------- BARRA FACTOR MODEL ---------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'Barra Factor Model':
+elif page == 'Barra Factor Model':
     st.title("Barra Factors")
     app_barra.plot_barra_factors(start_date,end_date)
     st.title("Barra Factor Prediction")
@@ -185,7 +250,7 @@ elif menu == 'Barra Factor Model':
 ### --------------------------------- TAIL HEDGE PORTFOLIO --------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'SPX Monitor':
+elif page == 'SPX Monitor':
     st.title('Underlying Signals')
     app_positioning.plot_positioning_data()
     st.title('SPX OW/UW Backtest')
@@ -199,7 +264,7 @@ elif menu == 'SPX Monitor':
 ### --------------------------------- TAIL HEDGE PORTFOLIO --------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'Liquidity Monitor':
+elif page == 'Liquidity Monitor':
     st.title('Fed Plumbing')
     app_liquidity.plot_fed_plumbing()
     st.title('Equity Fed Plumbing Backtest')
