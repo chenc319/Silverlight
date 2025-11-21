@@ -99,27 +99,28 @@ flow_cluster_df.columns = [
     'spx',
     'bonds']
 
+
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------- POSITIONING LIQUIDITY REGIME -------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def regime_label(row):
-    if row['liquidity_2_roc'] > 0 and row['positioning_2_roc'] < 0:
+    if row['liquidity_2_roc'] > 0 and row['positioning_2_roc'] > 0:
         return 'Goldilocks'
-    elif row['liquidity_2_roc'] < 0 and row['positioning_2_roc'] < 0:
+    elif row['liquidity_2_roc'] > 0 and row['positioning_2_roc'] < 0:
         return 'Reflation'
-    elif row['liquidity_2_roc'] > 0 and row['positioning_2_roc'] > 0:
+    elif row['liquidity_2_roc'] < 0 and row['positioning_2_roc'] < 0:
         return 'Stagflation'
     elif row['liquidity_2_roc'] < 0 and row['positioning_2_roc'] > 0:
         return 'Deflation'
     return np.nan
 
 def ow_uw_flowcluster_backtest(row,signal_colname_1,signal_colname_2):
-    if row[signal_colname_1] > 0 and row[signal_colname_2] < 0:
+    if row[signal_colname_1] > 0 and row[signal_colname_2] > 0:
         return 1
-    elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
+    elif row[signal_colname_1] > 0 and row[signal_colname_2] < 0:
         return 0.9
-    elif row[signal_colname_1] > 0 and row[signal_colname_2] > 0:
+    elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
         return 0.8
     elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
         return 0.7
@@ -133,6 +134,17 @@ flow_cluster_df['regime_label'] = flow_cluster_df.apply(regime_label, axis=1)
 flow_cluster_df['equity_bt'] = flow_cluster_df['spx'] * flow_cluster_df['weights']
 flow_cluster_df['bonds_bt'] = flow_cluster_df['bonds'] * flow_cluster_df['weights']
 flow_cluster_df = flow_cluster_df.dropna()
+
+goldilocks = flow_cluster_df[flow_cluster_df['regime_label'] == 'Goldilocks']
+reflation = flow_cluster_df[flow_cluster_df['regime_label'] == 'Reflation']
+stagflation = flow_cluster_df[flow_cluster_df['regime_label'] == 'Stagflation']
+deflation = flow_cluster_df[flow_cluster_df['regime_label'] == 'Deflation']
+
+goldilocks['spx'].mean()
+reflation['spx'].mean()
+stagflation['spx'].mean()
+deflation['spx'].mean()
+
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------- POSITIONING LIQUIDITY REGIME -------------------------------------- ###
