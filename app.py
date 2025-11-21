@@ -15,7 +15,7 @@ import app_inflation
 import app_liquidity
 import app_sam_coreequity
 import app_positioning
-import app_prometheus
+import app_cross_asset
 import app_flowcluster
 
 ### FUNCTIONS ###
@@ -76,6 +76,7 @@ menu = st.sidebar.radio(
      'Growth & Inflation Study',
      'Grid Model',
      'FlowCluster Model',
+     'Cross-Asset Model',
      'Prometheus Model',
      'Growth Monitor',
      'Inflation Monitor',
@@ -134,15 +135,15 @@ elif menu == 'FlowCluster Model':
 ### ----------------------------------- PROMETHEUS MODEL ----------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif menu == 'Prometheus Model':
+elif menu == 'Cross-Asset Model':
     st.title('Prometheus Macro Regimes')
-    app_prometheus.plot_colorcoded_regime()
+    app_cross_asset.plot_colorcoded_regime()
     st.title('Equity Backtest')
-    app_prometheus.equity_prometheus_results()
+    app_cross_asset.equity_prometheus_results()
     st.title('Bonds Backtest')
-    app_prometheus.bonds_prometheus_results()
+    app_cross_asset.bonds_prometheus_results()
     st.title('BCOM Backtest')
-    app_prometheus.bcom_prometheus_results()
+    app_cross_asset.bcom_prometheus_results()
 
 
 ### ---------------------------------------------------------------------------------------- ###
