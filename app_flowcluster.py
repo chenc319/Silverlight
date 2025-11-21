@@ -164,7 +164,7 @@ def plot_colorcoded_regime():
     ]).dropna()
     color_coded_regime_plot(regime_merge,
                             y_col='spx',
-                            regime_col='closest_regime',
+                            regime_col='regime_label',
                             title="S&P 500 Level by Macro Regime")
 
 def equity_flowcluster_results():
