@@ -79,28 +79,111 @@ repo_venues_df.index = repo_venues_df.index.values
 repo_venues_df.columns = ['tri','gcf','dvp']
 repo_venues_df = repo_venues_df.resample('ME').last()
 
-### MERGE DFS ###
-liquidity_spx_merge = merge_dfs([liquidity_df,spx_monthly.pct_change().shift(-1)])
-liquidity_bonds_merge = merge_dfs([liquidity_df,bonds_monthly.pct_change().shift(-1)])
-repo_venues_spx_merge = merge_dfs([repo_venues_df,spx_monthly.pct_change().shift(-1)])
-repo_venues_bonds_merge = merge_dfs([repo_venues_df,bonds_monthly.pct_change().shift(-1)])
-
-### CALCULATE MONTHLY DIFFERENCES ###
 spx_positioning_diff = spx_positioning_df.resample('ME').mean().dropna()
 spx_positioning_diff.columns = ['spx_dealer','spx_asset_mgr','spx_lev_funds']
-spx_positioning_diff['spx_total'] = spx_positioning_diff.sum(axis=1)
-spx_positioning_diff['spx_lev_funds_1st_diff'] = spx_positioning_diff['spx_lev_funds'].diff(1)
-spx_positioning_diff['spx_lev_funds_2nd_diff'] = spx_positioning_diff['spx_lev_funds_1st_diff'].diff(1)
-spx_positioning_diff['spx_dealer_1st_diff'] = spx_positioning_diff['spx_dealer'].diff(1)
-spx_positioning_diff['spx_dealer_2nd_diff'] = spx_positioning_diff['spx_dealer_1st_diff'].diff(1)
-spx_positioning_diff = spx_positioning_diff.dropna()
 
-### MERGE DATA ###
-spx_spx_cftc = merge_dfs([spx_positioning_diff,spx_monthly.pct_change().shift(-1)]).dropna()
-bonds_spx_cftc = merge_dfs([spx_positioning_diff,bonds_monthly.pct_change().shift(-1)]).dropna()
+flow_cluster_df = merge_dfs([
+    liquidity_df['treasury'].diff(),
+    liquidity_df['treasury'].diff().diff(),
+    spx_positioning_diff['spx_lev_funds'].diff(),
+    spx_positioning_diff['spx_lev_funds'].diff().diff(),
+    spx_monthly.pct_change().shift(-1),
+    bonds_monthly.pct_change().shift(-1)
+]).dropna()
+
+flow_cluster_df.columns = [
+    'liquidity_1_roc',
+    'liquidity_2_roc',
+    'positioning_1_roc',
+    'positioning_2_roc',
+    'spx',
+    'bonds']
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------- POSITIONING LIQUIDITY REGIME -------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
+
+def regime_label(row):
+    if row['liquidity_2_roc'] > 0 and row['positioning_2_roc'] < 0:
+        return 'Goldilocks'
+    elif row['liquidity_2_roc'] < 0 and row['positioning_2_roc'] < 0:
+        return 'Reflation'
+    elif row['liquidity_2_roc'] > 0 and row['positioning_2_roc'] > 0:
+        return 'Stagflation'
+    elif row['liquidity_2_roc'] < 0 and row['positioning_2_roc'] > 0:
+        return 'Deflation'
+    return np.nan
+
+def ow_uw_flowcluster_backtest(row,signal_colname_1,signal_colname_2):
+    if row[signal_colname_1] > 0 and row[signal_colname_2] < 0:
+        return 1
+    elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
+        return 0.9
+    elif row[signal_colname_1] > 0 and row[signal_colname_2] > 0:
+        return 0.8
+    elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
+        return 0.7
+
+flow_cluster_df['weights'] = flow_cluster_df.apply(
+    lambda row: ow_uw_flowcluster_backtest(row,
+                                           'liquidity_2_roc',
+                                           'positioning_2_roc'), axis=1
+)
+flow_cluster_df['regime_label'] = flow_cluster_df.apply(regime_label, axis=1)
+flow_cluster_df['equity_bt'] = flow_cluster_df['spx'] * flow_cluster_df['weights']
+flow_cluster_df['bonds_bt'] = flow_cluster_df['bonds'] * flow_cluster_df['weights']
+flow_cluster_df = flow_cluster_df.dropna()
+
+### ---------------------------------------------------------------------------------------------------------- ###
+### -------------------------------------- POSITIONING LIQUIDITY REGIME -------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
+### ---------------------------------------------------------------------------------------------------------- ###
+### ---------------------------------------- flowcluster REGIME MODEL ----------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
+equities_flowcluster_return_metrics = return_metrics(
+    flow_cluster_df[['equity_bt','spx']],
+    flow_cluster_df[['spx']],
+    12
+)
+equities_flowcluster_return_metrics['Return/Risk']
+
+bonds_flowcluster_return_metrics = return_metrics(
+    flow_cluster_df[['bonds_bt','bonds']],
+    flow_cluster_df[['bonds']],
+    12
+)
+bonds_flowcluster_return_metrics['Return/Risk']
+
+def plot_colorcoded_regime():
+    regime_merge = merge_dfs([
+        pd.DataFrame(flow_cluster_df['regime_label']),
+        spx_monthly,
+        pd.DataFrame(flow_cluster_df['equity_bt'])
+    ]).dropna()
+    color_coded_regime_plot(regime_merge,
+                            y_col='spx',
+                            regime_col='closest_regime',
+                            title="S&P 500 Level by Macro Regime")
+
+def equity_flowcluster_results():
+    streamlit_plot(df=(1 + flow_cluster_df[['equity_bt', 'spx']]).cumprod() - 1,
+                   columns_array=['equity_bt', 'spx'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Equities Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(equities_flowcluster_return_metrics)
+
+def bonds_flowcluster_results():
+    streamlit_plot(df=(1 + flow_cluster_df[['bonds_bt', 'bonds']]).cumprod() - 1,
+                   columns_array=['bonds_bt', 'bonds'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Bonds Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(bonds_flowcluster_return_metrics)
+
+
+
 
 

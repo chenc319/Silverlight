@@ -124,7 +124,11 @@ elif menu == 'GRID Model':
 
 elif menu == 'FlowCluster Model':
     st.title('Upcoming FlowCluster Regime')
-
+    app_flowcluster.plot_colorcoded_regime()
+    st.title('Equity Backtest')
+    app_flowcluster.equity_flowcluster_results()
+    st.title('Bonds Backtest')
+    app_flowcluster.bonds_flowcluster_results()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ----------------------------------- PROMETHEUS MODEL ----------------------------------- ###
