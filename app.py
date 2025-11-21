@@ -74,7 +74,7 @@ menu = st.sidebar.radio(
     "Go to section:",
     ['SAM Core Equity',
      'Growth & Inflation Study',
-     'Grid Model',
+     'GRID Model',
      'FlowCluster Model',
      'Cross-Asset Model',
      'Prometheus Model',
