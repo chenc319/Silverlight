@@ -10,6 +10,74 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
+growth_vars = [
+    'RPI', 'W875RX1', 'DPCERA3M086SBEA',
+    'INDPRO', 'IPFPNSS', 'IPFINAL', 'IPCONGD', 'IPDCONGD',
+    'IPNCONGD', 'IPBUSEQ', 'IPMAT', 'IPDMAT', 'IPNMAT',
+    'IPMANSICS', 'IPB51222S', 'IPFUELS', 'CUMFNS', 'HWI',
+    'HWIURATIO', 'CLF16OV', 'CE16OV', 'UNRATE', 'UEMPMEAN',
+    'UEMPLT5', 'UEMP5TO14', 'UEMP15OV', 'UEMP15T26','UEMP27OV',
+    'CLAIMSx', 'PAYEMS', 'USGOOD', 'CES1021000001', 'USCONS',
+    'MANEMP', 'DMANEMP', 'NDMANEMP','SRVPRD', 'USTPU', 'USWTRADE',
+    'USTRADE', 'USFIRE', 'USGOVT', 'CES0600000007', 'AWOTMAN',
+    'AWHMAN','HOUST', 'HOUSTNE', 'HOUSTMW', 'HOUSTS', 'HOUSTW',
+    'PERMIT', 'PERMITNE', 'PERMITMW', 'PERMITS', 'PERMITW',
+    'AMDMNOx', 'ANDENOx', 'AMDMUOx', 'BUSLOANS', 'REALLN',
+    'DDURRG3M086SBEA', 'DNDGRG3M086SBEA','DSERRG3M086SBEA',
+    'CES0600000008', 'CES2000000008', 'CES3000000008',
+    'UMCSENTx', 'INVEST'
+]
+1,1,1,
+
+growth_vars = [
+    'RPI', 'W875RX1', 'DPCERA3M086SBEA','UNRATE', 'UEMPMEAN',
+    'UEMPLT5', 'UEMP5TO14', 'UEMP15OV', 'UEMP15T26','UEMP27OV',
+    'PAYEMS', 'DMANEMP', 'NDMANEMP','SRVPRD', 'USTPU', 'USWTRADE',
+    'USTRADE', 'USFIRE', 'USGOVT', 'CES0600000007', 'AWOTMAN',
+    'AWHMAN','BUSLOANS', 'REALLN',
+    'DDURRG3M086SBEA', 'DNDGRG3M086SBEA','DSERRG3M086SBEA',
+    'CES0600000008', 'CES2000000008', 'CES3000000008'
+]
+
+
+growth_lag1 = ['UNRATE','PAYEMS']
+
+growth_variables = pdr.DataReader(['USALOLITOAASTSAM','ICSA'], 'fred',
+                        '1949-12-31',
+                        '2025-12-31')
+growth_variables['PCEC96'] = growth_variables['PCEC96'].shift(-3).pct_change(12).diff(3)
+growth_variables['USALOLITOAASTSAM'] = growth_variables['USALOLITOAASTSAM'].diff(3)
+
+growth_variables = growth_variables.dropna()
+wins = (np.sign(growth_variables['USALOLITOAASTSAM']) == np.sign(growth_variables['PCEC96'])).astype(int)
+wins.sum() / len(wins)
+
+factor_features = [
+        'USALOLITOAASTSAM',
+        'RETAILSMSA',
+        'RSXFS',
+        'INDPRO',
+        'IPMAN',
+        'IPCONGD',
+        'PAYEMS',
+        'UNRATE',
+        'pce_goods',
+        'PCEDG',
+        'ICSA']
+
+factor_features = [
+        'CPILFESL',
+        'CPIUFDSL',
+        'CPIENGSL',
+        'CUSR0000SAH3',
+        'CPIAPPSL',
+        'CPIMEDSL',
+        'CPITRNSL',
+        'CUSR0000SAF116',
+        'CUSR0000SETB',
+        'CUSR0000SASLE'
+    ]
+
 def transform_series(series, tcode):
     if tcode == 1:  # No transformation
         return series
@@ -190,12 +258,13 @@ inflation_vars = [
     'CES2000000008', 'CES3000000008', 'UMCSENTx', 'INVEST', 'VIXCLSx'
 ]
 
-growth_features_targets = target_feature_merge[growth_vars]
+growth_features_targets = target_feature_merge[growth_vars].shift(2)
 growth_features_targets['growth_roc_2_lag'] = target_feature_merge['growth_roc_2_lag']
-inflation_features_targets = target_feature_merge[inflation_vars]
+inflation_features_targets = target_feature_merge[inflation_vars].shift(2)
 inflation_features_targets['inflation_roc_2_lag'] = target_feature_merge['inflation_roc_2_lag']
 
-inflation_features_targets.dropna()
+inflation_features_targets = inflation_features_targets.dropna()
+growth_features_targets = growth_features_targets.dropna()
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- PROMETHEUS REGIME MODEL ----------------------------------------- ###

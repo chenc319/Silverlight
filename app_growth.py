@@ -39,7 +39,7 @@ def plot_growth_predictor():
     target_feature_df.corr()
     target_feature_df['UNRATE'] = target_feature_df['UNRATE'] * -1
     target_feature_df['ICSA'] = target_feature_df['ICSA'] * -1
-    target_feature_df['PCE'] = target_feature_df['PCE'].shift(-1)
+    target_feature_df['PCE'] = target_feature_df['PCE'].shift(-3)
     target_feature_df = target_feature_df.dropna()
 
     from sklearn.preprocessing import StandardScaler
