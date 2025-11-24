@@ -10,92 +10,6 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
-growth_vars = [
-    'RPI', 'W875RX1', 'DPCERA3M086SBEA',
-    'INDPRO', 'IPFPNSS', 'IPFINAL', 'IPCONGD', 'IPDCONGD',
-    'IPNCONGD', 'IPBUSEQ', 'IPMAT', 'IPDMAT', 'IPNMAT',
-    'IPMANSICS', 'IPB51222S', 'IPFUELS', 'CUMFNS', 'HWI',
-    'HWIURATIO', 'CLF16OV', 'CE16OV', 'UNRATE', 'UEMPMEAN',
-    'UEMPLT5', 'UEMP5TO14', 'UEMP15OV', 'UEMP15T26','UEMP27OV',
-    'CLAIMSx', 'PAYEMS', 'USGOOD', 'CES1021000001', 'USCONS',
-    'MANEMP', 'DMANEMP', 'NDMANEMP','SRVPRD', 'USTPU', 'USWTRADE',
-    'USTRADE', 'USFIRE', 'USGOVT', 'CES0600000007', 'AWOTMAN',
-    'AWHMAN','HOUST', 'HOUSTNE', 'HOUSTMW', 'HOUSTS', 'HOUSTW',
-    'PERMIT', 'PERMITNE', 'PERMITMW', 'PERMITS', 'PERMITW',
-    'AMDMNOx', 'ANDENOx', 'AMDMUOx', 'BUSLOANS', 'REALLN',
-    'DDURRG3M086SBEA', 'DNDGRG3M086SBEA','DSERRG3M086SBEA',
-    'CES0600000008', 'CES2000000008', 'CES3000000008',
-    'UMCSENTx', 'INVEST'
-]
-1,1,1,
-
-growth_vars = [
-    'RPI', 'W875RX1', 'DPCERA3M086SBEA','UNRATE', 'UEMPMEAN',
-    'UEMPLT5', 'UEMP5TO14', 'UEMP15OV', 'UEMP15T26','UEMP27OV',
-    'PAYEMS', 'DMANEMP', 'NDMANEMP','SRVPRD', 'USTPU', 'USWTRADE',
-    'USTRADE', 'USFIRE', 'USGOVT', 'CES0600000007', 'AWOTMAN',
-    'AWHMAN','BUSLOANS', 'REALLN',
-    'DDURRG3M086SBEA', 'DNDGRG3M086SBEA','DSERRG3M086SBEA',
-    'CES0600000008', 'CES2000000008', 'CES3000000008'
-]
-
-
-growth_lag1 = ['UNRATE','PAYEMS']
-
-growth_variables = pdr.DataReader(['USALOLITOAASTSAM','ICSA'], 'fred',
-                        '1949-12-31',
-                        '2025-12-31')
-growth_variables['PCEC96'] = growth_variables['PCEC96'].shift(-3).pct_change(12).diff(3)
-growth_variables['USALOLITOAASTSAM'] = growth_variables['USALOLITOAASTSAM'].diff(3)
-
-growth_variables = growth_variables.dropna()
-wins = (np.sign(growth_variables['USALOLITOAASTSAM']) == np.sign(growth_variables['PCEC96'])).astype(int)
-wins.sum() / len(wins)
-
-factor_features = [
-        'USALOLITOAASTSAM',
-        'RETAILSMSA',
-        'RSXFS',
-        'INDPRO',
-        'IPMAN',
-        'IPCONGD',
-        'PAYEMS',
-        'UNRATE',
-        'pce_goods',
-        'PCEDG',
-        'ICSA']
-
-factor_features = [
-        'CPILFESL',
-        'CPIUFDSL',
-        'CPIENGSL',
-        'CUSR0000SAH3',
-        'CPIAPPSL',
-        'CPIMEDSL',
-        'CPITRNSL',
-        'CUSR0000SAF116',
-        'CUSR0000SETB',
-        'CUSR0000SASLE'
-    ]
-
-def transform_series(series, tcode):
-    if tcode == 1:  # No transformation
-        return series
-    elif tcode == 2:  # First difference
-        return series.diff()
-    elif tcode == 3:  # Second difference
-        return series.diff().diff()
-    elif tcode == 4:  # Log
-        return np.log(series)
-    elif tcode == 5:  # Log first difference
-        return np.log(series).diff()
-    elif tcode == 6:  # Log second difference
-        return np.log(series).diff().diff()
-    elif tcode == 7:  # Demeaned
-        return series - series.rolling(12).mean()
-    else:
-        raise ValueError(f"Unknown tcode {tcode}")
-
 def transform_series(series, tcode):
     if tcode == 1:  # No transformation
         return series.diff(12).diff(3)
@@ -121,12 +35,79 @@ def transform_fredmd(df, tcodes):
         out[col] = transformed
     return out.dropna()
 
+# growth_vars_lag1 = pdr.DataReader([
+#     'USALOLITOAASTSAM','ICSA','RPI', 'W875RX1', 'DPCERA3M086SBEA',
+#     'INDPRO','IPFPNSS', 'IPFINAL', 'IPCONGD', 'IPDCONGD','IPNCONGD',
+#     'IPBUSEQ', 'IPMAT', 'IPDMAT','IPNMAT','IPMANSICS', 'IPB51222S',
+#     'IPFUELS','CUMFNS',  'HOUST', 'HOUSTNE', 'HOUSTMW', 'HOUSTS',
+#     'HOUSTW','PERMIT', 'PERMITNE', 'PERMITMW', 'PERMITS','PERMITW',
+#     'BUSLOANS', 'REALLN'
+# ],
+#     'fred',
+#     '1949-12-31',
+#     '2025-12-31'
+# )
+# growth_vars_lag1.index = growth_vars_lag1.index + pd.DateOffset(months=1)
+# growth_vars_lag1 = growth_vars_lag1.resample('ME').last()
+#
+# growth_vars_lag2 = pdr.DataReader([
+#     'CLF16OV', 'CE16OV', 'UNRATE', 'UEMPMEAN','UEMPLT5',
+#     'UEMP5TO14', 'UEMP15OV', 'UEMP15T26','UEMP27OV',
+#     'PAYEMS', 'USGOOD', 'CES1021000001', 'USCONS','MANEMP',
+#     'DMANEMP', 'NDMANEMP','SRVPRD', 'USTPU', 'USWTRADE',
+#     'USTRADE', 'USFIRE', 'USGOVT', 'CES0600000007', 'AWOTMAN',
+#     'AWHMAN'
+# ],
+#     'fred',
+#     '1949-12-31',
+#     '2025-12-31'
+# )
+# growth_vars_lag2.index = growth_vars_lag2.index + pd.DateOffset(months=2)
+# growth_vars_lag2 = growth_vars_lag2.resample('ME').last()
+#
+# growth_lagged_features = merge_dfs([growth_vars_lag1, growth_vars_lag2]).dropna()
+# with open(Path(DATA_DIR) / 'growth_lagged_features.pkl', 'wb') as file:
+#     pickle.dump(growth_lagged_features, file)
+#
+# inflation_vars_lag1 = pdr.DataReader([
+#     'M1SL', 'M2SL', 'M2REAL', 'BOGMBASE', 'TOTRESNS', 'NONBORRES',
+#     'FEDFUNDS','TB3MS', 'TB6MS','GS1', 'GS5',
+#     'GS10', 'AAA', 'TB3SMFFM', 'TB6SMFFM', 'T1YFFM','T5YFFM', 'T10YFFM',
+#     'AAAFFM', 'BAAFFM','WPSFD49207', 'WPSFD49502','WPSID61','WPSID62',
+#     'PPICMM', 'CPIAUCSL', 'CPIAPPSL', 'CPITRNSL','CPIMEDSL', 'CUSR0000SAC',
+#     'CUSR0000SAD', 'CUSR0000SAS', 'CPIULFSL','CUSR0000SA0L2', 'CUSR0000SA0L5',
+#     'PCEPI','DDURRG3M086SBEA', 'DNDGRG3M086SBEA', 'DSERRG3M086SBEA'
+# ],
+#     'fred',
+#     '1949-12-31',
+#     '2025-12-31'
+# )
+# inflation_vars_lag1.index = inflation_vars_lag1.index + pd.DateOffset(months=1)
+# inflation_vars_lag1 = inflation_vars_lag1.resample('ME').last()
+#
+# inflation_vars_lag2 = pdr.DataReader([
+#     'CES0600000008',
+#     'CES2000000008',
+#     'CES3000000008'
+# ],
+#     'fred',
+#     '1949-12-31',
+#     '2025-12-31'
+# )
+# inflation_vars_lag2.index = inflation_vars_lag2.index + pd.DateOffset(months=2)
+# inflation_vars_lag2 = inflation_vars_lag2.resample('ME').last()
+#
+# inflation_lagged_features = merge_dfs([inflation_vars_lag1, inflation_vars_lag2]).dropna()
+# with open(Path(DATA_DIR) / 'inflation_lagged_features.pkl', 'wb') as file:
+#     pickle.dump(inflation_lagged_features, file)
+
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- PROMETHEUS REGIME MODEL ----------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
+
 ### GROWTH TARGET ###
-growth = pdr.DataReader('PCEC96',
+growth = pdr.DataReader('PCE',
                         'fred',
                         '1949-12-31',
                         '2025-12-31')
@@ -142,29 +123,11 @@ inflation = pdr.DataReader(
 inflation.index = pd.to_datetime(inflation.index) + pd.DateOffset(months=1)
 inflation = inflation.resample('ME').last()
 
-with open(Path(DATA_DIR) / 'FRED MD.csv', 'rb') as file:
-    entire_fred_md = pd.read_csv(file)
-entire_fred_md.drop([
-    'CP3Mx',
-    'COMPAPFFx',
-    'DTCTHFNM',
-    'CMRMTSPLx',
-    'ACOGNO',
-    'BUSINVx',
-    'ISRATIOx',
-    'NONREVSL',
-    'CONSPI',
-    'DTCOLNVHFNM',
-    'S&P div yield',
-    'S&P PE ratio',
-], axis=1, inplace=True)
-fred_tcodes  = entire_fred_md.iloc[0].to_dict()
-fred_df = entire_fred_md.iloc[1:]
-fred_df.index = pd.to_datetime(fred_df['sasdate']).values
-fred_df.drop('sasdate', axis=1, inplace=True)
-### LAG CORRECTION ###
-fred_df.index = fred_df.index + pd.DateOffset(months=1)
-fred_df = fred_df.resample('ME').last().dropna()
+with open(Path(DATA_DIR) / 'growth_lagged_features.pkl', 'rb') as file:
+    growth_lagged_features = pd.read_pickle(file)
+
+with open(Path(DATA_DIR) / 'inflation_lagged_features.pkl', 'rb') as file:
+    inflation_lagged_features = pd.read_pickle(file)
 
 with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
     sp500 = pd.read_csv(file)
@@ -203,9 +166,6 @@ with open(Path(DATA_DIR) / 'sector_industry_returns.xlsx', 'rb') as file:
 ### ---------------------------------------- PROMETHEUS REGIME MODEL ----------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-### TRANSFORM DATA ###
-fred_transformed = transform_fredmd(fred_df, fred_tcodes)
-
 ### GROWTH DATA ###
 growth_roc_2 = growth.pct_change(12).diff(3)
 growth_roc_2.columns = ['growth_roc_2']
@@ -220,47 +180,20 @@ lagged_inflation_roc_2.columns = ['inflation_roc_2_lag']
 
 ### MERGE TARGETS AND FEATURES ###
 target_feature_merge = merge_dfs([
-    fred_transformed,
-    growth_roc_2,
-    inflation_roc_2,
+    growth_lagged_features.diff(12).diff(3),
+    inflation_lagged_features.diff(12).diff(3),
     lagged_growth_roc_2,
     lagged_inflation_roc_2,
 ]).dropna()
 
-growth_vars = [
-    'RPI', 'W875RX1', 'DPCERA3M086SBEA', 'RETAILx',
-    'INDPRO', 'IPFPNSS', 'IPFINAL', 'IPCONGD', 'IPDCONGD',
-    'IPNCONGD', 'IPBUSEQ', 'IPMAT', 'IPDMAT', 'IPNMAT',
-    'IPMANSICS', 'IPB51222S', 'IPFUELS', 'CUMFNS', 'HWI',
-    'HWIURATIO', 'CLF16OV', 'CE16OV', 'UNRATE', 'UEMPMEAN',
-    'UEMPLT5', 'UEMP5TO14', 'UEMP15OV', 'UEMP15T26','UEMP27OV',
-    'CLAIMSx', 'PAYEMS', 'USGOOD', 'CES1021000001', 'USCONS',
-    'MANEMP', 'DMANEMP', 'NDMANEMP','SRVPRD', 'USTPU', 'USWTRADE',
-    'USTRADE', 'USFIRE', 'USGOVT', 'CES0600000007', 'AWOTMAN',
-    'AWHMAN','HOUST', 'HOUSTNE', 'HOUSTMW', 'HOUSTS', 'HOUSTW',
-    'PERMIT', 'PERMITNE', 'PERMITMW', 'PERMITS', 'PERMITW',
-    'AMDMNOx', 'ANDENOx', 'AMDMUOx', 'BUSLOANS', 'REALLN',
-    'DDURRG3M086SBEA', 'DNDGRG3M086SBEA','DSERRG3M086SBEA',
-    'CES0600000008', 'CES2000000008', 'CES3000000008',
-    'UMCSENTx', 'INVEST'
-]
 
-inflation_vars = [
-    'M1SL', 'M2SL', 'M2REAL', 'BOGMBASE', 'TOTRESNS', 'NONBORRES',
-    'BUSLOANS', 'REALLN', 'S&P 500', 'FEDFUNDS','TB3MS', 'TB6MS',
-    'GS1', 'GS5', 'GS10', 'AAA', 'BAA', 'TB3SMFFM', 'TB6SMFFM', 'T1YFFM',
-    'T5YFFM', 'T10YFFM','AAAFFM', 'BAAFFM', 'TWEXAFEGSMTHx', 'EXSZUSx',
-    'EXJPUSx', 'EXUSUKx', 'EXCAUSx', 'WPSFD49207', 'WPSFD49502','WPSID61',
-    'WPSID62', 'OILPRICEx', 'PPICMM', 'CPIAUCSL', 'CPIAPPSL', 'CPITRNSL',
-    'CPIMEDSL', 'CUSR0000SAC','CUSR0000SAD', 'CUSR0000SAS', 'CPIULFSL',
-    'CUSR0000SA0L2', 'CUSR0000SA0L5', 'PCEPI','DDURRG3M086SBEA',
-    'DNDGRG3M086SBEA', 'DSERRG3M086SBEA', 'CES0600000008',
-    'CES2000000008', 'CES3000000008', 'UMCSENTx', 'INVEST', 'VIXCLSx'
-]
+### CREATE FEATURES AND TARGET ###
+growth_vars = growth_lagged_features.columns
+inflation_vars = inflation_lagged_features.columns
 
-growth_features_targets = target_feature_merge[growth_vars].shift(2)
+growth_features_targets = target_feature_merge[growth_vars]
 growth_features_targets['growth_roc_2_lag'] = target_feature_merge['growth_roc_2_lag']
-inflation_features_targets = target_feature_merge[inflation_vars].shift(2)
+inflation_features_targets = target_feature_merge[inflation_vars]
 inflation_features_targets['inflation_roc_2_lag'] = target_feature_merge['inflation_roc_2_lag']
 
 inflation_features_targets = inflation_features_targets.dropna()
@@ -293,7 +226,7 @@ for row in range(lookback_window + 1, len(growth_features_targets)+1):
     X_current_scaled = scaler.transform(X_current)
 
     # PCA on standardized features
-    pca = PCA(n_components=5)
+    pca = PCA(n_components=10)
     factors_window = pca.fit_transform(X_window_scaled)
     factors_current = pca.transform(X_current_scaled)
 
@@ -345,7 +278,7 @@ for row in range(lookback_window + 1, len(inflation_features_targets)+1):
     X_current_scaled = scaler.transform(X_current)
 
     # PCA on standardized features
-    pca = PCA(n_components=5)
+    pca = PCA(n_components=10)
     factors_window = pca.fit_transform(X_window_scaled)
     factors_current = pca.transform(X_current_scaled)
 
@@ -370,36 +303,3 @@ df_valid = df.dropna(subset=['prediction', 'actual'])
 wins = (np.sign(df_valid['prediction']) == np.sign(df_valid['actual'])).astype(int)
 wins.sum() / len(wins)
 
-
-# Plot regression
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-growth_vars = [
-    'RPI', 'W875RX1', 'DPCERA3M086SBEA', 'RETAILx',
-    'INDPRO', 'IPFPNSS', 'IPFINAL', 'IPCONGD', 'IPDCONGD',
-    'IPNCONGD', 'IPBUSEQ', 'IPMAT', 'IPDMAT', 'IPNMAT',
-    'IPMANSICS', 'IPB51222S', 'IPFUELS', 'CUMFNS', 'HWI',
-    'HWIURATIO', 'CLF16OV', 'CE16OV', 'UNRATE', 'UEMPMEAN',
-    'UEMPLT5', 'UEMP5TO14', 'UEMP15OV', 'UEMP15T26','UEMP27OV',
-    'CLAIMSx', 'PAYEMS', 'USGOOD', 'CES1021000001', 'USCONS',
-    'MANEMP', 'DMANEMP', 'NDMANEMP','SRVPRD', 'USTPU', 'USWTRADE',
-    'USTRADE', 'USFIRE', 'USGOVT', 'CES0600000007', 'AWOTMAN',
-    'AWHMAN','HOUST', 'HOUSTNE', 'HOUSTMW', 'HOUSTS', 'HOUSTW',
-    'PERMIT', 'PERMITNE', 'PERMITMW', 'PERMITS', 'PERMITW',
-    'AMDMNOx', 'ANDENOx', 'AMDMUOx', 'BUSLOANS', 'REALLN',
-    'DDURRG3M086SBEA', 'DNDGRG3M086SBEA','DSERRG3M086SBEA',
-    'CES0600000008', 'CES2000000008', 'CES3000000008',
-    'UMCSENTx', 'INVEST'
-]
-plt.figure(figsize=(8, 5))
-sns.regplot(x="DPCERA3M086SBEA", y="growth_roc_2_lag", data=growth_features_targets, ci=None, scatter_kws={"s": 40})
-plt.title("Linear Regression Between x and y")
-plt.xlabel("x")
-plt.ylabel("y")
-plt.show()
-
-growth_features_targets.corr()
-
-growth_features_targets.columns
