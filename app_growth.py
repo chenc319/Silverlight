@@ -46,7 +46,7 @@ def plot_growth_predictor():
     from sklearn.linear_model import LinearRegression
 
     result_factor = []
-    window = 12
+    window = 36
 
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]
