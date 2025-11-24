@@ -34,31 +34,36 @@ def plot_growth_predictor():
         initial_claims = pd.read_pickle(file)
     growth_variables_merge = merge_dfs([growth_variables_merge,di_reserves,m2_money_supply,initial_claims])
     target_feature_df = growth_variables_merge.copy()
-    target_feature_df['PCE'] = target_feature_df['PCE'].pct_change()
-    target_feature_df[factor_features] = target_feature_df[factor_features].pct_change()
+    target_feature_df['PCE'] = target_feature_df['PCE'].pct_change(12).diff(3)
+    target_feature_df[factor_features] = target_feature_df[factor_features].pct_change(12).diff(3)
     target_feature_df.corr()
     target_feature_df['UNRATE'] = target_feature_df['UNRATE'] * -1
-    target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
-    target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
+    target_feature_df['ICSA'] = target_feature_df['ICSA'] * -1
     target_feature_df['PCE'] = target_feature_df['PCE'].shift(-1)
     target_feature_df = target_feature_df.dropna()
 
-    target_feature_df.columns
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.linear_model import LinearRegression
+
     result_factor = []
     window = 36
-
 
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]
         test = target_feature_df.iloc[i:i + 1]
 
-        # Simple factor: average of features
-        factor_train = train[factor_features].mean(axis=1)
-        factor_test = test[factor_features].mean(axis=1)
+        # Standardize the training features
+        scaler = StandardScaler()
+        factor_train_scaled = scaler.fit_transform(train[factor_features])
+        factor_test_scaled = scaler.transform(test[factor_features])  # Use same scaler
+
+        # Simple factor: average of standardized features
+        factor_train = factor_train_scaled.mean(axis=1)
+        factor_test = factor_test_scaled.mean(axis=1)
 
         model = LinearRegression()
-        model.fit(factor_train.values.reshape(-1, 1), train['PCE'].values)
-        pred = model.predict(factor_test.values.reshape(-1, 1))[0]
+        model.fit(factor_train.reshape(-1, 1), train['PCE'].values)
+        pred = model.predict(factor_test.reshape(-1, 1))[0]
         true = test['PCE'].values[0]
         result_factor.append({
             'prediction': pred,

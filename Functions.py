@@ -8,6 +8,7 @@ import plotly.graph_objs as go
 import plotly.subplots as sp
 import pandas as pd
 import functools as ft
+import pandas_datareader as pdr
 import numpy as np
 from plotly.subplots import make_subplots
 from matplotlib.colors import LinearSegmentedColormap
