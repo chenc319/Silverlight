@@ -40,11 +40,11 @@ def plot_inflation_predictor():
 
     result_factor = []
     window = 36
+    from sklearn.preprocessing import StandardScaler
+
     for i in range(window, len(target_feature_df)):
         train = target_feature_df.iloc[i - window:i]
         test = target_feature_df.iloc[i:i + 1]
-
-        from sklearn.preprocessing import StandardScaler
 
         # Standardize the training features
         scaler = StandardScaler()
@@ -56,9 +56,9 @@ def plot_inflation_predictor():
         factor_test = factor_test_scaled.mean(axis=1)
 
         model = LinearRegression()
-        model.fit(factor_train.values.reshape(-1, 1), train['CPIAUCSL'].values)
-        pred = model.predict(factor_test.values.reshape(-1, 1))[0]
-        true = test['CPIAUCSL'].values[0]
+        model.fit(factor_train.reshape(-1, 1), train['CPIAUSCL'].values)
+        pred = model.predict(factor_test.reshape(-1, 1))[0]
+        true = test['CPIAUSCL'].values[0]
         result_factor.append({
             'prediction': pred,
             'actual': true
