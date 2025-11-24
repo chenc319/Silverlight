@@ -56,9 +56,9 @@ def plot_inflation_predictor():
         factor_test = factor_test_scaled.mean(axis=1)
 
         model = LinearRegression()
-        model.fit(factor_train.reshape(-1, 1), train['CPIAUSCL'].values)
+        model.fit(factor_train.reshape(-1, 1), train['CPIAUCSL'].values)
         pred = model.predict(factor_test.reshape(-1, 1))[0]
-        true = test['CPIAUSCL'].values[0]
+        true = test['CPIAUCSL'].values[0]
         result_factor.append({
             'prediction': pred,
             'actual': true
