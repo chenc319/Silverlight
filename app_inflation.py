@@ -35,7 +35,7 @@ def plot_inflation_predictor():
     target_feature_df = inflation_variables_merge.pct_change(12).diff(3)
     target_feature_df['TOTRESNS'] = target_feature_df['TOTRESNS'] * -1
     target_feature_df['M2SL'] = target_feature_df['M2SL'] * -1
-    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-3)
+    target_feature_df['CPIAUCSL'] = target_feature_df['CPIAUCSL'].shift(-2)
     target_feature_df = target_feature_df.dropna()
 
     result_factor = []
