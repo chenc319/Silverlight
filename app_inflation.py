@@ -44,9 +44,16 @@ def plot_inflation_predictor():
         train = target_feature_df.iloc[i - window:i]
         test = target_feature_df.iloc[i:i + 1]
 
-        # Simple factor: average of features
-        factor_train = train[factor_features].mean(axis=1)
-        factor_test = test[factor_features].mean(axis=1)
+        from sklearn.preprocessing import StandardScaler
+
+        # Standardize the training features
+        scaler = StandardScaler()
+        factor_train_scaled = scaler.fit_transform(train[factor_features])
+        factor_test_scaled = scaler.transform(test[factor_features])  # Use same scaler
+
+        # Simple factor: average of standardized features
+        factor_train = factor_train_scaled.mean(axis=1)
+        factor_test = factor_test_scaled.mean(axis=1)
 
         model = LinearRegression()
         model.fit(factor_train.values.reshape(-1, 1), train['CPIAUCSL'].values)
