@@ -456,7 +456,7 @@ def color_coded_regime_plot(df, y_col, regime_col,
     )
     st.plotly_chart(fig, use_container_width=True)
 
-def calculate_regime_statistics(df, return_cols=['sp500_pct']):
+def calculate_regime_statistics(df, regime_col_name, return_cols=['sp500_pct']):
     regimes = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
     quad_labels = ['Quad 1', 'Quad 2', 'Quad 3', 'Quad 4']
     regime_short = {
@@ -468,12 +468,12 @@ def calculate_regime_statistics(df, return_cols=['sp500_pct']):
     results = []
 
     for regime, quad in zip(regimes, quad_labels):
-        regime_data = df[df['regime_label'] == regime]
+        regime_data = df[df[regime_col_name] == regime]
         row = {
             'Quad': quad,
             'Regime': regime,
             'Regime Code': regime_short[regime],
-            '% of Occurrences': (len(regime_data) / len(df.dropna(subset=['regime_label']))) * 100
+            '% of Occurrences': (len(regime_data) / len(df.dropna(subset=[regime_col_name]))) * 100
         }
 
         # Each asset is a separate column: key = asset, value = mean return
