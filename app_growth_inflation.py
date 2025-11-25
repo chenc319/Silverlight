@@ -146,8 +146,8 @@ quad_factors_df = load_multiple_tickers(quad_regime_factors)
 
 ### CREATE GROWTH AND INFLATION DF ###
 growth_inflation_df = merge_dfs([
-    growth.shift(-2),
-    inflation.shift(-2),
+    growth.shift(-1),
+    inflation.shift(-1),
     sp500,
     agg
 ]).dropna()
