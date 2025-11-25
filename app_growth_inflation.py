@@ -41,31 +41,7 @@ def regime_label(row):
         return 'Deflation'
     return np.nan
 
-def calculate_regime_statistics(df, return_cols=['sp500_pct', 'bonds_pct']):
-    regimes = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
-    quad_labels = ['Quad 1', 'Quad 2', 'Quad 3', 'Quad 4']
-    regime_short = {
-        'Goldilocks': 'I-G+',
-        'Reflation': 'I+G+',
-        'Stagflation': 'I+G-',
-        'Deflation': 'I-G-'
-    }
-    results = []
 
-    for regime, quad in zip(regimes, quad_labels):
-        regime_data = df[df['regime_label'] == regime]
-        regime_returns = (regime_data[return_cols].mean() * 100).values
-
-        results.append({
-            'Quad': quad,
-            'Regime': regime,
-            'Regime Code': regime_short[regime],
-            'Equities': regime_returns[0],
-            'Bonds': regime_returns[1],
-            '% of Occurrences': (len(regime_data) / len(df.dropna(subset=['regime_label']))) * 100
-        })
-
-    return pd.DataFrame(results)
 
 
 def calculate_regime_performance(base_df, asset_returns_df, regime_col='regime_label'):
