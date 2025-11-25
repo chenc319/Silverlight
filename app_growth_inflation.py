@@ -154,9 +154,9 @@ growth_inflation_df = merge_dfs([
 
 growth_inflation_df.columns = ['growth', 'inflation', 'sp500', 'bonds']
 
-growth_inflation_df['growth_roc'] = growth_inflation_df['growth'].diff(12)
+growth_inflation_df['growth_roc'] = growth_inflation_df['growth'].pct_change(12)
 growth_inflation_df['growth_roc_2'] = growth_inflation_df['growth_roc'].diff(3)
-growth_inflation_df['inflation_roc'] = growth_inflation_df['inflation'].diff(12)
+growth_inflation_df['inflation_roc'] = growth_inflation_df['inflation'].pct_change(12)
 growth_inflation_df['inflation_roc_2'] = growth_inflation_df['inflation_roc'].diff(3)
 
 growth_inflation_df['sp500_pct'] = growth_inflation_df['sp500'].pct_change()
