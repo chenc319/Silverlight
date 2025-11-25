@@ -182,7 +182,7 @@ def plot_growth_inflation(start=None, end=None):
     streamlit_subplot(df,
                       columns_array=['growth', 'growth_roc', 'inflation', 'inflation_roc'],
                       colors_array=['#2056AE', '#6AC47E', '#F2552C', '#F7BC38'],
-                      row_nums=1,
+                      row_nums=2,
                       col_nums=2)
 
     st.title("Equity and Fixed Income by Regime")
