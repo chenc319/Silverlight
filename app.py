@@ -167,8 +167,8 @@ if page == 'SAM Core Equity':
 ### ---------------------------------------------------------------------------------------- ###
 
 elif page == 'Growth & Inflation Study':
-    app_growth_inflation.plot_growth_inflation(start_date,end_date)
-    app_growth_inflation.plot_spx_sector_regimes(start_date,end_date)
+    app_growth_inflation.plot_growth_inflation()
+    app_growth_inflation.plot_spx_sectors_and_factors_regimes()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------- GROWTH AND INFLATION --------------------------------- ###

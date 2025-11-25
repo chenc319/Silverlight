@@ -169,13 +169,9 @@ growth_inflation_df = growth_inflation_df.dropna()
 ### -------------------------------------------- PLOTTING FUNCTIONS ------------------------------------------ ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-def plot_growth_inflation(start=None, end=None):
+def plot_growth_inflation():
 
     df = growth_inflation_df.copy()
-    if start:
-        df = df[df.index >= pd.Timestamp(start)]
-    if end:
-        df = df[df.index <= pd.Timestamp(end)]
 
     st.title("Growth and Inflation Inputs")
     # Dual Subplot: Growth (CLI) and Inflation (CPI)
@@ -192,7 +188,9 @@ def plot_growth_inflation(start=None, end=None):
 
     st.title("Growth and Inflation Historical Performance")
     stats_df = calculate_regime_statistics(df)
-    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
+    cmap = LinearSegmentedColormap.from_list(
+        'red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256
+    )
     styled = stats_df.style \
         .format({'Equities': "{:.2f}%", 'Bonds': "{:.2f}%", '% of Occurrences': "{:.2f}%"}) \
         .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
@@ -202,36 +200,20 @@ def plot_growth_inflation(start=None, end=None):
         st.write(styled, unsafe_allow_html=True)
 
     st.title("Equity Return Distributions")
-    plot_regime_return_histograms(df, 'regime_label', 'sp500_pct', regimes=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation'])
+    plot_regime_return_histograms(df,
+                                  'regime_label',
+                                  'sp500_pct',
+                                  regimes=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation'])
 
     st.title("Bonds Return Distributions")
-    plot_regime_return_histograms(df, 'regime_label', 'bonds_pct', regimes=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation'])
+    plot_regime_return_histograms(df,
+                                  'regime_label',
+                                  'bonds_pct',
+                                  regimes=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation'])
 
 
-### ---------------------------------------------------------------------------------------------------------- ###
-### ----------------------------------------- SECTOR/FACTOR PLOTTING ----------------------------------------- ###
-### ---------------------------------------------------------------------------------------------------------- ###
+def plot_spx_sectors_and_factors_regimes():
 
-def plot_spx_sector_regimes(start=None, end=None, **kwargs):
-    """Plot sector and factor performance by regime."""
-
-    # Calculate returns
-    sector_returns = spx_sectors_df.resample('ME').last().pct_change()
-    factor_returns = quad_factors_df.resample('ME').last().pct_change()
-
-    # Filter by date range if provided
-    if start:
-        sector_returns = sector_returns[sector_returns.index >= pd.Timestamp(start)]
-        factor_returns = factor_returns[factor_returns.index >= pd.Timestamp(start)]
-    if end:
-        sector_returns = sector_returns[sector_returns.index <= pd.Timestamp(end)]
-        factor_returns = factor_returns[factor_returns.index <= pd.Timestamp(end)]
-
-    # Calculate regime performance
-    sector_performance = calculate_regime_performance(growth_inflation_df, sector_returns)
-    factor_performance = calculate_regime_performance(growth_inflation_df, factor_returns)
-
-    # Styling function
     def style_percent_table(df):
         def highlight_red_green(val):
             if val < 0:
@@ -243,8 +225,12 @@ def plot_spx_sector_regimes(start=None, end=None, **kwargs):
         col = df.columns[0]
         return df.style.format({col: "{:.2f}%"}).applymap(highlight_red_green, subset=[col])
 
-    # ===== Sector Performance =====
-    # UPDATED ORDER with Quad labels
+    sector_returns = spx_sectors_df.resample('ME').last().pct_change()
+    factor_returns = quad_factors_df.resample('ME').last().pct_change()
+
+    sector_performance = calculate_regime_performance(growth_inflation_df, sector_returns)
+    factor_performance = calculate_regime_performance(growth_inflation_df, factor_returns)
+
     st.title("Top/Bottom SPX Sector Performance")
     cols = st.columns(4)
     regimes = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
@@ -255,7 +241,6 @@ def plot_spx_sector_regimes(start=None, end=None, **kwargs):
             st.subheader(f"{quad}: {regime}")
             st.write(style_percent_table(sector_performance[regime]), unsafe_allow_html=True)
 
-    # ===== Factor Performance =====
     st.title("Top/Bottom SPX Factor Performance")
     cols = st.columns(4)
     for i, (regime, quad) in enumerate(zip(regimes, quad_labels)):
