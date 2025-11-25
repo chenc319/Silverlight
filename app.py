@@ -201,7 +201,7 @@ elif page == 'FlowCluster Model':
 ### ---------------------------------------------------------------------------------------- ###
 
 elif page == 'Cross-Asset Model':
-    st.title('Prometheus Macro Regimes')
+    st.title('Cross-Asset Macro Regimes')
     app_cross_asset.plot_colorcoded_regime()
     st.title('Equity Backtest')
     app_cross_asset.equity_prometheus_results()
