@@ -191,8 +191,15 @@ def plot_growth_inflation(start=None, end=None):
     color_coded_regime_plot(df, 'bonds', 'regime_label', title="Bonds by Regime")
 
     st.title("Growth and Inflation Historical Performance")
-    stats_df = return_metrics_by_regime(df, 'sp500_pct', 'bonds_pct', regime_col='regime_label', ann_factor=12)
-    streamlit_return_metrics_table(stats_df)
+    stats_df = calculate_regime_statistics(df)
+    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
+    styled = stats_df.style \
+        .format({'Equities': "{:.2f}%", 'Bonds': "{:.2f}%", '% of Occurrences': "{:.2f}%"}) \
+        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.write(styled, unsafe_allow_html=True)
 
     st.title("Equity Return Distributions")
     plot_regime_return_histograms(df, 'regime_label', 'sp500_pct', regimes=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation'])
