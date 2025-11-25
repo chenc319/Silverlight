@@ -173,7 +173,7 @@ def plot_colorcoded_regime():
                             y_col='spx',
                             regime_col='regime_label',
                             title="S&P 500 Level by Macro Regime")
-    stats_df = calculate_regime_statistics(regime_merge,return_cols = ['spx'])
+    stats_df = calculate_regime_statistics(regime_merge,return_cols = ['equity_bt'])
     plot_streamlit_regime_statistics(stats_df)
 
 def equity_flowcluster_results():
