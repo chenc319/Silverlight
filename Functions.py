@@ -481,3 +481,15 @@ def calculate_regime_statistics(df, return_cols=['sp500_pct', 'bonds_pct']):
         })
 
     return pd.DataFrame(results)
+
+def plot_streamlit_regime_statistics(stats_df):
+    cmap = LinearSegmentedColormap.from_list(
+        'red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256
+    )
+    styled = stats_df.style \
+        .format({'Equities': "{:.2f}%", 'Bonds': "{:.2f}%", '% of Occurrences': "{:.2f}%"}) \
+        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.write(styled, unsafe_allow_html=True)

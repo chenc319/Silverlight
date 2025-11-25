@@ -41,9 +41,6 @@ def regime_label(row):
         return 'Deflation'
     return np.nan
 
-
-
-
 def calculate_regime_performance(base_df, asset_returns_df, regime_col='regime_label'):
     """Calculate average returns by regime for multiple assets."""
     # UPDATED ORDER
@@ -173,16 +170,7 @@ def plot_growth_inflation():
 
     st.title("Growth and Inflation Historical Performance")
     stats_df = calculate_regime_statistics(df)
-    cmap = LinearSegmentedColormap.from_list(
-        'red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256
-    )
-    styled = stats_df.style \
-        .format({'Equities': "{:.2f}%", 'Bonds': "{:.2f}%", '% of Occurrences': "{:.2f}%"}) \
-        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
-
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.write(styled, unsafe_allow_html=True)
+    plot_streamlit_regime_statistics(stats_df)
 
     st.title("Equity Return Distributions")
     plot_regime_return_histograms(df,
