@@ -169,97 +169,36 @@ growth_inflation_df = growth_inflation_df.dropna()
 ### -------------------------------------------- PLOTTING FUNCTIONS ------------------------------------------ ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-
-def plot_growth_inflation(start=None, end=None, **kwargs):
-    """Main plotting function for growth/inflation regime analysis."""
+def plot_growth_inflation(start=None, end=None):
 
     df = growth_inflation_df.copy()
-
-    # FIX: Convert start/end to pd.Timestamp to avoid datetime comparison error
     if start:
         df = df[df.index >= pd.Timestamp(start)]
     if end:
         df = df[df.index <= pd.Timestamp(end)]
 
-    # ===== CLI/CPI Dual Y-Axis Plot =====
     st.title("Growth and Inflation Inputs")
+    # Dual Subplot: Growth (CLI) and Inflation (CPI)
+    streamlit_subplot(df,
+                      columns_array=['growth', 'growth_roc', 'inflation', 'inflation_roc'],
+                      colors_array=['#2056AE', '#6AC47E', '#F2552C', '#F7BC38'],
+                      row_nums=1,
+                      col_nums=2)
 
-    fig = make_subplots(
-        rows=1, cols=2,
-        subplot_titles=['CLI (Growth)', 'CPI (Inflation)'],
-        specs=[[{"secondary_y": True}, {"secondary_y": True}]]
-    )
-
-    colors = {
-        'CLI': '#2056AE',
-        'CLI ROC': '#6AC47E',
-        'CPI': '#F2552C',
-        'CPI ROC': '#F7BC38'
-    }
-
-    # CLI subplot
-    fig.add_trace(
-        go.Scatter(x=df.index, y=df['growth'], name='CLI Outright',
-                   mode='lines', line=dict(color=colors['CLI'], width=2)),
-        row=1, col=1, secondary_y=False
-    )
-    fig.add_trace(
-        go.Scatter(x=df.index, y=df['growth_roc'], name='CLI ROC',
-                   mode='lines', line=dict(color=colors['CLI ROC'], dash='dot', width=2)),
-        row=1, col=1, secondary_y=True
-    )
-
-    # CPI subplot
-    fig.add_trace(
-        go.Scatter(x=df.index, y=df['inflation'], name='CPI Outright',
-                   mode='lines', line=dict(color=colors['CPI'], width=2)),
-        row=1, col=2, secondary_y=False
-    )
-    fig.add_trace(
-        go.Scatter(x=df.index, y=df['inflation_roc'], name='CPI ROC',
-                   mode='lines', line=dict(color=colors['CPI ROC'], dash='dot', width=2)),
-        row=1, col=2, secondary_y=True
-    )
-
-    fig.update_layout(
-        height=500,
-        hovermode='x unified',
-        legend=dict(orientation='h', y=-0.2)
-    )
-    fig.update_yaxes(title_text="Outright", row=1, col=1, secondary_y=False)
-    fig.update_yaxes(title_text="ROC", row=1, col=1, secondary_y=True)
-    fig.update_yaxes(title_text="Outright", row=1, col=2, secondary_y=False)
-    fig.update_yaxes(title_text="ROC", row=1, col=2, secondary_y=True)
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    # ===== Regime-Colored Asset Charts =====
     st.title("Equity and Fixed Income by Regime")
-    color_coded_regime_plot(df, 'sp500','regime_label', title="SP500 by Regime")
-    color_coded_regime_plot(df, 'bonds','regime_label', title="Bonds by Regime")
+    color_coded_regime_plot(df, 'sp500', 'regime_label', title="SP500 by Regime")
+    color_coded_regime_plot(df, 'bonds', 'regime_label', title="Bonds by Regime")
 
-    # ===== Statistics Table =====
     st.title("Growth and Inflation Historical Performance")
-    stats_df = calculate_regime_statistics(df)
-
-    cmap = LinearSegmentedColormap.from_list('red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256)
-    styled = stats_df.style \
-        .format({'Equities': "{:.2f}%", 'Bonds': "{:.2f}%", '% of Occurrences': "{:.2f}%"}) \
-        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
-
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.write(styled, unsafe_allow_html=True)
-
-    # ===== Return Distributions =====
-    # UPDATED ORDER
-    regimes = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
+    stats_df = return_metrics_by_regime(df, 'sp500_pct', 'bonds_pct', regime_col='regime_label', ann_factor=12)
+    streamlit_return_metrics_table(stats_df)
 
     st.title("Equity Return Distributions")
-    plot_regime_return_histograms(df, 'regime_label', 'sp500_pct', regimes)
+    plot_regime_return_histograms(df, 'regime_label', 'sp500_pct', regimes=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation'])
 
     st.title("Bonds Return Distributions")
-    plot_regime_return_histograms(df, 'regime_label', 'bonds_pct', regimes)
+    plot_regime_return_histograms(df, 'regime_label', 'bonds_pct', regimes=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation'])
+
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ----------------------------------------- SECTOR/FACTOR PLOTTING ----------------------------------------- ###
