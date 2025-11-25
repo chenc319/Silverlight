@@ -103,9 +103,9 @@ regime_code_map = {
     2: 'Goldilocks',
     3: 'Deflation'
 }
-
+#
 # ### GROWTH ###
-# growth = pdr.DataReader('PCE',
+# growth = pdr.DataReader('PCEC96',
 #                         'fred',
 #                         '1900-01-01',
 #                         pd.to_datetime('today'))
@@ -113,7 +113,7 @@ regime_code_map = {
 # growth = growth.resample('ME').last()
 # with open(Path(DATA_DIR) / 'growth.pkl', 'wb') as file:
 #     pickle.dump(growth, file)
-#
+
 # ### GROWTH ###
 # inflation = pdr.DataReader('CPIAUCSL',
 #                            'fred',
