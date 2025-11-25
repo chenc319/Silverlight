@@ -150,6 +150,8 @@ def plot_colorcoded_regime():
                             y_col='spx',
                             regime_col='closest_regime',
                             title="S&P 500 Level by Macro Regime")
+    stats_df = calculate_regime_statistics(regime_merge, return_cols=['equity_bt'])
+    plot_streamlit_regime_statistics(stats_df)
 
 def equity_prometheus_results():
     streamlit_plot(df=(1 + regime_backtest[['equity_bt', 'spx']]).cumprod() - 1,
