@@ -469,30 +469,32 @@ def calculate_regime_statistics(df, return_cols=['sp500_pct']):
 
     for regime, quad in zip(regimes, quad_labels):
         regime_data = df[df['regime_label'] == regime]
-        occurrence_pct = (len(regime_data) / len(df.dropna(subset=['regime_label']))) * 100
+        row = {
+            'Quad': quad,
+            'Regime': regime,
+            'Regime Code': regime_short[regime],
+            '% of Occurrences': (len(regime_data) / len(df.dropna(subset=['regime_label']))) * 100
+        }
 
+        # Each asset is a separate column: key = asset, value = mean return
         for asset in return_cols:
             asset_mean = regime_data[asset].mean() * 100 if not regime_data.empty else float('nan')
+            row[asset] = asset_mean
 
-            results.append({
-                'Quad': quad,
-                'Regime': regime,
-                'Regime Code': regime_short[regime],
-                'Asset': asset,
-                'Return (%)': asset_mean,
-                '% of Occurrences': occurrence_pct
-            })
+        results.append(row)
 
     return pd.DataFrame(results)
 
 def plot_streamlit_regime_statistics(stats_df):
+    asset_cols = [col for col in stats_df.columns if col not in ('Quad', 'Regime', 'Regime Code', '% of Occurrences')]
     cmap = LinearSegmentedColormap.from_list(
         'red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256
     )
     styled = stats_df.style \
-        .format({'Return (%)': "{:.2f}%", '% of Occurrences': "{:.2f}%"}) \
-        .background_gradient(cmap=cmap, subset=['Return (%)'])
+        .format({col: "{:.2f}%" for col in asset_cols + ['% of Occurrences']}) \
+        .background_gradient(cmap=cmap, subset=asset_cols)
 
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.write(styled, unsafe_allow_html=True)
+
