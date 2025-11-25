@@ -107,7 +107,7 @@ def transform_fredmd(df, tcodes):
 
 
 ### GROWTH TARGET ###
-growth = pdr.DataReader('PCE',
+growth = pdr.DataReader('PCEC96',
                         'fred',
                         '1949-12-31',
                         '2025-12-31')
