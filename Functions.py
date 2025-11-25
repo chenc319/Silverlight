@@ -456,7 +456,7 @@ def color_coded_regime_plot(df, y_col, regime_col,
     )
     st.plotly_chart(fig, use_container_width=True)
 
-def calculate_regime_statistics(df, return_cols=['sp500_pct', 'bonds_pct']):
+def calculate_regime_statistics(df, return_cols=['sp500_pct']):
     regimes = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
     quad_labels = ['Quad 1', 'Quad 2', 'Quad 3', 'Quad 4']
     regime_short = {
@@ -469,16 +469,19 @@ def calculate_regime_statistics(df, return_cols=['sp500_pct', 'bonds_pct']):
 
     for regime, quad in zip(regimes, quad_labels):
         regime_data = df[df['regime_label'] == regime]
-        regime_returns = (regime_data[return_cols].mean() * 100).values
+        occurrence_pct = (len(regime_data) / len(df.dropna(subset=['regime_label']))) * 100
 
-        results.append({
-            'Quad': quad,
-            'Regime': regime,
-            'Regime Code': regime_short[regime],
-            'Equities': regime_returns[0],
-            'Bonds': regime_returns[1],
-            '% of Occurrences': (len(regime_data) / len(df.dropna(subset=['regime_label']))) * 100
-        })
+        for asset in return_cols:
+            asset_mean = regime_data[asset].mean() * 100 if not regime_data.empty else float('nan')
+
+            results.append({
+                'Quad': quad,
+                'Regime': regime,
+                'Regime Code': regime_short[regime],
+                'Asset': asset,
+                'Return (%)': asset_mean,
+                '% of Occurrences': occurrence_pct
+            })
 
     return pd.DataFrame(results)
 
@@ -487,8 +490,8 @@ def plot_streamlit_regime_statistics(stats_df):
         'red_white_green', ['#ff3333', '#ffffff', '#39b241'], N=256
     )
     styled = stats_df.style \
-        .format({'Equities': "{:.2f}%", 'Bonds': "{:.2f}%", '% of Occurrences': "{:.2f}%"}) \
-        .background_gradient(cmap=cmap, subset=['Equities', 'Bonds'])
+        .format({'Return (%)': "{:.2f}%", '% of Occurrences': "{:.2f}%"}) \
+        .background_gradient(cmap=cmap, subset=['Return (%)'])
 
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:

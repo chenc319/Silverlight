@@ -169,7 +169,7 @@ def plot_growth_inflation():
     color_coded_regime_plot(df, 'bonds', 'regime_label', title="Bonds by Regime")
 
     st.title("Growth and Inflation Historical Performance")
-    stats_df = calculate_regime_statistics(df)
+    stats_df = calculate_regime_statistics(df,return_cols = ['sp500_pct','bonds_pct'])
     plot_streamlit_regime_statistics(stats_df)
 
     st.title("Equity Return Distributions")
