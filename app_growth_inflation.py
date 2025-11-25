@@ -180,10 +180,11 @@ def plot_growth_inflation(start=None, end=None):
     st.title("Growth and Inflation Inputs")
     # Dual Subplot: Growth (CLI) and Inflation (CPI)
     streamlit_subplot(df,
-                      columns_array=['growth', 'growth_roc', 'inflation', 'inflation_roc'],
-                      colors_array=['#2056AE', '#6AC47E', '#F2552C', '#F7BC38'],
+                      columns_array=['growth', 'growth_roc','growth_roc_2',
+                                     'inflation', 'inflation_roc','inflation_roc_2'],
+                      colors_array=['#2056AE', '#6AC47E', '#F2552C', '#F7BC38', '#E76F51', '#8D99AE'],
                       row_nums=2,
-                      col_nums=2)
+                      col_nums=3)
 
     st.title("Equity and Fixed Income by Regime")
     color_coded_regime_plot(df, 'sp500', 'regime_label', title="SP500 by Regime")
