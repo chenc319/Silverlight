@@ -6,7 +6,6 @@
 from Functions import *
 from pathlib import Path
 import os
-import altair as alt
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 ### ---------------------------------------------------------------------------------------------------------- ###

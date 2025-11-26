@@ -13,7 +13,9 @@ import pandas_datareader as pdr
 import numpy as np
 from plotly.subplots import make_subplots
 from matplotlib.colors import LinearSegmentedColormap
-from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LinearRegression, LogisticRegression
 
 
 def merge_dfs(array_of_dfs):
