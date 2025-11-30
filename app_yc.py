@@ -143,16 +143,16 @@ def plot_colorcoded_regime():
     ]).dropna()
     color_coded_regime_plot(regime_merge,
                             y_col='spx',
-                            regime_col='regime_label',
-                            title="S&P 500 Level by Macro Regime")
+                            regime_col='belly_regime',
+                            title="Level by Macro Regime")
     stats_df = calculate_regime_statistics(regime_merge,
-                                           regime_col_name='regime_label',
-                                           return_cols = ['equity_bt'])
+                                           regime_col_name='belly_regime',
+                                           return_cols = ['bt_returns'])
     plot_streamlit_regime_statistics(stats_df)
 
 def equity_yc_results():
-    streamlit_plot(df=(1 + treasury_diff[['bt_returns', 'spx']]).cumprod() - 1,
-                   columns_array=['equity_bt', 'spx_monthly_oct===pct'],
+    streamlit_plot(df=(1 + treasury_diff[['bt_returns', 'spx_monthly_pct']]).cumprod() - 1,
+                   columns_array=['bt_returns', 'spx_monthly_pct'],
                    colors_array=["#8B0000", "#000000"],
                    graph_title='Equities Historical Performance',
                    y_axis_label='%')
