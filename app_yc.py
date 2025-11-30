@@ -119,6 +119,7 @@ treasury_diff['total_score'] = (
     treasury_diff['belly_score']
 )
 
+
 treasury_diff['bt_returns'] = treasury_diff['spx_monthly_pct'] * treasury_diff['total_score']
 treasury_diff = treasury_diff['2000-01-01':]
 
