@@ -64,7 +64,7 @@ treasury_diff['belly'] = treasury_diff['10y'] - treasury_diff['2y']
 treasury_diff['back_end'] = treasury_diff['30y'] - treasury_diff['10y']
 
 ### CALCULATE CLASSIFICATIONS ###
-treasury_diff['total_yc_direction'] = treasury_diff[['1m','2y','10y','30y']].mean(axis=1)
+treasury_diff['total_yc_direction'] = treasury_diff[['2y','10y','30y']].mean(axis=1)
 treasury_diff['level_class'] = ['Bull' if x <= 0 else 'Bear' for x in treasury_diff['total_yc_direction']]
 treasury_diff['front_class'] = ['Flattening' if x <= 0 else 'Steepening' for x in treasury_diff['front_end']]
 treasury_diff['belly_class'] = ['Flattening' if x <= 0 else 'Steepening' for x in treasury_diff['belly']]
