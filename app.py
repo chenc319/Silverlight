@@ -17,6 +17,7 @@ import app_sam_coreequity
 import app_positioning
 import app_cross_asset
 import app_flowcluster
+import app_yc
 
 ### FUNCTIONS ###
 def merge_dfs(array_of_dfs):
@@ -88,6 +89,7 @@ with st.sidebar:
             "FlowCluster Model": "FlowCluster Model",
             "Cross-Asset Model": "Cross-Asset Model",
             "Prometheus Model": "Prometheus Model",
+            "Yield Curve Model": "Yield Curve Model",
         },
         "Monitors": {
             "Select an option...": "Select an option...",
@@ -100,7 +102,6 @@ with st.sidebar:
             "Select an option...": "Select an option...",
             "Growth & Inflation Study": "Growth & Inflation Study",
             "SAM Core Equity": "SAM Core Equity",
-            "Yield Curve Regimes": "Yield Curve Regimes",
             "Barra Factor Model": "Barra Factor Model"
         }
     }
@@ -210,6 +211,15 @@ elif page == 'Cross-Asset Model':
     st.title('BCOM Backtest')
     app_cross_asset.bcom_prometheus_results()
 
+### ---------------------------------------------------------------------------------------- ###
+### --------------------------------- TAIL HEDGE PORTFOLIO --------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif page == 'Yield Curve Model':
+    st.title('Yield Curve Regimes')
+    app_yc.plot_colorcoded_regime()
+    st.title('Equity Yield Curve Backtest')
+    app_yc.equity_yc_results()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- GROWTH ---------------------------------------- ###
@@ -227,14 +237,6 @@ elif page == 'Inflation Monitor':
     app_inflation.plot_inflation_predictor()
     st.title('Inflation Nowcast')
     app_inflation.plot_cpi_nowcast()
-
-### ---------------------------------------------------------------------------------------- ###
-### ------------------------------- YIELD CURVE REGIME MODEL ------------------------------- ###
-### ---------------------------------------------------------------------------------------- ###
-
-elif page == 'Yield Curve Regimes':
-    st.title("Yield Curve Tenors by Regime")
-    app_firv_regime.plot_treasury_yield_curves(start_date, end_date)
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ---------------------------------- BARRA FACTOR MODEL ---------------------------------- ###
