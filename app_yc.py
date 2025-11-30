@@ -116,10 +116,8 @@ treasury_diff['belly_score'] = treasury_diff['belly_regime'].map(belly_regime_sc
 treasury_diff['back_score']  = treasury_diff['back_regime'].map(back_regime_score_map)
 
 treasury_diff['total_score'] = (
-    treasury_diff['front_score'] +
-    treasury_diff['belly_score'] +
-    treasury_diff['back_score']
-)/3
+    treasury_diff['belly_score']
+)
 
 treasury_diff['bt_returns'] = treasury_diff['spx_monthly_pct'] * treasury_diff['total_score']
 treasury_diff = treasury_diff['2000-01-01':]
