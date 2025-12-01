@@ -84,9 +84,9 @@ front_regime_score_map = {
     'Bull Steepening':  +0.7
 }
 belly_regime_score_map = {
-    'Bear Steepening':  +0.7,
+    'Bear Steepening':  +0.6,
     'Bull Flattening':  +0.9,
-    'Bear Flattening':  +0.8,
+    'Bear Flattening':  +0.7,
     'Bull Steepening':  +1
 }
 back_regime_score_map = {
