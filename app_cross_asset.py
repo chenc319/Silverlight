@@ -16,10 +16,6 @@ with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
     sp500 = pd.read_csv(file)
 sp500.index = pd.to_datetime(sp500['Date']).values
 sp500.drop('Date', axis=1, inplace=True)
-spx_weekly = pd.DataFrame(sp500['Close']).resample('W-FRI').last()
-spx_weekly.columns = ['spx']
-spx_daily = pd.DataFrame(sp500['Close'])
-spx_daily.columns = ['spx']
 spx_monthly = pd.DataFrame(sp500['Close']).resample('ME').last()
 spx_monthly.columns = ['spx']
 
@@ -27,10 +23,6 @@ with open(Path(DATA_DIR) / 'AGG.csv', 'rb') as file:
     agg = pd.read_csv(file)
 agg.index = pd.to_datetime(agg['Date']).values
 agg.drop('Date', axis=1, inplace=True)
-bonds_weekly = pd.DataFrame(agg['Close']).resample('W-FRI').last()
-bonds_weekly.columns = ['bonds']
-bonds_daily = pd.DataFrame(agg['Close'])
-bonds_daily.columns = ['bonds']
 bonds_monthly = pd.DataFrame(agg['Close']).resample('ME').last()
 bonds_monthly.columns = ['bonds']
 
@@ -38,39 +30,119 @@ with open(Path(DATA_DIR) / '^BCOM.csv', 'rb') as file:
     bcom = pd.read_csv(file)
 bcom.index = pd.to_datetime(bcom['Date']).values
 bcom.drop('Date', axis=1, inplace=True)
-bcom_weekly = pd.DataFrame(bcom['Close']).resample('W-FRI').last()
-bcom_weekly.columns = ['bcom']
-bcom_daily = pd.DataFrame(bcom['Close'])
-bcom_daily.columns = ['bcom']
 bcom_monthly = pd.DataFrame(bcom['Close']).resample('ME').last()
 bcom_monthly.columns = ['bcom']
 
 ### MERGE DFS ###
-cross_asset_daily_merge = merge_dfs([spx_daily,bonds_daily,bcom_daily]).dropna()
-cross_asset_weekly_merge = merge_dfs([spx_weekly,bonds_weekly,bcom_weekly]).dropna()
-cross_asset_monthly_merge = merge_dfs([spx_monthly,bonds_monthly,bcom_monthly]).dropna()
+cross_asset_monthly_merge = merge_dfs([
+    spx_monthly,
+    bonds_monthly,
+    bcom_monthly]
+).dropna()
+
+# 1) Base returns
+df = cross_asset_monthly_merge.pct_change().dropna()
+df.columns = ['spx_ret', 'bonds_ret', 'bcom_ret']
+
+# 2) 12m realized vol for each asset
+vol_window = 12
+vol = df.rolling(vol_window).std()
+vol.columns = ['spx_vol', 'bonds_vol', 'bcom_vol']
+
+# 3) Pairwise excess returns
+excess = pd.DataFrame(index=df.index)
+excess['spx_bond_excess']  = df['spx_ret']  - df['bonds_ret']
+excess['spx_bcom_excess']  = df['spx_ret']  - df['bcom_ret']
+excess['bond_spx_excess']  = df['bonds_ret'] - df['spx_ret']
+excess['bond_bcom_excess'] = df['bonds_ret'] - df['bcom_ret']
+excess['bcom_spx_excess']  = df['bcom_ret'] - df['spx_ret']
+excess['bcom_bonds_excess']= df['bcom_ret'] - df['bonds_ret']
+
+# 4) Merge into full feature matrix
+features = merge_dfs([df, vol, excess]).dropna()
+
+feature_cols = [
+    'spx_ret', 'bonds_ret', 'bcom_ret',
+    'spx_vol', 'bonds_vol', 'bcom_vol',
+    'spx_bond_excess', 'spx_bcom_excess',
+    'bond_spx_excess', 'bond_bcom_excess',
+    'bcom_spx_excess', 'bcom_bonds_excess'
+]
 
 ### ---------------------------------------------------------------------------------------------------------- ###
-### ---------------------------------------- CROSS-ASSET REGIME MODEL ---------------------------------------- ###
+### ---------------------------------------- Z SCORE CALCULATION --------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
+window = 36
+feat_rolling_mean = features[feature_cols].rolling(window).mean()
+feat_rolling_std  = features[feature_cols].rolling(window).std()
+feat_rolling_z = ((features[feature_cols] - feat_rolling_mean) / feat_rolling_std).dropna()
+
+### ---------------------------------------------------------------------------------------------------------- ###
+### ---------------------------------------- REGIME ARCHETYPES ---------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 regime_archetypes = {
-    "Goldilocks":  np.array([ 1,   1,  0]),  # Equities best, Commodities worst, Bonds neutral
-    "Reflation":   np.array([ 0,  0,   1]),  # Commodities best, Bonds worst, Equities neutral
-    "Stagflation": np.array([0,  -1,   0]),   # Commodities best, Equities worst, Bonds neutral
-    "Deflation":   np.array([-1,  0,   -1]),   # Bonds best, Equities worst, Commodities neutral
+    "Goldilocks": np.array([
+        1,   # spx_ret
+        0,   # bonds_ret
+        -1,  # bcom_ret
+        -1,  # spx_vol
+        0,   # bonds_vol
+        0,   # bcom_vol
+        1,   # spx_bond_excess
+        1,   # spx_bcom_excess
+        -1,  # bond_spx_excess
+        0,   # bond_bcom_excess
+        -1,  # bcom_spx_excess
+        0    # bcom_bonds_excess
+    ]),
+    "Reflation": np.array([
+        1,   # spx_ret
+        -1,  # bonds_ret
+        1,   # bcom_ret
+        1,   # spx_vol
+        0,   # bonds_vol
+        1,   # bcom_vol
+        1,   # spx_bond_excess
+        0,   # spx_bcom_excess
+        -1,  # bond_spx_excess
+        -1,  # bond_bcom_excess
+        0,   # bcom_spx_excess
+        1    # bcom_bonds_excess
+    ]),
+    "Stagflation": np.array([
+        -1,  # spx_ret
+        -1,  # bonds_ret
+        1,   # bcom_ret
+        1,   # spx_vol
+        1,   # bonds_vol
+        1,   # bcom_vol
+        0,   # spx_bond_excess
+        -1,  # spx_bcom_excess
+        0,   # bond_spx_excess
+        -1,  # bond_bcom_excess
+        1,   # bcom_spx_excess
+        1    # bcom_bonds_excess
+    ]),
+    "Deflation": np.array([
+        -1,  # spx_ret
+        1,   # bonds_ret
+        -1,  # bcom_ret
+        0,   # spx_vol
+        0,   # bonds_vol
+        -1,  # bcom_vol
+        -1,  # spx_bond_excess
+        0,   # spx_bcom_excess
+        1,   # bond_spx_excess
+        1,   # bond_bcom_excess
+        0,   # bcom_spx_excess
+        -1   # bcom_bonds_excess
+    ])
 }
-asset_cols = ['spx', 'bonds', 'bcom']
 
-### Z SCORE CALCULATION ###
-window = 36
-df = cross_asset_monthly_merge.pct_change().dropna()
-df_rolling_mean = df.rolling(window).mean()
-df_rolling_std = df.rolling(window).std()
-df_rolling_z = ((df - df_rolling_mean) / df_rolling_std).dropna()
-
-### FUNCTION ###
 lambda_ = 1.0
+
 def assign_regime_probs(z_scores_row, regime_archetypes, lambda_=1.0):
     distances = {k: np.linalg.norm(z_scores_row - v) for k, v in regime_archetypes.items()}
     exp_dists = {k: np.exp(-lambda_ * d) for k, d in distances.items()}
@@ -78,36 +150,43 @@ def assign_regime_probs(z_scores_row, regime_archetypes, lambda_=1.0):
     nearest_regime = max(regime_probs.items(), key=lambda x: x[1])[0]
     return nearest_regime, regime_probs
 
-### BACKTEST ###
+### ---------------------------------------------------------------------------------------------------------- ###
+### ---------------------------------------- BACKTEST -------------------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
 results = []
-for idx, row in df_rolling_z[asset_cols].iterrows():
+for idx, row in feat_rolling_z.iterrows():
     regime, probs = assign_regime_probs(row.values, regime_archetypes, lambda_)
     results.append({"date": idx, "closest_regime": regime, **probs})
+
 regime_df = pd.DataFrame(results)
 regime_df.index = regime_df['date'].values
 regime_df.drop('date', axis=1, inplace=True)
 
-regime_backtest = merge_dfs([regime_df,df.shift(-1).dropna()])
+# Use next-month *returns* from the original 3-asset return df
+regime_backtest = merge_dfs([regime_df, df.shift(-1).dropna()])
 regime_backtest['equity_bt'] = np.nan
 regime_backtest['bonds_bt'] = np.nan
 regime_backtest['bcom_bt'] = np.nan
+
 for row in regime_backtest.index:
     if regime_backtest.loc[row, 'closest_regime'] == 'Goldilocks':
-        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx'] * 1
-        regime_backtest.loc[row,'bonds_bt'] = regime_backtest.loc[row,'bonds'] * 0.8
-        regime_backtest.loc[row,'bcom_bt'] = regime_backtest.loc[row,'bcom'] * 0.6
+        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx_ret']   * 1.0
+        regime_backtest.loc[row,'bonds_bt']  = regime_backtest.loc[row,'bonds_ret'] * 0.8
+        regime_backtest.loc[row,'bcom_bt']   = regime_backtest.loc[row,'bcom_ret']  * 0.6
     elif regime_backtest.loc[row, 'closest_regime'] == 'Reflation':
-        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx'] * 0.9
-        regime_backtest.loc[row,'bonds_bt'] = regime_backtest.loc[row,'bonds'] * 0.6
-        regime_backtest.loc[row,'bcom_bt'] = regime_backtest.loc[row,'bcom'] * 1
+        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx_ret']   * 0.9
+        regime_backtest.loc[row,'bonds_bt']  = regime_backtest.loc[row,'bonds_ret'] * 0.6
+        regime_backtest.loc[row,'bcom_bt']   = regime_backtest.loc[row,'bcom_ret']  * 1.0
     elif regime_backtest.loc[row, 'closest_regime'] == 'Stagflation':
-        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx'] * 0.7
-        regime_backtest.loc[row,'bonds_bt'] = regime_backtest.loc[row,'bonds'] * 0.8
-        regime_backtest.loc[row,'bcom_bt'] = regime_backtest.loc[row,'bcom'] * 1
+        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx_ret']   * 0.7
+        regime_backtest.loc[row,'bonds_bt']  = regime_backtest.loc[row,'bonds_ret'] * 0.8
+        regime_backtest.loc[row,'bcom_bt']   = regime_backtest.loc[row,'bcom_ret']  * 1.0
     elif regime_backtest.loc[row, 'closest_regime'] == 'Deflation':
-        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx'] * 0.6
-        regime_backtest.loc[row,'bonds_bt'] = regime_backtest.loc[row,'bonds'] * 1
-        regime_backtest.loc[row,'bcom_bt'] = regime_backtest.loc[row,'bcom'] * 0.6
+        regime_backtest.loc[row,'equity_bt'] = regime_backtest.loc[row,'spx_ret']   * 0.6
+        regime_backtest.loc[row,'bonds_bt']  = regime_backtest.loc[row,'bonds_ret'] * 1.0
+        regime_backtest.loc[row,'bcom_bt']   = regime_backtest.loc[row,'bcom_ret']  * 0.6
+
 regime_backtest = regime_backtest.dropna()
 
 ### ---------------------------------------------------------------------------------------------------------- ###
@@ -115,8 +194,8 @@ regime_backtest = regime_backtest.dropna()
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 equities_prometheus_return_metrics = return_metrics(
-    regime_backtest[['equity_bt','spx']],
-    regime_backtest[['spx']],
+    regime_backtest[['equity_bt','spx_ret']],
+    regime_backtest[['spx_ret']],
     12
 )
 equities_prometheus_return_metrics['Return/Risk']

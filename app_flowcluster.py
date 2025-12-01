@@ -17,10 +17,6 @@ with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
     sp500 = pd.read_csv(file)
 sp500.index = pd.to_datetime(sp500['Date']).values
 sp500.drop('Date', axis=1, inplace=True)
-spx_weekly = pd.DataFrame(sp500['Close']).resample('W-FRI').last()
-spx_weekly.columns = ['spx']
-spx_daily = pd.DataFrame(sp500['Close'])
-spx_daily.columns = ['spx']
 spx_monthly = pd.DataFrame(sp500['Close']).resample('ME').last()
 spx_monthly.columns = ['spx']
 
@@ -28,10 +24,6 @@ spx_monthly.columns = ['spx']
 with open(Path(DATA_DIR) / 'AGG.csv', 'rb') as file:
     bonds = pd.read_csv(file)
 bonds.index = pd.to_datetime(bonds['Date']).values
-bonds_daily = pd.DataFrame(bonds['Close'])
-bonds_daily.columns = ['bonds']
-bonds_weekly = pd.DataFrame(bonds['Close']).resample('W-FRI').last()
-bonds_weekly.columns = ['bonds']
 bonds_monthly = pd.DataFrame(bonds['Close']).resample('ME').last()
 bonds_monthly.columns = ['bonds']
 
@@ -120,9 +112,9 @@ def ow_uw_flowcluster_backtest(row,signal_colname_1,signal_colname_2):
     elif row[signal_colname_1] > 0 and row[signal_colname_2] < 0:
         return 0.9
     elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
-        return 0.8
-    elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
         return 0.7
+    elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
+        return 0.6
 
 flow_cluster_df['weights'] = flow_cluster_df.apply(
     lambda row: ow_uw_flowcluster_backtest(row,
