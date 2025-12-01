@@ -9,7 +9,7 @@ import functools as ft
 import app_growth
 import app_grid
 import app_growth_inflation
-import app_firv_regime
+import app_overview
 import app_barra
 import app_inflation
 import app_liquidity
@@ -85,6 +85,7 @@ with st.sidebar:
     sections = {
         "Macro Regime Models": {
             "Select an option...": "Select an option...",
+            "Regime Summary": "Regime Summary",
             "GRID Model": "GRID Model",
             "FlowCluster Model": "FlowCluster Model",
             "Cross-Asset Model": "Cross-Asset Model",
@@ -170,6 +171,20 @@ if page == 'SAM Core Equity':
 elif page == 'Growth & Inflation Study':
     app_growth_inflation.plot_growth_inflation()
     app_growth_inflation.plot_spx_sectors_and_factors_regimes()
+
+### ---------------------------------------------------------------------------------------- ###
+### ------------------------------------ REGIME SUMMARY ------------------------------------ ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif page == 'Regime Summary':
+    st.title('GRID')
+    app_overview.plot_grid_nowcast()
+    st.title('FlowCluster')
+    app_overview.plot_flowcluster_nowcast()
+    st.title('Cross-Asset')
+    app_overview.plot_crossasset_nowcast()
+    st.title('Yield Curve')
+    app_overview.plot_yc_nowcast()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------- GROWTH AND INFLATION --------------------------------- ###

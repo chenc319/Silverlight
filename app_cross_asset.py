@@ -56,8 +56,8 @@ cross_asset_monthly_merge = merge_dfs([spx_monthly,bonds_monthly,bcom_monthly]).
 
 regime_archetypes = {
     "Goldilocks":  np.array([ 1,   0,  -1]),  # Equities best, Commodities worst, Bonds neutral
-    "Reflation":   np.array([ 0,  -1,   1]),  # Commodities best, Bonds worst, Equities neutral
-    "Stagflation": np.array([-1,  0,   1]),   # Commodities best, Equities worst, Bonds neutral
+    "Reflation":   np.array([ 0.5,  -1,   1]),  # Commodities best, Bonds worst, Equities neutral
+    "Stagflation": np.array([-0.5,  0,   1]),   # Commodities best, Equities worst, Bonds neutral
     "Deflation":   np.array([-1,  1,   0]),   # Bonds best, Equities worst, Commodities neutral
 }
 asset_cols = ['spx', 'bonds', 'bcom']
