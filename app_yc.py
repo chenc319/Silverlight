@@ -58,7 +58,7 @@ treasury_monthly_df = treasury_merge.resample('ME').last()
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 ### CALCULATE SLOPES AND DIFFERENCES ###
-treasury_diff = treasury_monthly_df.diff().dropna()
+treasury_diff = treasury_monthly_df.diff(12).diff(3).dropna()
 treasury_diff['front_end'] = treasury_diff['2y'] - treasury_diff['1m']
 treasury_diff['belly'] = treasury_diff['10y'] - treasury_diff['2y']
 treasury_diff['back_end'] = treasury_diff['30y'] - treasury_diff['10y']
