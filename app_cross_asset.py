@@ -54,12 +54,14 @@ cross_asset_monthly_merge = merge_dfs([spx_monthly,bonds_monthly,bcom_monthly]).
 ### ---------------------------------------- CROSS-ASSET REGIME MODEL ---------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
+# [Equities, Bonds, Commodities]
 regime_archetypes = {
-    "Goldilocks":  np.array([ 1.0,   0.0,  -0.5]),  # Equities best, bonds OK, commodities lag
-    "Reflation":   np.array([ 0.5,  -1.0,   1.0]),  # Commodities + cyclicals, bonds worst
-    "Stagflation": np.array([-0.5,  -1.0,   1.0]),  # Commodities best, both equities & bonds bad
-    "Deflation":   np.array([-1.0,   1.0,  -0.5]),  # Long bonds best, equities worst, commodities weak
+    "Goldilocks":  np.array([ 1.0,   0.5,  -1.0]),   # Equities best, bonds OK, commodities worst
+    "Reflation":   np.array([ 0.5,  -1.0,   1.0]),   # Commodities best, equities modest, bonds worst
+    "Stagflation": np.array([-0.5, -0.5,   0.5]),    # All bad vs Goldilocks; commodities relatively OK
+    "Deflation":   np.array([-1.0,  1.0,  -0.5]),    # Bonds best, equities worst, commodities weak
 }
+
 
 asset_cols = ['spx', 'bonds', 'bcom']
 
