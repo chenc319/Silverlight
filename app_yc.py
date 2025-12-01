@@ -124,6 +124,3 @@ def equity_yc_results():
                    y_axis_label='%')
     streamlit_return_metrics_table(equities_yc_return_metrics)
 
-
-
-
