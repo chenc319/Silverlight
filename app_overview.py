@@ -17,10 +17,6 @@ with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
     sp500 = pd.read_csv(file)
 sp500.index = pd.to_datetime(sp500['Date']).values
 sp500.drop('Date', axis=1, inplace=True)
-spx_weekly = pd.DataFrame(sp500['Close']).resample('W-FRI').last()
-spx_weekly.columns = ['spx']
-spx_daily = pd.DataFrame(sp500['Close'])
-spx_daily.columns = ['spx']
 spx_monthly = pd.DataFrame(sp500['Close']).resample('ME').last()
 spx_monthly.columns = ['spx']
 
@@ -29,12 +25,16 @@ with open(Path(DATA_DIR) / 'AGG.csv', 'rb') as file:
     agg = pd.read_csv(file)
 agg.index = pd.to_datetime(agg['Date']).values
 agg.drop('Date', axis=1, inplace=True)
-bonds_weekly = pd.DataFrame(agg['Close']).resample('W-FRI').last()
-bonds_weekly.columns = ['bonds']
-bonds_daily = pd.DataFrame(agg['Close'])
-bonds_daily.columns = ['bonds']
 bonds_monthly = pd.DataFrame(agg['Close']).resample('ME').last()
 bonds_monthly.columns = ['bonds']
+
+### BCOM ###
+with open(Path(DATA_DIR) / '^BCOM.csv', 'rb') as file:
+    bcom = pd.read_csv(file)
+bcom.index = pd.to_datetime(bcom['Date']).values
+bcom.drop('Date', axis=1, inplace=True)
+bcom_monthly = pd.DataFrame(bcom['Close']).resample('ME').last()
+bcom_monthly.columns = ['bcom']
 
 ### YIELDS ###
 with open(Path(DATA_DIR) / 'treasury_1m.pkl', 'rb') as file:
@@ -52,6 +52,11 @@ treasury_merge = merge_dfs([treasury_1m,treasury_2y, treasury_5y, treasury_10y,t
 treasury_merge.index = pd.to_datetime(treasury_merge.index).values
 treasury_merge.columns = ['1m','2y','5y','10y','30y']
 treasury_monthly_df = treasury_merge.resample('ME').last()
+
+
+### LIQUIDITY ###
+with open(Path(DATA_DIR) / 'treasury.pkl', 'rb') as file:
+    treasury = pd.read_pickle(file)
 
 
 ### ---------------------------------------------------------------------------------------------------------- ###

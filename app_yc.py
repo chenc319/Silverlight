@@ -58,68 +58,30 @@ treasury_monthly_df = treasury_merge.resample('ME').last()
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 ### CALCULATE SLOPES AND DIFFERENCES ###
-treasury_diff = treasury_monthly_df.diff(12).diff(3).dropna()
-treasury_diff['front_end'] = treasury_diff['2y'] - treasury_diff['1m']
+treasury_diff = treasury_monthly_df.diff(3).dropna()
 treasury_diff['belly'] = treasury_diff['10y'] - treasury_diff['2y']
-treasury_diff['back_end'] = treasury_diff['30y'] - treasury_diff['10y']
-
-### CALCULATE CLASSIFICATIONS ###
 treasury_diff['total_yc_direction'] = treasury_diff[['2y','5y','10y']].mean(axis=1)
-treasury_diff['level_class'] = ['Bull' if x <= 0 else 'Bear' for x in treasury_diff['total_yc_direction']]
-treasury_diff['front_class'] = ['Flattening' if x <= 0 else 'Steepening' for x in treasury_diff['front_end']]
+treasury_diff['level_class'] = ['Bull' if x <= 0 else 'Bear' for x in treasury_diff['2y']]
 treasury_diff['belly_class'] = ['Flattening' if x <= 0 else 'Steepening' for x in treasury_diff['belly']]
-treasury_diff['back_class'] = ['Flattening' if x <= 0 else 'Steepening' for x in treasury_diff['back_end']]
 
 ### REGIMES ###
-treasury_diff['front_regime'] = treasury_diff['level_class'] + ' ' + treasury_diff['front_class']
 treasury_diff['belly_regime'] = treasury_diff['level_class'] + ' ' + treasury_diff['belly_class']
-treasury_diff['back_regime'] = treasury_diff['level_class'] + ' ' + treasury_diff['back_class']
+treasury_diff['spx_monthly_pct'] = spx_monthly.pct_change(1).shift(-1)
 
-treasury_diff['spx_monthly_pct'] = spx_monthly.pct_change().shift(-1)
-
-front_regime_score_map = {
-    'Bear Steepening':  +1,
-    'Bear Flattening':  +0.9,
-    'Bull Flattening':  +0.8,
-    'Bull Steepening':  +0.7
-}
 belly_regime_score_map = {
-    'Bear Steepening':  +0.6,
-    'Bull Flattening':  +0.9,
-    'Bear Flattening':  +0.7,
-    'Bull Steepening':  +1
-}
-back_regime_score_map = {
-    'Bear Steepening':  +1,
-    'Bull Flattening':  +0.9,
-    'Bear Flattening':  +0.8,
+    'Bear Steepening':  +0.9,
+    'Bull Flattening':  +1,
+    'Bear Flattening':  +0.6,
     'Bull Steepening':  +0.7
 }
 
-bear_steepening = treasury_diff[treasury_diff['front_regime'] == 'Bear Steepening']['spx_monthly_pct'].mean()
-bear_flattening = treasury_diff[treasury_diff['front_regime'] == 'Bear Flattening']['spx_monthly_pct'].mean()
-bull_flattening = treasury_diff[treasury_diff['front_regime'] == 'Bull Flattening']['spx_monthly_pct'].mean()
-bull_steepening = treasury_diff[treasury_diff['front_regime'] == 'Bull Steepening']['spx_monthly_pct'].mean()
-
-bear_steepening = treasury_diff[treasury_diff['belly_regime'] == 'Bear Steepening']['spx_monthly_pct'].mean()
 bull_flattening = treasury_diff[treasury_diff['belly_regime'] == 'Bull Flattening']['spx_monthly_pct'].mean()
-bear_flattening = treasury_diff[treasury_diff['belly_regime'] == 'Bear Flattening']['spx_monthly_pct'].mean()
+bear_steepening = treasury_diff[treasury_diff['belly_regime'] == 'Bear Steepening']['spx_monthly_pct'].mean()
 bull_steepening = treasury_diff[treasury_diff['belly_regime'] == 'Bull Steepening']['spx_monthly_pct'].mean()
-
-bear_steepening = treasury_diff[treasury_diff['back_regime'] == 'Bear Steepening']['spx_monthly_pct'].mean()
-bull_flattening = treasury_diff[treasury_diff['back_regime'] == 'Bull Flattening']['spx_monthly_pct'].mean()
-bear_flattening = treasury_diff[treasury_diff['back_regime'] == 'Bear Flattening']['spx_monthly_pct'].mean()
-bull_steepening = treasury_diff[treasury_diff['back_regime'] == 'Bull Steepening']['spx_monthly_pct'].mean()
-
-treasury_diff['front_score'] = treasury_diff['front_regime'].map(front_regime_score_map)
-treasury_diff['belly_score'] = treasury_diff['belly_regime'].map(belly_regime_score_map)
-treasury_diff['back_score']  = treasury_diff['back_regime'].map(back_regime_score_map)
-
-treasury_diff['total_score'] = (
-    treasury_diff['belly_score']
-)
+bear_flattening = treasury_diff[treasury_diff['belly_regime'] == 'Bear Flattening']['spx_monthly_pct'].mean()
 
 
+treasury_diff['total_score'] = treasury_diff['belly_regime'].map(belly_regime_score_map)
 treasury_diff['bt_returns'] = treasury_diff['spx_monthly_pct'] * treasury_diff['total_score']
 
 ### ---------------------------------------------------------------------------------------------------------- ###
