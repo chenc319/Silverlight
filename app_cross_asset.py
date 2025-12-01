@@ -55,10 +55,10 @@ cross_asset_monthly_merge = merge_dfs([spx_monthly,bonds_monthly,bcom_monthly]).
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 regime_archetypes = {
-    "Goldilocks":  np.array([ 1,   0,  -1]),  # Equities best, Commodities worst, Bonds neutral
+    "Goldilocks":  np.array([ 1,   0,  -0.5]),  # Equities best, Commodities worst, Bonds neutral
     "Reflation":   np.array([ 0.5,  -1,   1]),  # Commodities best, Bonds worst, Equities neutral
-    "Stagflation": np.array([-0.5,  0,   1]),   # Commodities best, Equities worst, Bonds neutral
-    "Deflation":   np.array([-1,  1,   0]),   # Bonds best, Equities worst, Commodities neutral
+    "Stagflation": np.array([-0.5,  1,   0]),   # Commodities best, Equities worst, Bonds neutral
+    "Deflation":   np.array([-1,  1,   -1]),   # Bonds best, Equities worst, Commodities neutral
 }
 asset_cols = ['spx', 'bonds', 'bcom']
 
@@ -178,5 +178,13 @@ def bcom_prometheus_results():
                    y_axis_label='%')
     streamlit_return_metrics_table(bcom_prometheus_return_metrics)
 
+
+
+from sklearn.mixture import GaussianMixture
+from sklearn.preprocessing import StandardScaler
+
+### ---------------------------------------------------------------------------------------------------------- ###
+### -------------------------- GMM-BASED CROSS-ASSET REGIME MODEL (Two Sigma style) -------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
 
 
