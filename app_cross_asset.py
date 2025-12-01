@@ -259,11 +259,3 @@ def bcom_prometheus_results():
 
 
 
-from sklearn.mixture import GaussianMixture
-from sklearn.preprocessing import StandardScaler
-
-### ---------------------------------------------------------------------------------------------------------- ###
-### -------------------------- GMM-BASED CROSS-ASSET REGIME MODEL (Two Sigma style) -------------------------- ###
-### ---------------------------------------------------------------------------------------------------------- ###
-
-
