@@ -76,9 +76,9 @@ spx_positioning_diff.columns = ['spx_dealer','spx_asset_mgr','spx_lev_funds']
 
 flow_cluster_df = merge_dfs([
     liquidity_df['treasury'].diff(),
-    liquidity_df['treasury'].diff(12).diff(),
+    liquidity_df['treasury'].diff(12).diff(3),
     spx_positioning_diff['spx_lev_funds'].diff(),
-    spx_positioning_diff['spx_lev_funds'].diff(12).diff(),
+    spx_positioning_diff['spx_lev_funds'].diff(12).diff(3),
     spx_monthly.pct_change().shift(-1),
     bonds_monthly.pct_change().shift(-1)
 ]).dropna()
