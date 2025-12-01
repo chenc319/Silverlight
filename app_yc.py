@@ -74,15 +74,21 @@ belly_regime_score_map = {
     'Bear Flattening':  +0.6,
     'Bull Steepening':  +0.7
 }
+belly_quad_regime_map = {
+    'Bear Steepening':  'Reflation',
+    'Bull Flattening':  'Goldilocks',
+    'Bear Flattening':  'Deflation',
+    'Bull Steepening':  'Stagflation'
+}
 
 bull_flattening = treasury_diff[treasury_diff['belly_regime'] == 'Bull Flattening']['spx_monthly_pct'].mean()
 bear_steepening = treasury_diff[treasury_diff['belly_regime'] == 'Bear Steepening']['spx_monthly_pct'].mean()
 bull_steepening = treasury_diff[treasury_diff['belly_regime'] == 'Bull Steepening']['spx_monthly_pct'].mean()
 bear_flattening = treasury_diff[treasury_diff['belly_regime'] == 'Bear Flattening']['spx_monthly_pct'].mean()
 
-
 treasury_diff['total_score'] = treasury_diff['belly_regime'].map(belly_regime_score_map)
 treasury_diff['bt_returns'] = treasury_diff['spx_monthly_pct'] * treasury_diff['total_score']
+treasury_diff['regime_label'] = treasury_diff['belly_regime'].map(belly_quad_regime_map)
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- YIELD CURVE REGIME MODEL ---------------------------------------- ###
@@ -97,16 +103,16 @@ equities_yc_return_metrics['Return/Risk']
 
 def plot_colorcoded_regime():
     regime_merge = merge_dfs([
-        pd.DataFrame(treasury_diff['belly_regime']),
+        pd.DataFrame(treasury_diff['regime_label']),
         spx_monthly,
         pd.DataFrame(treasury_diff['bt_returns'])
     ]).dropna()
     color_coded_regime_plot(regime_merge,
                             y_col='spx',
-                            regime_col='belly_regime',
+                            regime_col='regime_label',
                             title="Level by Macro Regime")
     stats_df = calculate_regime_statistics(regime_merge,
-                                           regime_col_name='belly_regime',
+                                           regime_col_name='regime_label',
                                            return_cols = ['bt_returns'])
     plot_streamlit_regime_statistics(stats_df)
 
