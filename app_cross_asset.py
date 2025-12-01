@@ -201,15 +201,15 @@ equities_prometheus_return_metrics = return_metrics(
 equities_prometheus_return_metrics['Return/Risk']
 
 bonds_prometheus_return_metrics = return_metrics(
-    regime_backtest[['bonds_bt','bonds']],
-    regime_backtest[['bonds']],
+    regime_backtest[['bonds_bt','bonds_ret']],
+    regime_backtest[['bonds_ret']],
     12
 )
 bonds_prometheus_return_metrics['Return/Risk']
 
 bcom_prometheus_return_metrics = return_metrics(
-    regime_backtest[['bcom_bt','bcom']],
-    regime_backtest[['bcom']],
+    regime_backtest[['bcom_bt','bcom_ret']],
+    regime_backtest[['bcom_ret']],
     12
 )
 bcom_prometheus_return_metrics['Return/Risk']
