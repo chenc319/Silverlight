@@ -48,16 +48,40 @@ with open(Path(DATA_DIR) / 'treasury_10y.pkl', 'rb') as file:
 with open(Path(DATA_DIR) / 'treasury_30y.pkl', 'rb') as file:
     treasury_30y = pd.read_pickle(file)
 
+### LIQUIDITY ###
+with open(Path(DATA_DIR) / 'treasury.pkl', 'rb') as file:
+    treasury = pd.read_pickle(file)
+with open(Path(DATA_DIR) / 'reserves.pkl', 'rb') as file:
+    reserves = pd.read_pickle(file)
+with open(Path(DATA_DIR) / 'tga.pkl', 'rb') as file:
+    tga = pd.read_pickle(file)
+with open(Path(DATA_DIR) / 'rrp_volume.pkl', 'rb') as file:
+    rrp_volume = pd.read_pickle(file)
+
+### POSITIONING DATA ###
+with open(Path(DATA_DIR) / 'spx_positioning_df.pkl', 'rb') as file:
+    spx_positioning_df = pd.read_pickle(file)[['dealer_spread', 'asset_mgr_spread', 'lev_funds_spread']]
+    spx_positioning_df.index = pd.to_datetime(spx_positioning_df.index)
+with open(Path(DATA_DIR) / 'emini_spx_positioning_df.pkl', 'rb') as file:
+    emini_spx_positioning_df = pd.read_pickle(file)[['dealer_spread', 'asset_mgr_spread', 'lev_funds_spread']]
+    emini_spx_positioning_df.index = pd.to_datetime(emini_spx_positioning_df.index)
+with open(Path(DATA_DIR) / 'vix_positioning_df.pkl', 'rb') as file:
+    vix_positioning_df = pd.read_pickle(file)[['dealer_spread', 'asset_mgr_spread', 'lev_funds_spread']]
+    vix_positioning_df.index = pd.to_datetime(vix_positioning_df.index)
+
 treasury_merge = merge_dfs([treasury_1m,treasury_2y, treasury_5y, treasury_10y,treasury_30y]).dropna()
 treasury_merge.index = pd.to_datetime(treasury_merge.index).values
 treasury_merge.columns = ['1m','2y','5y','10y','30y']
 treasury_monthly_df = treasury_merge.resample('ME').last()
 
 
-### LIQUIDITY ###
-with open(Path(DATA_DIR) / 'treasury.pkl', 'rb') as file:
-    treasury = pd.read_pickle(file)
-
+# Color mapping for regimes (customize as desired)
+    regime_colors = {
+        "Goldilocks": "#28a745",  # Green
+        "Reflation": "#90ee90",  # Super light green
+        "Stagflation": "#ffc107",  # Yellow
+        "Deflation": "#dc3545"  # Red
+    }
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------- REGIME OVERVIEW --------------------------------------------- ###
@@ -190,13 +214,7 @@ def plot_grid_nowcast():
         lookback_window=12,
         pca_num_components=10)
 
-    # Color mapping for regimes (customize as desired)
-    regime_colors = {
-        "Goldilocks": "#28a745",  # Green
-        "Reflation": "#90ee90",  # Super light green
-        "Stagflation": "#ffc107",  # Yellow
-        "Deflation": "#dc3545"  # Red
-    }
+
     growth_prediction = lin_pca_growth_results['prediction'][-1]
     inflation_prediction = lin_pca_inflation_results['prediction'][-1]
 
@@ -246,7 +264,93 @@ def plot_grid_nowcast():
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def plot_flowcluster_nowcast():
-    print('hi')
+
+
+    ### ---------------------------------------------------------------------------------------------------------- ###
+    ### -------------------------------------- FLOWCLUSTER LIQUIDITY REGIME -------------------------------------- ###
+    ### ---------------------------------------------------------------------------------------------------------- ###
+
+    ### AGGREGATE DATA AND RESAMPLE ###
+    liquidity_df = merge_dfs([treasury, reserves, tga, rrp_volume]).dropna()
+    liquidity_df.index = liquidity_df.index.values
+    liquidity_df.columns = ['treasury', 'reserves', 'tga', 'onrrp']
+    liquidity_df = liquidity_df.resample('ME').last()
+
+    spx_positioning_diff = spx_positioning_df.resample('ME').mean().dropna()
+    spx_positioning_diff.columns = ['spx_dealer', 'spx_asset_mgr', 'spx_lev_funds']
+
+    flow_cluster_df = merge_dfs([
+        liquidity_df['treasury'].diff(),
+        liquidity_df['treasury'].diff(12).diff(3),
+        spx_positioning_diff['spx_lev_funds'].diff(),
+        spx_positioning_diff['spx_lev_funds'].diff(12).diff(3),
+        spx_monthly.pct_change().shift(-1),
+        bonds_monthly.pct_change().shift(-1)
+    ]).dropna()
+
+    flow_cluster_df.columns = [
+        'liquidity_1_roc',
+        'liquidity_2_roc',
+        'positioning_1_roc',
+        'positioning_2_roc',
+        'spx',
+        'bonds']
+
+    def regime_label(row):
+        if row['liquidity_2_roc'] > 0 and row['positioning_2_roc'] > 0:
+            return 'Goldilocks'
+        elif row['liquidity_2_roc'] > 0 and row['positioning_2_roc'] < 0:
+            return 'Reflation'
+        elif row['liquidity_2_roc'] < 0 and row['positioning_2_roc'] < 0:
+            return 'Stagflation'
+        elif row['liquidity_2_roc'] < 0 and row['positioning_2_roc'] > 0:
+            return 'Deflation'
+        return np.nan
+
+    flow_cluster_df['regime_label'] = flow_cluster_df.apply(regime_label, axis=1)
+
+    liquidity_indicator = flow_cluster_df['liquidity_2_roc'][-1]
+    positioning_indicator = flow_cluster_df['positioning_2_roc'][-1]
+
+    if liquidity_indicator > 0 and positioning_indicator > 0:
+        upcoming_grid_regime = 'Goldilocks'
+    elif liquidity_indicator > 0 and positioning_indicator < 0:
+        upcoming_grid_regime = 'Reflation'
+    elif liquidity_indicator < 0 and positioning_indicator < 0:
+        upcoming_grid_regime = 'Stagflation'
+    elif liquidity_indicator < 0 and positioning_indicator > 0:
+        upcoming_grid_regime = 'Deflation'
+
+    regime_color = regime_colors.get(upcoming_grid_regime, "gray")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("**Liquidity Indicator**")
+        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{liquidity_indicator:+.2%}</span>",
+                    unsafe_allow_html=True)
+        st.caption("3-Month Change of YoY QE Treasuries")
+    with col2:
+        st.markdown("**Positioning Indicator**")
+        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{positioning_indicator:+.2%}</span>",
+                    unsafe_allow_html=True)
+
+        st.caption("3-Month Change of YoY SPX Positioning")
+    with col3:
+        st.markdown("**Quad Regime**")
+        st.markdown(
+            f"<span style='background-color:{regime_color};color:white;padding:0.25em 0.75em;border-radius:0.3em;font-weight:bold;font-size:1.2em'>{upcoming_grid_regime}</span>",
+            unsafe_allow_html=True
+        )
+        if upcoming_grid_regime == 'Goldilocks':
+            st.caption("Liquidity + Positioning +")
+        elif upcoming_grid_regime == 'Reflation':
+            st.caption("Liquidity + Positioning -")
+        elif upcoming_grid_regime == 'Deflation':
+            st.caption("Liquidity - Positioning -")
+        elif upcoming_grid_regime == 'Stagflation':
+            st.caption("Liquidity - Positioning +")
+
 
 
 ### ---------------------------------------------------------------------------------------------------------- ###
