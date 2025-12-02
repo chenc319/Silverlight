@@ -1,6 +1,7 @@
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- CROSS-ASSET REGIME MODEL ---------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
+import pandas as pd
 
 ### PACKAGES ###
 from Functions import *
@@ -33,40 +34,36 @@ bcom.drop('Date', axis=1, inplace=True)
 bcom_monthly = pd.DataFrame(bcom['Close']).resample('ME').last()
 bcom_monthly.columns = ['bcom']
 
+with open(Path(DATA_DIR) / 'DXY.csv', 'rb') as file:
+    dxy = pd.read_csv(file)
+dxy.index = pd.to_datetime(dxy['Date']).values
+dxy.drop('Date', axis=1, inplace=True)
+dxy_monthly = pd.DataFrame(dxy['Close']).resample('ME').last()
+dxy_monthly.columns = ['dxy']
+
 ### MERGE DFS ###
 cross_asset_monthly_merge = merge_dfs([
     spx_monthly,
     bonds_monthly,
-    bcom_monthly]
+    bcom_monthly,
+    dxy_monthly]
 ).dropna()
 
 # 1) Base returns
 df = cross_asset_monthly_merge.pct_change().dropna()
-df.columns = ['spx_ret', 'bonds_ret', 'bcom_ret']
+df.columns = ['spx_ret', 'bonds_ret', 'bcom_ret','dxy_ret']
 
 # 2) 12m realized vol for each asset
 vol_window = 12
 vol = df.rolling(vol_window).std()
-vol.columns = ['spx_vol', 'bonds_vol', 'bcom_vol']
-
-# 3) Pairwise excess returns
-excess = pd.DataFrame(index=df.index)
-excess['spx_bond_excess']  = df['spx_ret']  - df['bonds_ret']
-excess['spx_bcom_excess']  = df['spx_ret']  - df['bcom_ret']
-excess['bond_spx_excess']  = df['bonds_ret'] - df['spx_ret']
-excess['bond_bcom_excess'] = df['bonds_ret'] - df['bcom_ret']
-excess['bcom_spx_excess']  = df['bcom_ret'] - df['spx_ret']
-excess['bcom_bonds_excess']= df['bcom_ret'] - df['bonds_ret']
+vol.columns = ['spx_vol', 'bonds_vol', 'bcom_vol','dxy_vol']
 
 # 4) Merge into full feature matrix
-features = merge_dfs([df, vol, excess]).dropna()
+features = merge_dfs([df, vol]).dropna()
 
 feature_cols = [
-    'spx_ret', 'bonds_ret', 'bcom_ret',
-    'spx_vol', 'bonds_vol', 'bcom_vol',
-    'spx_bond_excess', 'spx_bcom_excess',
-    'bond_spx_excess', 'bond_bcom_excess',
-    'bcom_spx_excess', 'bcom_bonds_excess'
+    'spx_ret', 'bonds_ret', 'bcom_ret','dxy_ret',
+    'spx_vol', 'bonds_vol', 'bcom_vol','dxy_vol'
 ]
 
 ### ---------------------------------------------------------------------------------------------------------- ###
@@ -84,62 +81,47 @@ feat_rolling_z = ((features[feature_cols] - feat_rolling_mean) / feat_rolling_st
 
 regime_archetypes = {
     "Goldilocks": np.array([
-        1,   # spx_ret
-        0,   # bonds_ret
-        -1,  # bcom_ret
-        -1,  # spx_vol
-        0,   # bonds_vol
-        0,   # bcom_vol
-        1,   # spx_bond_excess
-        1,   # spx_bcom_excess
-        -1,  # bond_spx_excess
-        0,   # bond_bcom_excess
-        -1,  # bcom_spx_excess
-        0    # bcom_bonds_excess
+        1,   # spx_ret    (equities up)
+        0,   # bonds_ret  (bonds flat/moderate)
+        -1,  # bcom_ret   (commodities soft)
+        -1,  # dxy_ret    (dollar weak / risk-on)
+        -1,  # spx_vol    (low equity vol)
+        0,   # bonds_vol  (neutral bond vol)
+        0,   # bcom_vol   (neutral commodity vol)
+        -1   # dxy_vol    (low FX vol / calm dollar)
     ]),
     "Reflation": np.array([
-        1,   # spx_ret
-        -1,  # bonds_ret
-        1,   # bcom_ret
-        1,   # spx_vol
-        0,   # bonds_vol
-        1,   # bcom_vol
-        1,   # spx_bond_excess
-        0,   # spx_bcom_excess
-        -1,  # bond_spx_excess
-        -1,  # bond_bcom_excess
-        0,   # bcom_spx_excess
-        1    # bcom_bonds_excess
+        1,   # spx_ret    (equities up)
+        -1,  # bonds_ret  (bonds down, yields up)
+        1,   # bcom_ret   (commodities up)
+        -1,  # dxy_ret    (dollar weaker on global growth)
+        1,   # spx_vol    (higher equity vol)
+        0,   # bonds_vol  (neutral to modestly higher)
+        1,   # bcom_vol   (higher commodity vol)
+        0    # dxy_vol    (neutral FX vol; not a crisis)
     ]),
     "Stagflation": np.array([
-        -1,  # spx_ret
-        -1,  # bonds_ret
-        1,   # bcom_ret
-        1,   # spx_vol
-        1,   # bonds_vol
-        1,   # bcom_vol
-        0,   # spx_bond_excess
-        -1,  # spx_bcom_excess
-        0,   # bond_spx_excess
-        -1,  # bond_bcom_excess
-        1,   # bcom_spx_excess
-        1    # bcom_bonds_excess
+        -1,  # spx_ret    (equities down)
+        -1,  # bonds_ret  (bonds pressured by inflation)
+        1,   # bcom_ret   (commodities up on inflation)
+        1,   # dxy_ret    (dollar up on stress/inflation)
+        1,   # spx_vol    (high equity vol)
+        1,   # bonds_vol  (high rates/bond vol)
+        1,   # bcom_vol   (high commodity vol)
+        1    # dxy_vol    (high FX vol / stress)
     ]),
     "Deflation": np.array([
-        -1,  # spx_ret
-        1,   # bonds_ret
-        -1,  # bcom_ret
-        0,   # spx_vol
-        0,   # bonds_vol
-        -1,  # bcom_vol
-        -1,  # spx_bond_excess
-        0,   # spx_bcom_excess
-        1,   # bond_spx_excess
-        1,   # bond_bcom_excess
-        0,   # bcom_spx_excess
-        -1   # bcom_bonds_excess
+        -1,  # spx_ret    (equities down)
+        1,   # bonds_ret  (bonds up, yields fall)
+        -1,  # bcom_ret   (commodities weak)
+        1,   # dxy_ret    (dollar up as safe haven)
+        0,   # spx_vol    (elevated but not as extreme as stagflation)
+        0,   # bonds_vol  (moderate; yields grinding lower)
+        -1,  # bcom_vol   (low commodity vol / demand collapse)
+        1    # dxy_vol    (higher FX vol on deleveraging)
     ])
 }
+
 
 lambda_ = 1.0
 
