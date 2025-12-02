@@ -12,7 +12,6 @@ DATA_DIR = os.getenv('DATA_DIR', 'data')
 ### -------------------------------------------- REGIME OVERVIEW --------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-### EQUITIES ###
 with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
     sp500 = pd.read_csv(file)
 sp500.index = pd.to_datetime(sp500['Date']).values
@@ -20,7 +19,6 @@ sp500.drop('Date', axis=1, inplace=True)
 spx_monthly = pd.DataFrame(sp500['Close']).resample('ME').last()
 spx_monthly.columns = ['spx']
 
-### BONDS ###
 with open(Path(DATA_DIR) / 'AGG.csv', 'rb') as file:
     agg = pd.read_csv(file)
 agg.index = pd.to_datetime(agg['Date']).values
@@ -28,13 +26,19 @@ agg.drop('Date', axis=1, inplace=True)
 bonds_monthly = pd.DataFrame(agg['Close']).resample('ME').last()
 bonds_monthly.columns = ['bonds']
 
-### BCOM ###
 with open(Path(DATA_DIR) / '^BCOM.csv', 'rb') as file:
     bcom = pd.read_csv(file)
 bcom.index = pd.to_datetime(bcom['Date']).values
 bcom.drop('Date', axis=1, inplace=True)
 bcom_monthly = pd.DataFrame(bcom['Close']).resample('ME').last()
 bcom_monthly.columns = ['bcom']
+
+with open(Path(DATA_DIR) / 'DXY.csv', 'rb') as file:
+    dxy = pd.read_csv(file)
+dxy.index = pd.to_datetime(dxy['Date']).values
+dxy.drop('Date', axis=1, inplace=True)
+dxy_monthly = pd.DataFrame(dxy['Close']).resample('ME').last()
+dxy_monthly.columns = ['dxy']
 
 ### YIELDS ###
 with open(Path(DATA_DIR) / 'treasury_1m.pkl', 'rb') as file:
@@ -360,13 +364,140 @@ def plot_flowcluster_nowcast():
         elif upcoming_grid_regime == 'Stagflation':
             st.caption("Liquidity - Positioning +")
 
-
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------- REGIME OVERVIEW --------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def plot_crossasset_nowcast():
-    print('hi')
+    ### MERGE DFS ###
+    cross_asset_monthly_merge = merge_dfs([
+        spx_monthly,
+        bonds_monthly,
+        bcom_monthly,
+        dxy_monthly
+    ]).dropna()
+
+    # Monthly returns
+    df = cross_asset_monthly_merge.pct_change().dropna()
+    df.columns = ['spx_ret', 'bonds_ret', 'bcom_ret', 'dxy_ret']
+
+    feature_cols = ['spx_ret', 'bonds_ret', 'bcom_ret', 'dxy_ret']
+
+    window = 36
+    feat_rolling_mean = df[feature_cols].rolling(window).mean()
+    feat_rolling_std = df[feature_cols].rolling(window).std()
+    feat_rolling_z = ((df[feature_cols] - feat_rolling_mean) / feat_rolling_std).dropna()
+
+
+    regime_archetypes = {
+        "Goldilocks": np.array([
+            1.0,  # spx_ret: equities strongest
+            0.0,  # bonds_ret: flat/moderate
+            -1.0,  # bcom_ret: underperform (no big inflation impulse)
+            0.0  # dxy_ret: neutral / range-bound
+        ]),
+        "Reflation": np.array([
+            0.5,  # spx_ret: equities up, but less "sweet spot" than Goldilocks
+            -1.0,  # bonds_ret: bonds down, yields up
+            1.0,  # bcom_ret: commodities up on growth + inflation
+            0.0  # dxy_ret: mixed on average
+        ]),
+        "Stagflation": np.array([
+            -1.0,  # spx_ret: worst for equities
+            -0.5,  # bonds_ret: weak in real terms; nominal slightly negative/flat
+            1.0,  # bcom_ret: commodities clear relative winner
+            0.5  # dxy_ret: dollar often firm on stress/inflation
+        ]),
+        "Deflation": np.array([
+            -0.5,  # spx_ret: bad, but typically less awful than stagflation
+            1.0,  # bonds_ret: best (duration rally)
+            -1.0,  # bcom_ret: weak commodities
+            1.0  # dxy_ret: dollar up as safe haven
+        ])
+    }
+
+    lambda_ = 1.0
+
+    def assign_regime_probs(z_scores_row, regime_archetypes, lambda_=1.0):
+        distances = {k: np.linalg.norm(z_scores_row - v) for k, v in regime_archetypes.items()}
+        exp_dists = {k: np.exp(-lambda_ * d) for k, d in distances.items()}
+        regime_probs = {k: exp_dists[k] / sum(exp_dists.values()) for k in regime_archetypes}
+        nearest_regime = max(regime_probs.items(), key=lambda x: x[1])[0]
+        return nearest_regime, regime_probs
+
+    results = []
+    for idx, row in feat_rolling_z.iterrows():
+        regime, probs = assign_regime_probs(row.values, regime_archetypes, lambda_)
+        results.append({"date": idx, "closest_regime": regime, **probs})
+
+    regime_df = pd.DataFrame(results)
+    regime_df.index = regime_df['date'].values
+    regime_df.drop('date', axis=1, inplace=True)
+
+    # Get last row
+    last = regime_df.iloc[-1]
+    last_regime = last['closest_regime']
+    gold_prob = float(last['Goldilocks'])
+    refl_prob = float(last['Reflation'])
+    stag_prob = float(last['Stagflation'])
+    defl_prob = float(last['Deflation'])
+
+    # Map regime to color (adjust to your palette)
+    regime_color_map = {
+        'Goldilocks': '#2ca02c',  # green
+        'Reflation': '#1f77b4',  # blue
+        'Stagflation': '#ff7f0e',  # orange
+        'Deflation': '#d62728'  # red
+    }
+    regime_color = regime_color_map.get(last_regime, '#808080')
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("**Quad Regime**")
+        st.markdown(
+            f"<span style='background-color:{regime_color};color:white;"
+            f"padding:0.25em 0.75em;border-radius:0.3em;font-weight:bold;"
+            f"font-size:1.2em'>{last_regime}</span>",
+            unsafe_allow_html=True
+        )
+        if last_regime == 'Goldilocks':
+            st.caption("Liquidity + Positioning +")
+        elif last_regime == 'Reflation':
+            st.caption("Liquidity + Positioning -")
+        elif last_regime == 'Deflation':
+            st.caption("Liquidity - Positioning -")
+        elif last_regime == 'Stagflation':
+            st.caption("Liquidity - Positioning +")
+
+    with col2:
+        st.markdown("**Regime Probabilities**")
+        st.markdown(
+            f"<span style='font-size:1.0em;'>"
+            f"Goldilocks: <b>{gold_prob:5.1%}</b><br>"
+            f"Reflation:&nbsp;&nbsp; <b>{refl_prob:5.1%}</b><br>"
+            f"Stagflation: <b>{stag_prob:5.1%}</b><br>"
+            f"Deflation:&nbsp;&nbsp; <b>{defl_prob:5.1%}</b>"
+            f"</span>",
+            unsafe_allow_html=True
+        )
+
+    with col3:
+        st.markdown("**Most Likely Regime Prob**")
+        max_regime = max(
+            [('Goldilocks', gold_prob),
+             ('Reflation', refl_prob),
+             ('Stagflation', stag_prob),
+             ('Deflation', defl_prob)],
+            key=lambda x: x[1]
+        )
+        st.markdown(
+            f"<span style='font-size:1.5em;font-weight:bold;'>"
+            f"{max_regime[0]}: {max_regime[1]:.1%}"
+            f"</span>",
+            unsafe_allow_html=True
+        )
+        st.caption("Last observation regime probability snapshot")
 
 
 ### ---------------------------------------------------------------------------------------------------------- ###
