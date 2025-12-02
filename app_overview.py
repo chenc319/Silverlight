@@ -442,35 +442,26 @@ def plot_crossasset_nowcast():
     stag_prob = float(last['Stagflation'])
     defl_prob = float(last['Deflation'])
 
-    # Map regime to color (adjust to your palette)
-    regime_color_map = {
-        'Goldilocks': '#2ca02c',  # green
-        'Reflation': '#1f77b4',  # blue
-        'Stagflation': '#ff7f0e',  # orange
-        'Deflation': '#d62728'  # red
-    }
-    regime_color = regime_color_map.get(last_regime, '#808080')
+    # Use your existing regime_colors dict
+    regime_color = regime_colors.get(last_regime, "#808080")
 
+    # Caption based on archetype matrix signs:
+    # Goldilocks:   Equities +  Bonds 0   Commodities -  Dollar 0
+    # Reflation:    Equities +  Bonds -   Commodities +  Dollar 0
+    # Stagflation:  Equities -  Bonds -   Commodities +  Dollar +
+    # Deflation:    Equities -  Bonds +   Commodities -  Dollar +
+    regime_caption_map = {
+        "Goldilocks": "Equities +   Bonds 0   Commodities -   Dollar 0",
+        "Reflation": "Equities +   Bonds -   Commodities +   Dollar 0",
+        "Stagflation": "Equities -   Bonds -   Commodities +   Dollar +",
+        "Deflation": "Equities -   Bonds +   Commodities -   Dollar +",
+    }
+    regime_caption = regime_caption_map.get(last_regime, "")
+
+    # Order: col1 = Regime Probabilities, col2 = Most Likely, col3 = Quad Regime
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown("**Quad Regime**")
-        st.markdown(
-            f"<span style='background-color:{regime_color};color:white;"
-            f"padding:0.25em 0.75em;border-radius:0.3em;font-weight:bold;"
-            f"font-size:1.2em'>{last_regime}</span>",
-            unsafe_allow_html=True
-        )
-        if last_regime == 'Goldilocks':
-            st.caption("Liquidity + Positioning +")
-        elif last_regime == 'Reflation':
-            st.caption("Liquidity + Positioning -")
-        elif last_regime == 'Deflation':
-            st.caption("Liquidity - Positioning -")
-        elif last_regime == 'Stagflation':
-            st.caption("Liquidity - Positioning +")
-
-    with col2:
         st.markdown("**Regime Probabilities**")
         st.markdown(
             f"<span style='font-size:1.0em;'>"
@@ -482,14 +473,16 @@ def plot_crossasset_nowcast():
             unsafe_allow_html=True
         )
 
-    with col3:
+    with col2:
         st.markdown("**Most Likely Regime Prob**")
         max_regime = max(
-            [('Goldilocks', gold_prob),
-             ('Reflation', refl_prob),
-             ('Stagflation', stag_prob),
-             ('Deflation', defl_prob)],
-            key=lambda x: x[1]
+            [
+                ("Goldilocks", gold_prob),
+                ("Reflation", refl_prob),
+                ("Stagflation", stag_prob),
+                ("Deflation", defl_prob),
+            ],
+            key=lambda x: x[1],
         )
         st.markdown(
             f"<span style='font-size:1.5em;font-weight:bold;'>"
@@ -498,6 +491,16 @@ def plot_crossasset_nowcast():
             unsafe_allow_html=True
         )
         st.caption("Last observation regime probability snapshot")
+
+    with col3:
+        st.markdown("**Quad Regime**")
+        st.markdown(
+            f"<span style='background-color:{regime_color};color:white;"
+            f"padding:0.25em 0.75em;border-radius:0.3em;font-weight:bold;"
+            f"font-size:1.2em'>{last_regime}</span>",
+            unsafe_allow_html=True
+        )
+        st.caption(regime_caption)
 
 
 ### ---------------------------------------------------------------------------------------------------------- ###
