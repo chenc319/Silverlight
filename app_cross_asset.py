@@ -218,15 +218,15 @@ def plot_colorcoded_regime():
 
 def equity_prometheus_results():
     streamlit_plot(df=(1 + regime_backtest[['equity_bt', 'spx_ret']]).cumprod() - 1,
-                   columns_array=['equity_bt', 'spx'],
+                   columns_array=['equity_bt', 'spx_ret'],
                    colors_array=["#8B0000", "#000000"],
                    graph_title='Equities Historical Performance',
                    y_axis_label='%')
     streamlit_return_metrics_table(equities_prometheus_return_metrics)
 
 def bonds_prometheus_results():
-    streamlit_plot(df=(1 + regime_backtest[['bonds_bt', 'bonds']]).cumprod() - 1,
-                   columns_array=['bonds_bt', 'bonds'],
+    streamlit_plot(df=(1 + regime_backtest[['bonds_bt', 'bonds_ret']]).cumprod() - 1,
+                   columns_array=['bonds_bt', 'bonds_ret'],
                    colors_array=["#8B0000", "#000000"],
                    graph_title='Bonds Historical Performance',
                    y_axis_label='%')
@@ -234,7 +234,7 @@ def bonds_prometheus_results():
 
 def bcom_prometheus_results():
     streamlit_plot(df=(1 + regime_backtest[['bcom_bt', 'bcom_ret']]).cumprod() - 1,
-                   columns_array=['bcom_bt', 'bcom'],
+                   columns_array=['bcom_bt', 'bcom_ret'],
                    colors_array=["#8B0000", "#000000"],
                    graph_title='BCOM Historical Performance',
                    y_axis_label='%')
