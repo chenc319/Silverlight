@@ -208,7 +208,7 @@ def plot_colorcoded_regime():
         pd.DataFrame(regime_backtest['equity_bt'])
     ]).dropna()
     color_coded_regime_plot(regime_merge,
-                            y_col='spx_ret',
+                            y_col='spx',
                             regime_col='closest_regime',
                             title="S&P 500 Level by Macro Regime")
     stats_df = calculate_regime_statistics(regime_merge,
