@@ -81,46 +81,47 @@ feat_rolling_z = ((features[feature_cols] - feat_rolling_mean) / feat_rolling_st
 
 regime_archetypes = {
     "Goldilocks": np.array([
-        1,   # spx_ret    (equities up)
-        0,   # bonds_ret  (bonds flat/moderate)
-        -1,  # bcom_ret   (commodities soft)
-        -1,  # dxy_ret    (dollar weak / risk-on)
-        -1,  # spx_vol    (low equity vol)
-        0,   # bonds_vol  (neutral bond vol)
-        0,   # bcom_vol   (neutral commodity vol)
-        -1   # dxy_vol    (low FX vol / calm dollar)
+        1,   # spx_ret
+        0,   # bonds_ret
+        -1,  # bcom_ret
+        0,   # dxy_ret  (neutral)
+        -1,  # spx_vol
+        0,   # bonds_vol
+        0,   # bcom_vol
+        0    # dxy_vol  (neutral)
     ]),
     "Reflation": np.array([
-        1,   # spx_ret    (equities up)
-        -1,  # bonds_ret  (bonds down, yields up)
-        1,   # bcom_ret   (commodities up)
-        -1,  # dxy_ret    (dollar weaker on global growth)
-        1,   # spx_vol    (higher equity vol)
-        0,   # bonds_vol  (neutral to modestly higher)
-        1,   # bcom_vol   (higher commodity vol)
-        0    # dxy_vol    (neutral FX vol; not a crisis)
+        1,   # spx_ret
+        -1,  # bonds_ret
+        1,   # bcom_ret
+        0,   # dxy_ret  (not forced weak)
+        1,   # spx_vol
+        0,   # bonds_vol
+        1,   # bcom_vol
+        0    # dxy_vol
     ]),
     "Stagflation": np.array([
-        -1,  # spx_ret    (equities down)
-        -1,  # bonds_ret  (bonds pressured by inflation)
-        1,   # bcom_ret   (commodities up on inflation)
-        1,   # dxy_ret    (dollar up on stress/inflation)
-        1,   # spx_vol    (high equity vol)
-        1,   # bonds_vol  (high rates/bond vol)
-        1,   # bcom_vol   (high commodity vol)
-        1    # dxy_vol    (high FX vol / stress)
+        -1,  # spx_ret
+        -1,  # bonds_ret
+        1,   # bcom_ret
+        1,   # dxy_ret
+        1,   # spx_vol
+        1,   # bonds_vol
+        1,   # bcom_vol
+        1    # dxy_vol
     ]),
     "Deflation": np.array([
-        -1,  # spx_ret    (equities down)
-        1,   # bonds_ret  (bonds up, yields fall)
-        -1,  # bcom_ret   (commodities weak)
-        1,   # dxy_ret    (dollar up as safe haven)
-        0,   # spx_vol    (elevated but not as extreme as stagflation)
-        0,   # bonds_vol  (moderate; yields grinding lower)
-        -1,  # bcom_vol   (low commodity vol / demand collapse)
-        1    # dxy_vol    (higher FX vol on deleveraging)
+        0,   # spx_ret  (low nominal, ok real)
+        1,   # bonds_ret
+        -1,  # bcom_ret
+        1,   # dxy_ret
+        0,   # spx_vol
+        0,   # bonds_vol
+        -1,  # bcom_vol
+        1    # dxy_vol
     ])
 }
+
 
 
 lambda_ = 1.0
@@ -207,7 +208,7 @@ def plot_colorcoded_regime():
         pd.DataFrame(regime_backtest['equity_bt'])
     ]).dropna()
     color_coded_regime_plot(regime_merge,
-                            y_col='spx',
+                            y_col='spx_ret',
                             regime_col='closest_regime',
                             title="S&P 500 Level by Macro Regime")
     stats_df = calculate_regime_statistics(regime_merge,
@@ -216,7 +217,7 @@ def plot_colorcoded_regime():
     plot_streamlit_regime_statistics(stats_df)
 
 def equity_prometheus_results():
-    streamlit_plot(df=(1 + regime_backtest[['equity_bt', 'spx']]).cumprod() - 1,
+    streamlit_plot(df=(1 + regime_backtest[['equity_bt', 'spx_ret']]).cumprod() - 1,
                    columns_array=['equity_bt', 'spx'],
                    colors_array=["#8B0000", "#000000"],
                    graph_title='Equities Historical Performance',
@@ -232,7 +233,7 @@ def bonds_prometheus_results():
     streamlit_return_metrics_table(bonds_prometheus_return_metrics)
 
 def bcom_prometheus_results():
-    streamlit_plot(df=(1 + regime_backtest[['bcom_bt', 'bcom']]).cumprod() - 1,
+    streamlit_plot(df=(1 + regime_backtest[['bcom_bt', 'bcom_ret']]).cumprod() - 1,
                    columns_array=['bcom_bt', 'bcom'],
                    colors_array=["#8B0000", "#000000"],
                    graph_title='BCOM Historical Performance',
