@@ -64,7 +64,7 @@ feature_cols = ['spx_ret', 'bonds_ret', 'bcom_ret', 'dxy_ret']
 ### ---------------------------------------- Z SCORE CALCULATION --------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-window = 60
+window = 36
 feat_rolling_mean = df[feature_cols].rolling(window).mean()
 feat_rolling_std  = df[feature_cols].rolling(window).std()
 feat_rolling_z = ((df[feature_cols] - feat_rolling_mean) / feat_rolling_std).dropna()
@@ -75,30 +75,31 @@ feat_rolling_z = ((df[feature_cols] - feat_rolling_mean) / feat_rolling_std).dro
 
 regime_archetypes = {
     "Goldilocks": np.array([
-        1,   # spx_ret: equities strongest
-        0,   # bonds_ret: flat/moderate
-        -1,  # bcom_ret: underperform (no big inflation impulse)
-        0    # dxy_ret: neutral / range-bound dollar
+        1.0,    # spx_ret: equities strongest
+        0.0,    # bonds_ret: flat/moderate
+        -1.0,   # bcom_ret: underperform (no big inflation impulse)
+        0.0     # dxy_ret: neutral / range-bound
     ]),
     "Reflation": np.array([
-        1,   # spx_ret: equities up (cyclicals/value)
-        -1,  # bonds_ret: bonds down, yields up
-        1,   # bcom_ret: commodities up
-        0    # dxy_ret: neutral on average
+        0.5,    # spx_ret: equities up, but less "sweet spot" than Goldilocks
+        -1.0,   # bonds_ret: bonds down, yields up
+        1.0,    # bcom_ret: commodities up on growth + inflation
+        0.0     # dxy_ret: mixed on average
     ]),
     "Stagflation": np.array([
-        -1,  # spx_ret: equities poor
-        -1,  # bonds_ret: nominal bonds poor in real terms
-        1,   # bcom_ret: commodities relative winner
-        1    # dxy_ret: dollar often firm on stress/inflation
+        -1.0,   # spx_ret: worst for equities
+        -0.5,   # bonds_ret: weak in real terms; nominal slightly negative/flat
+        1.0,    # bcom_ret: commodities clear relative winner
+        0.5     # dxy_ret: dollar often firm on stress/inflation
     ]),
     "Deflation": np.array([
-        0,   # spx_ret: low/mediocre nominal
-        1,   # bonds_ret: best (duration rally)
-        -1,  # bcom_ret: weak commodities
-        1    # dxy_ret: dollar up as safe haven
+        -0.5,   # spx_ret: bad, but typically less awful than stagflation
+        1.0,    # bonds_ret: best (duration rally)
+        -1.0,   # bcom_ret: weak commodities
+        1.0     # dxy_ret: dollar up as safe haven
     ])
 }
+
 
 lambda_ = 1.0
 
