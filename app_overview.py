@@ -327,15 +327,24 @@ def plot_flowcluster_nowcast():
 
     with col1:
         st.markdown("**Liquidity Indicator**")
-        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{liquidity_indicator:+.2%}</span>",
-                    unsafe_allow_html=True)
-        st.caption("3-Month Change of YoY QE Treasuries")
+        st.markdown(
+            f"<span style='font-size:1.5em;font-weight:bold;'>"
+            f"{liquidity_indicator / 1e9:+.2f} Bn"
+            f"</span>",
+            unsafe_allow_html=True
+        )
+        st.caption("3-Month Change in YoY QE Treasuries (USD billions)")
+
     with col2:
         st.markdown("**Positioning Indicator**")
-        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{positioning_indicator:+.2%}</span>",
-                    unsafe_allow_html=True)
+        st.markdown(
+            f"<span style='font-size:1.5em;font-weight:bold;'>"
+            f"{positioning_indicator:+,.0f}"
+            f"</span>",
+            unsafe_allow_html=True
+        )
+        st.caption("3-Month Change in YoY SPX Positioning (number of contracts)")
 
-        st.caption("3-Month Change of YoY SPX Positioning")
     with col3:
         st.markdown("**Quad Regime**")
         st.markdown(
