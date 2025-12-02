@@ -64,7 +64,7 @@ feature_cols = ['spx_ret', 'bonds_ret', 'bcom_ret', 'dxy_ret']
 ### ---------------------------------------- Z SCORE CALCULATION --------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-window = 12
+window = 60
 feat_rolling_mean = df[feature_cols].rolling(window).mean()
 feat_rolling_std  = df[feature_cols].rolling(window).std()
 feat_rolling_z = ((df[feature_cols] - feat_rolling_mean) / feat_rolling_std).dropna()
