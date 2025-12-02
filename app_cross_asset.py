@@ -239,4 +239,3 @@ def bcom_prometheus_results():
                    graph_title='BCOM Historical Performance',
                    y_axis_label='%')
     streamlit_return_metrics_table(bcom_prometheus_return_metrics)
-
