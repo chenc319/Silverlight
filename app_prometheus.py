@@ -10,31 +10,6 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
-def transform_series(series, tcode):
-    if tcode == 1:  # No transformation
-        return series.diff(12).diff(3)
-    elif tcode == 2:  # First difference
-        return series.diff(12).diff(3)
-    elif tcode == 3:  # Second difference
-        return series.diff(12).diff(3)
-    elif tcode == 4:  # Log
-        return series.diff(12).diff(3)
-    elif tcode == 5:  # Log first difference
-        return series.diff(12).diff(3)
-    elif tcode == 6:  # Log second difference
-        return series.diff(12).diff(3)
-    elif tcode == 7:  # Demeaned
-        return series.diff(12).diff(3)
-    else:
-        raise ValueError(f"Unknown tcode {tcode}")
-
-def transform_fredmd(df, tcodes):
-    out = pd.DataFrame(index=df.index)
-    for col in df.columns:
-        transformed = transform_series(df[col], tcodes[col])
-        out[col] = transformed
-    return out.dropna()
-
 # growth_vars_lag1 = pdr.DataReader([
 #     'USALOLITOAASTSAM','ICSA',
 #     'BUSLOANS', 'REALLN'
