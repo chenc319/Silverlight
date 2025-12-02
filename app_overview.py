@@ -76,12 +76,12 @@ treasury_monthly_df = treasury_merge.resample('ME').last()
 
 
 # Color mapping for regimes (customize as desired)
-    regime_colors = {
-        "Goldilocks": "#28a745",  # Green
-        "Reflation": "#90ee90",  # Super light green
-        "Stagflation": "#ffc107",  # Yellow
-        "Deflation": "#dc3545"  # Red
-    }
+regime_colors = {
+    "Goldilocks": "#28a745",  # Green
+    "Reflation": "#90ee90",  # Super light green
+    "Stagflation": "#ffc107",  # Yellow
+    "Deflation": "#dc3545"  # Red
+}
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------- REGIME OVERVIEW --------------------------------------------- ###
