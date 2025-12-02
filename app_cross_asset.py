@@ -1,16 +1,17 @@
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- CROSS-ASSET REGIME MODEL ---------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
-import pandas as pd
 
-### PACKAGES ###
+import numpy as np
+import pandas as pd
 from Functions import *
 from pathlib import Path
 import os
+
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 ### ---------------------------------------------------------------------------------------------------------- ###
-### ---------------------------------------- CROSS-ASSET REGIME MODEL ---------------------------------------- ###
+### ----------------------------- LOAD AND PREPARE MONTHLY PRICE SERIES -------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 with open(Path(DATA_DIR) / 'SPX.csv', 'rb') as file:
@@ -46,83 +47,58 @@ cross_asset_monthly_merge = merge_dfs([
     spx_monthly,
     bonds_monthly,
     bcom_monthly,
-    dxy_monthly]
-).dropna()
+    dxy_monthly
+]).dropna()
 
-# 1) Base returns
+### ---------------------------------------------------------------------------------------------------------- ###
+### ---------------------------------------- FEATURE MATRIX: RETURNS ONLY ------------------------------------ ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
+# Monthly returns
 df = cross_asset_monthly_merge.pct_change().dropna()
-df.columns = ['spx_ret', 'bonds_ret', 'bcom_ret','dxy_ret']
+df.columns = ['spx_ret', 'bonds_ret', 'bcom_ret', 'dxy_ret']
 
-# 2) 12m realized vol for each asset
-vol_window = 12
-vol = df.rolling(vol_window).std()
-vol.columns = ['spx_vol', 'bonds_vol', 'bcom_vol','dxy_vol']
-
-# 4) Merge into full feature matrix
-features = merge_dfs([df, vol]).dropna()
-
-feature_cols = [
-    'spx_ret', 'bonds_ret', 'bcom_ret','dxy_ret',
-    'spx_vol', 'bonds_vol', 'bcom_vol','dxy_vol'
-]
+feature_cols = ['spx_ret', 'bonds_ret', 'bcom_ret', 'dxy_ret']
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- Z SCORE CALCULATION --------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 window = 36
-feat_rolling_mean = features[feature_cols].rolling(window).mean()
-feat_rolling_std  = features[feature_cols].rolling(window).std()
-feat_rolling_z = ((features[feature_cols] - feat_rolling_mean) / feat_rolling_std).dropna()
+feat_rolling_mean = df[feature_cols].rolling(window).mean()
+feat_rolling_std  = df[feature_cols].rolling(window).std()
+feat_rolling_z = ((df[feature_cols] - feat_rolling_mean) / feat_rolling_std).dropna()
 
 ### ---------------------------------------------------------------------------------------------------------- ###
-### ---------------------------------------- REGIME ARCHETYPES ---------------------------------------------- ###
+### ---------------------------------------- REGIME ARCHETYPES (RETURNS) ------------------------------------ ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 regime_archetypes = {
-    "Stagflation": np.array([
-        1,   # spx_ret
-        0,   # bonds_ret
-        -1,  # bcom_ret
-        0,   # dxy_ret  (neutral)
-        -1,  # spx_vol
-        0,   # bonds_vol
-        0,   # bcom_vol
-        0    # dxy_vol  (neutral)
+    "Goldilocks": np.array([
+        1,   # spx_ret: equities strongest
+        0,   # bonds_ret: flat/moderate
+        -1,  # bcom_ret: underperform (no big inflation impulse)
+        0    # dxy_ret: neutral / range-bound dollar
     ]),
     "Reflation": np.array([
-        1,   # spx_ret
-        -1,  # bonds_ret
-        1,   # bcom_ret
-        0,   # dxy_ret  (not forced weak)
-        1,   # spx_vol
-        0,   # bonds_vol
-        1,   # bcom_vol
-        0    # dxy_vol
+        1,   # spx_ret: equities up (cyclicals/value)
+        -1,  # bonds_ret: bonds down, yields up
+        1,   # bcom_ret: commodities up
+        0    # dxy_ret: neutral on average
+    ]),
+    "Stagflation": np.array([
+        -1,  # spx_ret: equities poor
+        -1,  # bonds_ret: nominal bonds poor in real terms
+        1,   # bcom_ret: commodities relative winner
+        1    # dxy_ret: dollar often firm on stress/inflation
     ]),
     "Deflation": np.array([
-        -1,  # spx_ret
-        -1,  # bonds_ret
-        1,   # bcom_ret
-        1,   # dxy_ret
-        1,   # spx_vol
-        1,   # bonds_vol
-        1,   # bcom_vol
-        1    # dxy_vol
-    ]),
-    "Goldilocks": np.array([
-        0,   # spx_ret  (low nominal, ok real)
-        1,   # bonds_ret
-        -1,  # bcom_ret
-        1,   # dxy_ret
-        0,   # spx_vol
-        0,   # bonds_vol
-        -1,  # bcom_vol
-        1    # dxy_vol
+        0,   # spx_ret: low/mediocre nominal
+        1,   # bonds_ret: best (duration rally)
+        -1,  # bcom_ret: weak commodities
+        1    # dxy_ret: dollar up as safe haven
     ])
 }
-
-
 
 lambda_ = 1.0
 
@@ -146,7 +122,7 @@ regime_df = pd.DataFrame(results)
 regime_df.index = regime_df['date'].values
 regime_df.drop('date', axis=1, inplace=True)
 
-# Use next-month *returns* from the original 3-asset return df
+# Use next-month *returns* for backtest (no look-ahead)
 regime_backtest = merge_dfs([regime_df, df.shift(-1).dropna()])
 regime_backtest['equity_bt'] = np.nan
 regime_backtest['bonds_bt'] = np.nan
@@ -173,7 +149,7 @@ for row in regime_backtest.index:
 regime_backtest = regime_backtest.dropna()
 
 ### ---------------------------------------------------------------------------------------------------------- ###
-### ---------------------------------------- CROSS-ASSET REGIME MODEL ---------------------------------------- ###
+### ---------------------------------------- PERFORMANCE METRICS --------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 equities_prometheus_return_metrics = return_metrics(
@@ -198,7 +174,7 @@ bcom_prometheus_return_metrics = return_metrics(
 bcom_prometheus_return_metrics['Return/Risk']
 
 ### ---------------------------------------------------------------------------------------------------------- ###
-### ---------------------------------------- CROSS-ASSET REGIME MODEL ---------------------------------------- ###
+### ---------------------------------------- PLOTTING HELPERS ----------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def plot_colorcoded_regime():
