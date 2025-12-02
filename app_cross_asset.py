@@ -80,7 +80,7 @@ feat_rolling_z = ((features[feature_cols] - feat_rolling_mean) / feat_rolling_st
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 regime_archetypes = {
-    "Goldilocks": np.array([
+    "Stagflation": np.array([
         1,   # spx_ret
         0,   # bonds_ret
         -1,  # bcom_ret
@@ -100,7 +100,7 @@ regime_archetypes = {
         1,   # bcom_vol
         0    # dxy_vol
     ]),
-    "Stagflation": np.array([
+    "Deflation": np.array([
         -1,  # spx_ret
         -1,  # bonds_ret
         1,   # bcom_ret
@@ -110,7 +110,7 @@ regime_archetypes = {
         1,   # bcom_vol
         1    # dxy_vol
     ]),
-    "Deflation": np.array([
+    "Goldilocks": np.array([
         0,   # spx_ret  (low nominal, ok real)
         1,   # bonds_ret
         -1,  # bcom_ret
