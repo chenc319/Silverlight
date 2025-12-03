@@ -571,10 +571,10 @@ def plot_yc_nowcast():
 
     # Caption for mapped macro quad (consistent with your archetypes)
     quad_caption_map = {
-        "Goldilocks": "Equities +   Bonds 0   Commodities -   Dollar 0",
-        "Reflation": "Equities +   Bonds -   Commodities +   Dollar 0",
-        "Stagflation": "Equities -   Bonds -   Commodities +   Dollar +",
-        "Deflation": "Equities -   Bonds +   Commodities -   Dollar +",
+        "Goldilocks": "Bear Steepening",
+        "Reflation": "Bull Flattening",
+        "Stagflation": "Bear Flattening",
+        "Deflation": "Bull Steepening",
     }
     mapped_quad_caption = quad_caption_map.get(mapped_quad, "")
 
