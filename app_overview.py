@@ -599,18 +599,8 @@ def plot_yc_nowcast():
         )
         st.caption(belly_caption)
 
-    with col2:
-        st.markdown("**Mapped Macro Quad**")
-        mapped_color = regime_colors.get(mapped_quad, "#808080")
-        st.markdown(
-            f"<span style='background-color:{mapped_color};color:white;"
-            f"padding:0.25em 0.75em;border-radius:0.3em;font-weight:bold;"
-            f"font-size:1.1em'>{mapped_quad}</span>",
-            unsafe_allow_html=True
-        )
-        st.caption(mapped_quad_caption)
 
-    with col3:
+    with col2:
         st.markdown("**Next-Month SPX (Curve-based)**")
         st.markdown(
             f"<span style='font-size:1.5em;font-weight:bold;'>"
@@ -619,6 +609,17 @@ def plot_yc_nowcast():
             unsafe_allow_html=True
         )
         st.caption("S&P 500 1M return following this yield-curve regime")
+
+    with col3:
+        st.markdown("**Macro Quad**")
+        mapped_color = regime_colors.get(mapped_quad, "#808080")
+        st.markdown(
+            f"<span style='background-color:{mapped_color};color:white;"
+            f"padding:0.25em 0.75em;border-radius:0.3em;font-weight:bold;"
+            f"font-size:1.1em'>{mapped_quad}</span>",
+            unsafe_allow_html=True
+        )
+        st.caption(mapped_quad_caption)
 
 
 
