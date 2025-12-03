@@ -508,7 +508,119 @@ def plot_crossasset_nowcast():
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def plot_yc_nowcast():
-    print('hi')
+    ### YIELDS ###
+    with open(Path(DATA_DIR) / 'treasury_1m.pkl', 'rb') as file:
+        treasury_1m = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'treasury_2y.pkl', 'rb') as file:
+        treasury_2y = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'treasury_5y.pkl', 'rb') as file:
+        treasury_5y = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'treasury_10y.pkl', 'rb') as file:
+        treasury_10y = pd.read_pickle(file)
+    with open(Path(DATA_DIR) / 'treasury_30y.pkl', 'rb') as file:
+        treasury_30y = pd.read_pickle(file)
+
+    treasury_merge = merge_dfs([treasury_1m, treasury_2y, treasury_5y, treasury_10y, treasury_30y]).dropna()
+    treasury_merge.index = pd.to_datetime(treasury_merge.index).values
+    treasury_merge.columns = ['1m', '2y', '5y', '10y', '30y']
+    treasury_monthly_df = treasury_merge.resample('ME').last()
+
+
+    ### CALCULATE SLOPES AND DIFFERENCES ###
+    treasury_diff = treasury_monthly_df.diff(3).dropna()
+    treasury_diff['belly'] = treasury_diff['10y'] - treasury_diff['2y']
+    treasury_diff['total_yc_direction'] = treasury_diff[['2y', '5y', '10y']].mean(axis=1)
+    treasury_diff['level_class'] = ['Bull' if x <= 0 else 'Bear' for x in treasury_diff['2y']]
+    treasury_diff['belly_class'] = ['Flattening' if x <= 0 else 'Steepening' for x in treasury_diff['belly']]
+
+    ### REGIMES ###
+    treasury_diff['belly_regime'] = treasury_diff['level_class'] + ' ' + treasury_diff['belly_class']
+    treasury_diff['spx_monthly_pct'] = spx_monthly.pct_change(1).shift(-1)
+
+    belly_quad_regime_map = {
+        'Bear Steepening': 'Reflation',
+        'Bull Flattening': 'Goldilocks',
+        'Bear Flattening': 'Deflation',
+        'Bull Steepening': 'Stagflation'
+    }
+
+    # Get last row from treasury_diff
+    last_yc = treasury_diff.iloc[-1]
+    last_belly_regime = last_yc['belly_regime']  # e.g. "Bull Steepening"
+    last_level_class = last_yc['level_class']  # "Bull" / "Bear"
+    last_belly_class = last_yc['belly_class']  # "Steepening" / "Flattening"
+    last_spx_next = float(last_yc['spx_monthly_pct'])  # next-month SPX pct
+
+    # Map belly_regime -> macro quad regime
+    belly_quad_regime_map = {
+        'Bear Steepening': 'Reflation',
+        'Bull Flattening': 'Goldilocks',
+        'Bear Flattening': 'Deflation',
+        'Bull Steepening': 'Stagflation'
+    }
+    mapped_quad = belly_quad_regime_map.get(last_belly_regime, "Unknown")
+
+    # Caption for curve regime (intuitive description)
+    belly_caption_map = {
+        'Bear Steepening': "Yields ↑, long-end ↑↑ (growth + inflation scare)",
+        'Bull Flattening': "Yields ↓, long-end ↓ less (late-cycle / disinflation)",
+        'Bear Flattening': "Yields ↑, front-end ↑↑ (late-cycle tightening)",
+        'Bull Steepening': "Yields ↓, front-end ↓↓ (cuts into slowdown/recession)"
+    }
+    belly_caption = belly_caption_map.get(last_belly_regime, "")
+
+    # Caption for mapped macro quad (consistent with your archetypes)
+    quad_caption_map = {
+        "Goldilocks": "Equities +   Bonds 0   Commodities -   Dollar 0",
+        "Reflation": "Equities +   Bonds -   Commodities +   Dollar 0",
+        "Stagflation": "Equities -   Bonds -   Commodities +   Dollar +",
+        "Deflation": "Equities -   Bonds +   Commodities -   Dollar +",
+    }
+    mapped_quad_caption = quad_caption_map.get(mapped_quad, "")
+
+    # Optional color for belly_regime (define your own)
+    belly_regime_colors = {
+        'Bear Steepening': "#1f77b4",
+        'Bull Flattening': "#2ca02c",
+        'Bear Flattening': "#d62728",
+        'Bull Steepening': "#ff7f0e",
+    }
+    belly_color = belly_regime_colors.get(last_belly_regime, "#808080")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("**Yield Curve Regime**")
+        st.markdown(
+            f"<span style='background-color:{belly_color};color:white;"
+            f"padding:0.25em 0.75em;border-radius:0.3em;font-weight:bold;"
+            f"font-size:1.1em'>{last_belly_regime}</span>",
+            unsafe_allow_html=True
+        )
+        st.caption(belly_caption)
+
+    with col2:
+        st.markdown("**Mapped Macro Quad**")
+        mapped_color = regime_colors.get(mapped_quad, "#808080")
+        st.markdown(
+            f"<span style='background-color:{mapped_color};color:white;"
+            f"padding:0.25em 0.75em;border-radius:0.3em;font-weight:bold;"
+            f"font-size:1.1em'>{mapped_quad}</span>",
+            unsafe_allow_html=True
+        )
+        st.caption(mapped_quad_caption)
+
+    with col3:
+        st.markdown("**Next-Month SPX (Curve-based)**")
+        st.markdown(
+            f"<span style='font-size:1.5em;font-weight:bold;'>"
+            f"{last_spx_next:+.2%}"
+            f"</span>",
+            unsafe_allow_html=True
+        )
+        st.caption("S&P 500 1M return following this yield-curve regime")
+
+
 
 
 
