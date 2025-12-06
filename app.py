@@ -18,6 +18,7 @@ import app_positioning
 import app_cross_asset
 import app_flowcluster
 import app_yc
+import app_401_seas
 
 ### FUNCTIONS ###
 def merge_dfs(array_of_dfs):
@@ -74,7 +75,8 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 def reset_other_selections(current_section):
     sections = ["Macro Regime Models",
                 "Monitors",
-                "Analysis"
+                "Analysis",
+                'Passive Bubble'
                 ]
     for section in sections:
         if section != current_section:
@@ -104,6 +106,10 @@ with st.sidebar:
             "Growth & Inflation Study": "Growth & Inflation Study",
             "SAM Core Equity": "SAM Core Equity",
             "Barra Factor Model": "Barra Factor Model"
+        },
+        'Passive Bubble': {
+            "Select an option...": "Select an option...",
+            '401k Seasonality': '401k Seasonality'
         }
     }
 
@@ -140,11 +146,21 @@ with st.sidebar:
         label_visibility="collapsed"
     )
 
+    st.markdown("### Passive Bubble")
+    passive_bubble_selection = st.selectbox(
+        "Passive Bubble",
+        list(sections["Passive Bubble"].keys()),
+        key="Passive Bubble_selection",
+        on_change=lambda: reset_other_selections("Passive Bubble"),
+        label_visibility="collapsed"
+    )
+
     # Set the current page based on any non-default selection
     page = "Select an option..."
     for selection in [macro_regime_models,
                       monitors_selection,
                       analysis_selection,
+                      passive_bubble_selection
                       ]:
         if selection != "Select an option...":
             page = selection
@@ -288,6 +304,14 @@ elif page == 'Liquidity Monitor':
     app_liquidity.plot_equity_fed_plumbing_backtest()
     st.title('Equity Repo Venue Backtest')
     app_liquidity.plot_equity_repo_venue_backtest()
+
+### ---------------------------------------------------------------------------------------- ###
+### --------------------------------- TAIL HEDGE PORTFOLIO --------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif page == '401k Seasonality':
+    st.title('Equity Bond RV Spread')
+
 
 
 
