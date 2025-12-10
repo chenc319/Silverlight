@@ -7,6 +7,7 @@ from Functions import *
 from pathlib import Path
 import os
 DATA_DIR = os.getenv('DATA_DIR', 'data')
+end = pd.to_datetime('today')
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### -------------------------------------------- REGIME OVERVIEW --------------------------------------------- ###
@@ -96,8 +97,8 @@ def plot_grid_nowcast():
     growth = pdr.DataReader('PCEC96',
                             'fred',
                             '1949-12-31',
-                            '2025-12-31')
-    growth.index = pd.to_datetime(growth.index) + pd.DateOffset(months=3)
+                            end)
+    growth.index = pd.to_datetime(growth.index) + pd.DateOffset(months=1)
     growth = growth.resample('ME').last()
 
     ### INFLATION TARGET ###
@@ -105,8 +106,8 @@ def plot_grid_nowcast():
         'CPIAUCSL',
         'fred',
         '1949-12-31',
-        '2025-12-31')
-    inflation.index = pd.to_datetime(inflation.index) + pd.DateOffset(months=2)
+        end)
+    inflation.index = pd.to_datetime(inflation.index) + pd.DateOffset(months=1)
     inflation = inflation.resample('ME').last()
 
     with open(Path(DATA_DIR) / 'growth_lagged_features.pkl', 'rb') as file:
@@ -268,11 +269,6 @@ def plot_grid_nowcast():
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def plot_flowcluster_nowcast():
-
-
-    ### ---------------------------------------------------------------------------------------------------------- ###
-    ### -------------------------------------- FLOWCLUSTER LIQUIDITY REGIME -------------------------------------- ###
-    ### ---------------------------------------------------------------------------------------------------------- ###
 
     ### AGGREGATE DATA AND RESAMPLE ###
     liquidity_df = merge_dfs([treasury, reserves, tga, rrp_volume]).dropna()
