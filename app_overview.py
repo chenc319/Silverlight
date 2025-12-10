@@ -538,18 +538,9 @@ def plot_yc_nowcast():
     treasury_diff['spx_monthly_pct'] = spx_monthly.pct_change(1).shift(-1)
     treasury_diff = treasury_diff.dropna()
 
-    belly_quad_regime_map = {
-        'Bear Steepening': 'Reflation',
-        'Bull Flattening': 'Goldilocks',
-        'Bear Flattening': 'Deflation',
-        'Bull Steepening': 'Stagflation'
-    }
-
     # Get last row from treasury_diff
     last_yc = treasury_diff.iloc[-1]
     last_belly_regime = last_yc['belly_regime']  # e.g. "Bull Steepening"
-    last_level_class = last_yc['level_class']  # "Bull" / "Bear"
-    last_belly_class = last_yc['belly_class']  # "Steepening" / "Flattening"
     last_spx_next = float(last_yc['spx_monthly_pct'])  # next-month SPX pct
 
     # Map belly_regime -> macro quad regime
@@ -572,8 +563,8 @@ def plot_yc_nowcast():
 
     # Caption for mapped macro quad (consistent with your archetypes)
     quad_caption_map = {
-        "Goldilocks": "Bear Steepening",
-        "Reflation": "Bull Flattening",
+        "Goldilocks": "Bull Flattening",
+        "Reflation": "Bear Steepening",
         "Stagflation": "Bear Flattening",
         "Deflation": "Bull Steepening",
     }
@@ -612,7 +603,7 @@ def plot_yc_nowcast():
         st.caption("S&P 500 1M return following this yield-curve regime")
 
     with col3:
-        st.markdown("**Macro Quad**")
+        st.markdown("**Quad Regime**")
         mapped_color = regime_colors.get(mapped_quad, "#808080")
         st.markdown(
             f"<span style='background-color:{mapped_color};color:white;"
