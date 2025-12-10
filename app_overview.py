@@ -535,7 +535,8 @@ def plot_yc_nowcast():
 
     ### REGIMES ###
     treasury_diff['belly_regime'] = treasury_diff['level_class'] + ' ' + treasury_diff['belly_class']
-    treasury_diff['spx_monthly_pct'] = spx_monthly.pct_change(1).shift(-1).dropna()
+    treasury_diff['spx_monthly_pct'] = spx_monthly.pct_change(1).shift(-1)
+    treasury_diff = treasury_diff.dropna()
 
     belly_quad_regime_map = {
         'Bear Steepening': 'Reflation',
