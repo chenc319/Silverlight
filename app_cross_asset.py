@@ -2,8 +2,6 @@
 ### ---------------------------------------- CROSS-ASSET REGIME MODEL ---------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-import numpy as np
-import pandas as pd
 from Functions import *
 from pathlib import Path
 import os
@@ -75,28 +73,28 @@ feat_rolling_z = ((df[feature_cols] - feat_rolling_mean) / feat_rolling_std).dro
 
 regime_archetypes = {
     "Goldilocks": np.array([
-        1.0,    # spx_ret: equities strongest
-        0.0,    # bonds_ret: flat/moderate
-        -1.0,   # bcom_ret: underperform (no big inflation impulse)
-        0.0     # dxy_ret: neutral / range-bound
+        1.0,   # spx_ret: clear winner
+        0.5,   # bonds_ret: modestly positive
+        -0.5,  # bcom_ret: mildly soft
+        -0.5   # dxy_ret: dollar gently weaker
     ]),
     "Reflation": np.array([
-        0.5,    # spx_ret: equities up, but less "sweet spot" than Goldilocks
-        -1.0,   # bonds_ret: bonds down, yields up
-        1.0,    # bcom_ret: commodities up on growth + inflation
-        0.0     # dxy_ret: mixed on average
+        0.5,   # spx_ret: positive but choppier than Goldilocks
+        -1.0,  # bonds_ret: clear underperformer (yields up)
+        1.0,   # bcom_ret: big winner
+        0.0    # dxy_ret: roughly mixed/flat
     ]),
     "Stagflation": np.array([
-        -1.0,   # spx_ret: worst for equities
-        -0.5,   # bonds_ret: weak in real terms; nominal slightly negative/flat
-        1.0,    # bcom_ret: commodities clear relative winner
-        0.5     # dxy_ret: dollar often firm on stress/inflation
+        -1.0,  # spx_ret: worst for equities
+        -0.5,  # bonds_ret: mildly negative in nominal terms
+        1.0,   # bcom_ret: strong relative winner
+        0.5    # dxy_ret: often firm
     ]),
     "Deflation": np.array([
-        -0.5,   # spx_ret: bad, but typically less awful than stagflation
-        1.0,    # bonds_ret: best (duration rally)
-        -1.0,   # bcom_ret: weak commodities
-        1.0     # dxy_ret: dollar up as safe haven
+        -0.5,  # spx_ret: weak but not as bad as stagflation
+        1.0,   # bonds_ret: strongest (duration bull)
+        -1.0,  # bcom_ret: clear loser
+        1.0    # dxy_ret: strong safe haven
     ])
 }
 
