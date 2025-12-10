@@ -9,14 +9,15 @@ from datetime import datetime
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 # # Define the range from the first report date to today
-# start_date = "2010-07-20"
+# with open(Path(DATA_DIR) / 'historical_cftf_financial_texts.pkl', 'rb') as file:
+#     historical_cftf_financial_texts = pd.read_pickle(file)
+# start_date = "2025-10-21"
 # end_date = pd.Timestamp.today().strftime("%Y-%m-%d")
 # tuesdays = pd.date_range(start=start_date, end=end_date, freq='W-TUE')
 # wednesdays = pd.date_range(start=start_date, end=end_date, freq='W-WED')
 # all_report_dates = sorted(list(set(tuesdays) | set(wednesdays)))
 # all_report_dates_str = [d.strftime("%Y-%m-%d") for d in all_report_dates]
 #
-# historical_cftf_financial_texts = {}
 # for report_date in all_report_dates_str:
 #     date_obj = datetime.strptime(report_date, "%Y-%m-%d")
 #     numeric_date = date_obj.strftime("%m%d%y")
@@ -32,10 +33,9 @@ DATA_DIR = os.getenv('DATA_DIR', 'data')
 #         print(report_date)
 #     except requests.RequestException:
 #         continue  # Skip on other request errors too
-#
+# historical_cftf_financial_texts.keys()
 # with open(Path(DATA_DIR) / 'historical_cftf_financial_texts.pkl', 'wb') as file:
 #     pickle.dump(historical_cftf_financial_texts, file)
-
 
 with open(Path(DATA_DIR) / 'historical_cftf_financial_texts.pkl', 'rb') as file:
     historical_cftf_financial_texts = pd.read_pickle(file)
