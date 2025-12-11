@@ -54,8 +54,8 @@ fund_flow_spx_merge.columns = ['fund_flow','fund_flow_z','spx']
 z_score_bucket(fund_flow_spx_merge,'fund_flow_z','spx')
 
 ### MOVING AVERAGES ###
-fund_flow_spx_merge['fund_flow_1st_roc'] = fund_flow_spx_merge['fund_flow'].diff(12)
-fund_flow_spx_merge['fund_flow_2nd_roc'] = fund_flow_spx_merge['fund_flow_1st_roc'].diff(3)
+fund_flow_spx_merge['fund_flow_1st_roc'] = fund_flow_spx_merge['fund_flow'].diff(3)
+fund_flow_spx_merge['fund_flow_2nd_roc'] = fund_flow_spx_merge['fund_flow_1st_roc'].diff(1)
 fund_flow_spx_merge[(fund_flow_spx_merge['fund_flow_1st_roc']>0) & (fund_flow_spx_merge['fund_flow_2nd_roc']>0)]['spx'].mean()
 fund_flow_spx_merge[(fund_flow_spx_merge['fund_flow_1st_roc']>0) & (fund_flow_spx_merge['fund_flow_2nd_roc']<0)]['spx'].mean()
 fund_flow_spx_merge[(fund_flow_spx_merge['fund_flow_1st_roc']<0) & (fund_flow_spx_merge['fund_flow_2nd_roc']>0)]['spx'].mean()
@@ -73,27 +73,12 @@ def fund_flow_z_backtest(row,signal_colname_1):
     else:
         return 1
 
-def fund_flow_cross_backtest(row,signal_colname_1,signal_colname_2):
-    if row[signal_colname_1] > 0 and row[signal_colname_2] > 0:
-        return 0.8
-    elif row[signal_colname_1] > 0 and row[signal_colname_2] < 0:
-        return 0.6
-    elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
-        return 1
-    elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
-        return 0.8
-
 fund_flow_spx_merge['z_weights'] = fund_flow_spx_merge.apply(
     lambda row: fund_flow_z_backtest(row,
                                            'fund_flow_z'), axis=1
 )
-fund_flow_spx_merge['cross_weights'] = fund_flow_spx_merge.apply(
-    lambda row: fund_flow_cross_backtest(row,
-                                           'fund_flow_1st_roc',
-                                         'fund_flow_2nd_roc'), axis=1
-)
 
-fund_flow_spx_merge['bt_returns'] = fund_flow_spx_merge['cross_weights'] * fund_flow_spx_merge['spx']
+fund_flow_spx_merge['bt_returns'] = fund_flow_spx_merge['z_weights'] * fund_flow_spx_merge['spx']
 spx_fund_flow_return_metrics = return_metrics(
     fund_flow_spx_merge[['bt_returns','spx']],
     fund_flow_spx_merge[['spx']],
