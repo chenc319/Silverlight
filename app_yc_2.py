@@ -48,7 +48,11 @@ with open(Path(DATA_DIR) / 'treasury_10y.pkl', 'rb') as file:
 with open(Path(DATA_DIR) / 'treasury_30y.pkl', 'rb') as file:
     treasury_30y = pd.read_pickle(file)
 
-treasury_merge = merge_dfs([treasury_1m,treasury_2y, treasury_5y, treasury_10y,treasury_30y]).dropna()
+treasury_merge = merge_dfs([treasury_1m,
+                            treasury_2y,
+                            treasury_5y,
+                            treasury_10y,
+                            treasury_30y]).dropna()
 treasury_merge.index = pd.to_datetime(treasury_merge.index).values
 treasury_merge.columns = ['1m','2y','5y','10y','30y']
 treasury_monthly_df = treasury_merge.resample('ME').last()
@@ -56,7 +60,8 @@ treasury_monthly_df = treasury_merge.resample('ME').last()
 
 level = treasury_monthly_df.mean(axis=1)
 slope = treasury_monthly_df["10y"] - treasury_monthly_df["2y"]
-curv = 2 * treasury_monthly_df["5y"] - treasury_monthly_df["2y"] - treasury_monthly_df["10y"]
+curv = (2 * treasury_monthly_df["5y"] -
+        treasury_monthly_df["2y"] - treasury_monthly_df["10y"])
 
 factors = pd.DataFrame({
     "level": level,
@@ -184,11 +189,6 @@ belly_quad_regime_map = {
     'Bear Flattening':  'Deflation',
     'Bull Steepening':  'Stagflation'
 }
-
-bull_flattening = treasury_diff[treasury_diff['belly_regime'] == 'Bull Flattening']['spx_monthly_pct'].mean()
-bear_steepening = treasury_diff[treasury_diff['belly_regime'] == 'Bear Steepening']['spx_monthly_pct'].mean()
-bull_steepening = treasury_diff[treasury_diff['belly_regime'] == 'Bull Steepening']['spx_monthly_pct'].mean()
-bear_flattening = treasury_diff[treasury_diff['belly_regime'] == 'Bear Flattening']['spx_monthly_pct'].mean()
 
 treasury_diff['total_score'] = treasury_diff['belly_regime'].map(belly_regime_score_map)
 treasury_diff['bt_returns'] = treasury_diff['spx_monthly_pct'] * treasury_diff['total_score']
