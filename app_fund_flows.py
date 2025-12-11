@@ -32,21 +32,59 @@ for x in range(0,len(etf_flows.columns)-1,2):
     df.index = pd.to_datetime(df.iloc[:,0].values)
     df.drop(df.columns[0], axis=1, inplace=True)
     df = df[df != 0]
-    df = df.resample('M').mean().dropna()
+    df = df.resample('ME').mean().dropna()
     etf_fund_flow_df = merge_dfs([etf_fund_flow_df,df])
 etf_fund_flow_df = etf_fund_flow_df.ffill().dropna()
+etf_fund_flow_df = etf_fund_flow_df[['voo','vug','vtv','ivv','spy','vea']]
 sum_etf_fund_flow_df = pd.DataFrame(etf_fund_flow_df.sum(axis=1))
 sum_etf_fund_flow_df.columns = ['fund_flow']
-
-
-plt.plot(etf_fund_flow_df[['spy', 'voo', 'ivv', 'qqq', 'vug', 'vea', 'acwx', 'iefa', 'vtv', 'iwf',
-       'spym', 'rsp', 'schx', 'veu', 'iwb', 'smh']])
-plt.show()
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### --------------------------------------------- FUND FLOW MODEL -------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
-fund_flow_spx_merge = merge_dfs([sum_etf_fund_flow_df,spx_monthly_pct.shift(-1)]).dropna()
+etf_fund_flow_std = sum_etf_fund_flow_df.rolling(12).std()
+etf_fund_flow_mean = sum_etf_fund_flow_df.rolling(12).mean()
+sum_etf_fund_flow_z = (sum_etf_fund_flow_df - etf_fund_flow_mean) / etf_fund_flow_std
+fund_flow_spx_merge = merge_dfs([sum_etf_fund_flow_z.diff(12),spx_monthly_pct.shift(-1)]).dropna()
+z_score_bucket(fund_flow_spx_merge,'fund_flow','spx')
 
+### ---------------------------------------------------------------------------------------------------------- ###
+### --------------------------------------------- FUND FLOW MODEL -------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
 
+def fund_flow_z_backtest(row,signal_colname_1):
+    if row[signal_colname_1] < -0.5:
+        return 1
+    elif row[signal_colname_1] > 0.5:
+        return 0.6
+    else:
+        return 1
+
+fund_flow_spx_merge['weights'] = fund_flow_spx_merge.apply(
+    lambda row: fund_flow_z_backtest(row,
+                                           'fund_flow'), axis=1
+)
+fund_flow_spx_merge['bt_returns'] = fund_flow_spx_merge['weights'] * fund_flow_spx_merge['spx']
+
+spx_fund_flow_return_metrics = return_metrics(
+    fund_flow_spx_merge[['bt_returns','spx']],
+    fund_flow_spx_merge[['spx']],
+    12
+)
+spx_fund_flow_return_metrics['Return/Risk']
+
+### ---------------------------------------------------------------------------------------------------------- ###
+### --------------------------------------------- FUND FLOW MODEL -------------------------------------------- ###
+### ---------------------------------------------------------------------------------------------------------- ###
+
+def display_etf_fund_flows():
+    etf_fund_flow_df
+
+def equity_fund_flow_results():
+    streamlit_plot(df=(1 + fund_flow_spx_merge[['bt_returns', 'spx']]).cumprod() - 1,
+                   columns_array=['bt_returns', 'spx'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Equities Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(spx_fund_flow_return_metrics)

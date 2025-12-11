@@ -500,3 +500,20 @@ def plot_streamlit_regime_statistics(stats_df):
     with col2:
         st.write(styled, unsafe_allow_html=True)
 
+
+def z_score_bucket(df, z_col, target_col):
+    l2 = df[df[z_col] < -2][target_col].mean()
+    l1g2 = df[(df[z_col] < -1) & (df[z_col] > -2)][target_col].mean()
+    l0g1 = df[(df[z_col] < 0) & (df[z_col] > -1)][target_col].mean()
+    g0l1 = df[(df[z_col] < 1) & (df[z_col] > 0)][target_col].mean()
+    g1l2 = df[(df[z_col] < 2) & (df[z_col] > 1)][target_col].mean()
+    g2 = df[df[z_col] > 2][target_col].mean()
+
+    l5 = df[df[z_col] < -0.5][target_col].mean()
+    g5 = df[df[z_col] > 0.5][target_col].mean()
+
+    z_score_df = pd.DataFrame()
+    z_score_df['buckets'] = ['<-2', '-2 to -1', '-1 to 0', '0 to 1', '1 to 2', '>2', '<-0.5', '>0.5']
+    z_score_df['mean_returns'] = [l2, l1g2, l0g1, g0l1, g1l2, g2, l5, g5]
+    print(z_score_df)
+    return (z_score_df)

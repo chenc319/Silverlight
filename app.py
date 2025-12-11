@@ -6,10 +6,11 @@
 import streamlit as st
 import pandas as pd
 import functools as ft
+import app_fund_flows
 import app_growth
 import app_grid
 import app_growth_inflation
-import app_overview
+import app_regime_summary
 import app_barra
 import app_inflation
 import app_liquidity
@@ -109,8 +110,9 @@ with st.sidebar:
         },
         'Passive Bubble': {
             "Select an option...": "Select an option...",
-            '401k Seasonality': '401k Seasonality'
-        }
+            '401k Seasonality': '401k Seasonality',
+            'Fund Flows': 'Fund Flows'
+    }
     }
 
     # Initialize session state for each section if not exists
@@ -194,13 +196,13 @@ elif page == 'Growth & Inflation Study':
 
 elif page == 'Regime Summary':
     st.title('GRID')
-    app_overview.plot_grid_nowcast()
+    app_regime_summary.plot_grid_nowcast()
     st.title('FlowCluster')
-    app_overview.plot_flowcluster_nowcast()
+    app_regime_summary.plot_flowcluster_nowcast()
     st.title('Cross-Asset')
-    app_overview.plot_crossasset_nowcast()
+    app_regime_summary.plot_crossasset_nowcast()
     st.title('Yield Curve')
-    app_overview.plot_yc_nowcast()
+    app_regime_summary.plot_yc_nowcast()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------- GROWTH AND INFLATION --------------------------------- ###
@@ -306,13 +308,18 @@ elif page == 'Liquidity Monitor':
     app_liquidity.plot_equity_repo_venue_backtest()
 
 ### ---------------------------------------------------------------------------------------- ###
-### --------------------------------- TAIL HEDGE PORTFOLIO --------------------------------- ###
+### ------------------------------------- SEASONALITY -------------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
 elif page == '401k Seasonality':
     st.title('Equity Bond RV Spread')
 
+### ---------------------------------------------------------------------------------------- ###
+### -------------------------------------- FUND FLOWS -------------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
 
-
+elif page == 'Fund Flows':
+    st.title('Fund Flows Backtest')
+    app_fund_flows.equity_fund_flow_results()
 
 
