@@ -1,7 +1,6 @@
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### --------------------------------------------- FUND FLOW MODEL -------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
-import pandas as pd
 
 ### PACKAGES ###
 from Functions import *
@@ -54,12 +53,7 @@ fund_flow_spx_merge.columns = ['fund_flow','fund_flow_z','spx']
 z_score_bucket(fund_flow_spx_merge,'fund_flow_z','spx')
 
 ### MOVING AVERAGES ###
-fund_flow_spx_merge['fund_flow_1st_roc'] = fund_flow_spx_merge['fund_flow'].diff(3)
-fund_flow_spx_merge['fund_flow_2nd_roc'] = fund_flow_spx_merge['fund_flow_1st_roc'].diff(1)
-fund_flow_spx_merge[(fund_flow_spx_merge['fund_flow_1st_roc']>0) & (fund_flow_spx_merge['fund_flow_2nd_roc']>0)]['spx'].mean()
-fund_flow_spx_merge[(fund_flow_spx_merge['fund_flow_1st_roc']>0) & (fund_flow_spx_merge['fund_flow_2nd_roc']<0)]['spx'].mean()
-fund_flow_spx_merge[(fund_flow_spx_merge['fund_flow_1st_roc']<0) & (fund_flow_spx_merge['fund_flow_2nd_roc']>0)]['spx'].mean()
-fund_flow_spx_merge[(fund_flow_spx_merge['fund_flow_1st_roc']<0) & (fund_flow_spx_merge['fund_flow_2nd_roc']<0)]['spx'].mean()
+
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### --------------------------------------------- FUND FLOW MODEL -------------------------------------------- ###

@@ -20,6 +20,7 @@ import app_cross_asset
 import app_flowcluster
 import app_yc
 import app_seas
+import app_momo
 
 ### FUNCTIONS ###
 def merge_dfs(array_of_dfs):
@@ -111,6 +112,7 @@ with st.sidebar:
         'Passive Bubble': {
             "Select an option...": "Select an option...",
             'Seasonality': 'Seasonality',
+            'Momentum': 'Momentum',
             'Fund Flows': 'Fund Flows'
     }
     }
@@ -323,5 +325,13 @@ elif page == 'Fund Flows':
     app_fund_flows.display_etf_fund_flows()
     st.title('Fund Flows Backtest')
     app_fund_flows.equity_fund_flow_results()
+
+### ---------------------------------------------------------------------------------------- ###
+### --------------------------------------- MOMENTUM --------------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif page == 'Momentum':
+    st.title('SPX Rotation Momentum Backtest')
+    app_momo.equity_sector_momo_results()
 
 
