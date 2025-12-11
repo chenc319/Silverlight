@@ -90,6 +90,7 @@ for row in sectors_12_pct.index:
     sector_backtest.loc[row,'bt_returns'] = total_bt_returns
 
 sector_backtest['sector_benchmark'] = sectors_lag_pct.mean(axis=1)
+sector_backtest = sector_backtest['2007-01-01':]
 
 sector_momo_return_metrics = return_metrics(
     sector_backtest[['bt_returns','sector_benchmark']],
