@@ -92,7 +92,7 @@ def display_etf_fund_flows():
                    graph_title = 'Top 6 Fund Flows',
                    y_axis_label = 'Rolling 12m Change')
     streamlit_plot(df=sum_etf_fund_flow_df,
-                   columns_array=etf_fund_flow_df.columns,
+                   columns_array=sum_etf_fund_flow_df.columns,
                    colors_array=[
                        "#000000",  # black
                    ],
