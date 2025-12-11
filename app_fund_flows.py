@@ -91,6 +91,13 @@ def display_etf_fund_flows():
                        ],
                    graph_title = 'Top 6 Fund Flows',
                    y_axis_label = 'Rolling 12m Change')
+    streamlit_plot(df=sum_etf_fund_flow_df,
+                   columns_array=etf_fund_flow_df.columns,
+                   colors_array=[
+                       "#000000",  # black
+                   ],
+                   graph_title='Top 6 Net Fund Flow',
+                   y_axis_label='Rolling 12m Change')
 
 def equity_fund_flow_results():
     streamlit_plot(df=(1 + fund_flow_spx_merge[['bt_returns', 'spx']]).cumprod() - 1,
