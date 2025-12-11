@@ -7,19 +7,17 @@ import streamlit as st
 import pandas as pd
 import functools as ft
 import app_fund_flows
-import app_growth
+from archives import app_growth, app_inflation
 import app_grid
 import app_growth_inflation
 import app_regime_summary
 import app_barra
-import app_inflation
 import app_liquidity
 import app_sam_coreequity
 import app_positioning
 import app_cross_asset
 import app_flowcluster
 import app_yc
-import app_seas
 import app_momo
 
 ### FUNCTIONS ###
