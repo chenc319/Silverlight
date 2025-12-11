@@ -110,7 +110,7 @@ with st.sidebar:
         },
         'Passive Bubble': {
             "Select an option...": "Select an option...",
-            '401k Seasonality': '401k Seasonality',
+            'Seasonality': 'Seasonality',
             'Fund Flows': 'Fund Flows'
     }
     }
@@ -311,7 +311,7 @@ elif page == 'Liquidity Monitor':
 ### ------------------------------------- SEASONALITY -------------------------------------- ###
 ### ---------------------------------------------------------------------------------------- ###
 
-elif page == '401k Seasonality':
+elif page == 'Seasonality':
     st.title('Equity Bond RV Spread')
 
 ### ---------------------------------------------------------------------------------------- ###
@@ -319,6 +319,8 @@ elif page == '401k Seasonality':
 ### ---------------------------------------------------------------------------------------- ###
 
 elif page == 'Fund Flows':
+    st.title('Top 6 Fund Flows')
+    app_fund_flows.display_etf_fund_flows()
     st.title('Fund Flows Backtest')
     app_fund_flows.equity_fund_flow_results()
 

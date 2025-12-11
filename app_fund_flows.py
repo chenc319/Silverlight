@@ -79,7 +79,18 @@ spx_fund_flow_return_metrics['Return/Risk']
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def display_etf_fund_flows():
-    etf_fund_flow_df
+    streamlit_plot(df = etf_fund_flow_df,
+                   columns_array = etf_fund_flow_df.columns,
+                   colors_array = [
+                       "#6BA368",  # soft green
+                       "#C75C5C",  # muted red
+                       "#D4AF37",  # muted golden yellow
+                       "#E29547",  # soft orange
+                       "#4F81BD",  # muted blue
+                       "#B38CB4",  # muted purple
+                       ],
+                   graph_title = 'Top 6 Fund Flows',
+                   y_axis_label = 'Rolling 12m Change')
 
 def equity_fund_flow_results():
     streamlit_plot(df=(1 + fund_flow_spx_merge[['bt_returns', 'spx']]).cumprod() - 1,
