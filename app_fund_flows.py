@@ -43,11 +43,23 @@ sum_etf_fund_flow_df.columns = ['fund_flow']
 ### --------------------------------------------- FUND FLOW MODEL -------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
+### Z SCORE ###
 etf_fund_flow_std = sum_etf_fund_flow_df.rolling(12).std()
 etf_fund_flow_mean = sum_etf_fund_flow_df.rolling(12).mean()
 sum_etf_fund_flow_z = (sum_etf_fund_flow_df - etf_fund_flow_mean) / etf_fund_flow_std
-fund_flow_spx_merge = merge_dfs([sum_etf_fund_flow_z.diff(12),spx_monthly_pct.shift(-1)]).dropna()
-z_score_bucket(fund_flow_spx_merge,'fund_flow','spx')
+fund_flow_spx_merge = merge_dfs([sum_etf_fund_flow_df,
+                                 sum_etf_fund_flow_z.diff(12),
+                                 spx_monthly_pct.shift(-1)]).dropna()
+fund_flow_spx_merge.columns = ['fund_flow','fund_flow_z','spx']
+z_score_bucket(fund_flow_spx_merge,'fund_flow_z','spx')
+
+### MOVING AVERAGES ###
+fund_flow_spx_merge['fund_flow_1st_roc'] = fund_flow_spx_merge['fund_flow'].diff(12)
+fund_flow_spx_merge['fund_flow_2nd_roc'] = fund_flow_spx_merge['fund_flow_1st_roc'].diff(3)
+fund_flow_spx_merge[(fund_flow_spx_merge['fund_flow_1st_roc']>0) & (fund_flow_spx_merge['fund_flow_2nd_roc']>0)]['spx'].mean()
+fund_flow_spx_merge[(fund_flow_spx_merge['fund_flow_1st_roc']>0) & (fund_flow_spx_merge['fund_flow_2nd_roc']<0)]['spx'].mean()
+fund_flow_spx_merge[(fund_flow_spx_merge['fund_flow_1st_roc']<0) & (fund_flow_spx_merge['fund_flow_2nd_roc']>0)]['spx'].mean()
+fund_flow_spx_merge[(fund_flow_spx_merge['fund_flow_1st_roc']<0) & (fund_flow_spx_merge['fund_flow_2nd_roc']<0)]['spx'].mean()
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ### --------------------------------------------- FUND FLOW MODEL -------------------------------------------- ###
@@ -61,12 +73,27 @@ def fund_flow_z_backtest(row,signal_colname_1):
     else:
         return 1
 
-fund_flow_spx_merge['weights'] = fund_flow_spx_merge.apply(
-    lambda row: fund_flow_z_backtest(row,
-                                           'fund_flow'), axis=1
-)
-fund_flow_spx_merge['bt_returns'] = fund_flow_spx_merge['weights'] * fund_flow_spx_merge['spx']
+def fund_flow_cross_backtest(row,signal_colname_1,signal_colname_2):
+    if row[signal_colname_1] > 0 and row[signal_colname_2] > 0:
+        return 0.8
+    elif row[signal_colname_1] > 0 and row[signal_colname_2] < 0:
+        return 0.6
+    elif row[signal_colname_1] < 0 and row[signal_colname_2] > 0:
+        return 1
+    elif row[signal_colname_1] < 0 and row[signal_colname_2] < 0:
+        return 0.8
 
+fund_flow_spx_merge['z_weights'] = fund_flow_spx_merge.apply(
+    lambda row: fund_flow_z_backtest(row,
+                                           'fund_flow_z'), axis=1
+)
+fund_flow_spx_merge['cross_weights'] = fund_flow_spx_merge.apply(
+    lambda row: fund_flow_cross_backtest(row,
+                                           'fund_flow_1st_roc',
+                                         'fund_flow_2nd_roc'), axis=1
+)
+
+fund_flow_spx_merge['bt_returns'] = fund_flow_spx_merge['cross_weights'] * fund_flow_spx_merge['spx']
 spx_fund_flow_return_metrics = return_metrics(
     fund_flow_spx_merge[['bt_returns','spx']],
     fund_flow_spx_merge[['spx']],
@@ -90,14 +117,14 @@ def display_etf_fund_flows():
                        "#B38CB4",  # muted purple
                        ],
                    graph_title = 'Top 6 Fund Flows',
-                   y_axis_label = 'Rolling 12m Change')
+                   y_axis_label = 'Rolling 12m Change (Millions)')
     streamlit_plot(df=sum_etf_fund_flow_df,
                    columns_array=sum_etf_fund_flow_df.columns,
                    colors_array=[
                        "#000000",  # black
                    ],
                    graph_title='Top 6 Net Fund Flow',
-                   y_axis_label='Rolling 12m Change')
+                   y_axis_label='Rolling 12m Change (Millions)')
 
 def equity_fund_flow_results():
     streamlit_plot(df=(1 + fund_flow_spx_merge[['bt_returns', 'spx']]).cumprod() - 1,
