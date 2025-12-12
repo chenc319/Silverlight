@@ -116,8 +116,8 @@ for row in sector_rolling_vol.index:
     inv_vol = inv_vol / inv_vol.sum()  # normalize to 1
     sector_vol_scale_weights.loc[row] = inv_vol
 
-sector_vol_scale_bt = (sector_vol_scale_weights * sectors_lag_pct).dropna().sum(axis=1)
-
+sector_vol_scale_bt = pd.DataFrame((sector_vol_scale_weights * sectors_lag_pct).dropna().sum(axis=1))
+sector_vol_scale_bt.columns = ['bt_returns']
 sector_vol_scale_bt['sector_benchmark'] = sectors_lag_pct.mean(axis=1)
 
 sector_vol_scale_return_metrics = return_metrics(
