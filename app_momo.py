@@ -1,6 +1,7 @@
 ### ------------------------------------------------------------------------------------ ###
 ### --------------------------------------- MOMO --------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
+import pandas as pd
 
 ### PACKAGES ###
 from Functions import *
@@ -56,28 +57,20 @@ dxy_monthly = pd.DataFrame(dxy['Close']).resample('ME').last()
 dxy_monthly.columns = ['dxy']
 
 ### SECTOR DATA ###
-spx_sectors_merge = pd.DataFrame()
-for each_factor in list(spx_sectors.keys()):
-    with open(Path(DATA_DIR) / (each_factor + '.csv'), 'rb') as file:
-        df = pd.read_csv(file)
-    df.index = pd.to_datetime(df['Date']).values
-    try:
-        df['Price'] = df['Price'].str.replace(',', '', regex=False)
-        df['Price'] = pd.to_numeric(df['Price'], errors='coerce')
-    except:
-        pass
-    df = pd.DataFrame(pd.to_numeric(df['Price']))
-    df.columns = [spx_sectors[each_factor]]
-    spx_sectors_merge = merge_dfs([spx_sectors_merge, df])
-spx_sectors_merge = spx_sectors_merge.dropna()
+with open(Path(DATA_DIR) / ('sector_industry_returns.xlsx'), 'rb') as file:
+    sector_df = pd.read_excel(file,sheet_name = 'sector')
+sector_df.index = pd.to_datetime(sector_df['Dates']).values
+sector_df.sort_index(inplace=True)
+sector_df.drop('Dates', axis=1, inplace=True)
+sector_df = sector_df.dropna()
 
 ### ------------------------------------------------------------------------------------ ###
 ### --------------------------------------- MOMO --------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
 ### CROSS ASSET ###
-sectors_12_pct = spx_sectors_merge.resample('ME').last().pct_change(12)
-sectors_lag_pct = spx_sectors_merge.resample('ME').last().pct_change(1).shift(-1)
+sectors_12_pct = sector_df.resample('ME').last().pct_change(12)
+sectors_lag_pct = sector_df.resample('ME').last().pct_change(1).shift(-1)
 
 sector_backtest = pd.DataFrame(columns = ['top4','mid4','bottom4','bt_returns'])
 row = pd.to_datetime('2025-05-31')
@@ -106,7 +99,7 @@ sector_momo_return_metrics = return_metrics(
 sector_momo_return_metrics['Return/Risk']
 
 ### VOLATILITY SCALING ###
-sector_realized_pct = spx_sectors_merge.resample('ME').last().pct_change(1)
+sector_realized_pct = sector_df.resample('ME').last().pct_change(1)
 sector_rolling_vol = sector_realized_pct.rolling(3).std() * (12**0.5)
 sector_vol_scale_weights = pd.DataFrame(columns = sector_realized_pct.columns)
 for row in sector_rolling_vol.index:
