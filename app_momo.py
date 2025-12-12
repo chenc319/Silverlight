@@ -69,6 +69,42 @@ for each_factor in list(spx_sectors.keys()):
 ### --------------------------------------- MOMO --------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
+### MOMO ###
+sectors_12_pct = spx_sectors_merge.resample('ME').last().pct_change(12)
+sectors_lag_pct = spx_sectors_merge.resample('ME').last().pct_change(1).shift(-1)
+
+sector_backtest = pd.DataFrame(columns = ['top4','mid4','bottom4','bt_returns'])
+row = pd.to_datetime('2025-05-31')
+for row in sectors_12_pct.index:
+    subset = sectors_12_pct.loc[row].sort_values(ascending=False)
+    top4 = subset.index[:4]
+    mid3 = subset.index[4:7]
+    bottom3 = subset.index[7:11]
+    future_top4 = sectors_lag_pct.loc[row,top4].mean() * 0.5
+    future_mid3 = sectors_lag_pct.loc[row,mid3].mean() * 0.35
+    future_bottom4 = sectors_lag_pct.loc[row,bottom3].mean() * 0.15
+    total_bt_returns = future_top4 + future_mid3 + future_bottom4
+
+    sector_backtest.loc[row,'top4'] = future_top4
+    sector_backtest.loc[row,'mid4'] = future_mid3
+    sector_backtest.loc[row,'bottom4'] = future_bottom4
+    sector_backtest.loc[row,'bt_returns'] = total_bt_returns
+
+sector_backtest['sector_benchmark'] = sectors_lag_pct.mean(axis=1)
+sector_backtest = sector_backtest['2007-01-01':]
+
+sector_momo_return_metrics = return_metrics(
+    sector_backtest[['bt_returns','sector_benchmark']],
+    sector_backtest[['sector_benchmark']],
+    12
+)
+sector_momo_return_metrics['Return/Risk']
+
+### ------------------------------------------------------------------------------------ ###
+### --------------------------------------- MOMO --------------------------------------- ###
+### ------------------------------------------------------------------------------------ ###
+
+### CROSS ASSET ###
 sectors_12_pct = spx_sectors_merge.resample('ME').last().pct_change(12)
 sectors_lag_pct = spx_sectors_merge.resample('ME').last().pct_change(1).shift(-1)
 
