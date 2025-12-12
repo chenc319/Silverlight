@@ -150,3 +150,4 @@ def equity_sector_vol_scale_results():
                    graph_title='Equities Historical Performance',
                    y_axis_label='%')
     streamlit_return_metrics_table(sector_vol_scale_return_metrics)
+
