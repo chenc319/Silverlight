@@ -107,7 +107,7 @@ sector_momo_return_metrics['Return/Risk']
 
 ### VOLATILITY SCALING ###
 sector_realized_pct = spx_sectors_merge.resample('ME').last().pct_change(1)
-sector_rolling_vol = sector_realized_pct.rolling(12).std() * (12**0.5)
+sector_rolling_vol = sector_realized_pct.rolling(3).std() * (12**0.5)
 sector_vol_scale_weights = pd.DataFrame(columns = sector_realized_pct.columns)
 for row in sector_rolling_vol.index:
     vol_today = sector_rolling_vol.loc[row]
