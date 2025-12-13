@@ -234,7 +234,7 @@ def sector_vol_scale_results():
                    y_axis_label='%')
     streamlit_return_metrics_table(sector_vol_scale_return_metrics)
 
-def sector_excess_return_results():
+def sector_x_spx_results():
     streamlit_plot(df=(1 + sector_x_spx_backtest[['bt_returns',
                                             'sector_benchmark']]
                        ).cumprod() - 1,
@@ -244,3 +244,12 @@ def sector_excess_return_results():
                    y_axis_label='%')
     streamlit_return_metrics_table(sector_x_spx_return_metrics)
 
+def sector_x_bcom_results():
+    streamlit_plot(df=(1 + sector_x_bcom_backtest[['bt_returns',
+                                            'sector_benchmark']]
+                       ).cumprod() - 1,
+                   columns_array=['bt_returns', 'sector_benchmark'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Equities Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(sector_x_bcom_return_metrics)
