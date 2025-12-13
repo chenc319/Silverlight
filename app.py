@@ -330,8 +330,10 @@ elif page == 'Fund Flows':
 
 elif page == 'Momentum':
     st.title('SPX Rotation Momentum Backtest')
-    app_momo.equity_sector_momo_results()
+    app_momo.sector_momo_results()
     st.title('SPX Rotation Vol-Scale Backtest')
-    app_momo.equity_sector_vol_scale_results()
+    app_momo.sector_vol_scale_results()
+    st.title('SPX Rotation Excess Return Backtest')
+    app_momo.sector_exces_return_results()
 
 
