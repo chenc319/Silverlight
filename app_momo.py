@@ -72,7 +72,7 @@ sectors_lag_pct = sector_df.resample('ME').last().pct_change(1).shift(-1)
 ### ------------------------------------------------------------------------------------ ###
 
 ### CROSS SECTIONAL SECTOR ROTATION MOMENTUM VS SPX ###
-spx_12_pct = pd.DataFrame(sp500.resample('ME').last().pct_change(12)['Close'])
+spx_12_pct = pd.DataFrame(sp500.resample('ME').last().pct_change(6)['Close'])
 sector_x_ret = pd.DataFrame()
 for each_sector in sectors_12_pct.columns:
     merge_df = merge_dfs([sectors_12_pct[each_sector],
@@ -116,7 +116,7 @@ sector_x_spx_return_metrics['Return/Risk']
 ### ------------------------------------------------------------------------------------ ###
 
 ### CROSS SECTIONAL SECTOR ROTATION MOMENTUM VS SPX ###
-bcom_12_pct = pd.DataFrame(bcom.resample('ME').last().pct_change(12)['Close'])
+bcom_12_pct = pd.DataFrame(bcom.resample('ME').last().pct_change(6)['Close'])
 sector_x_ret = pd.DataFrame()
 for each_sector in sectors_12_pct.columns:
     merge_df = merge_dfs([sectors_12_pct[each_sector],
@@ -160,7 +160,7 @@ sector_x_bcom_return_metrics['Return/Risk']
 ### ------------------------------------------------------------------------------------ ###
 
 ### CROSS SECTIONAL SECTOR ROTATION MOMENTUM VS SPX ###
-bonds_12_pct = pd.DataFrame(agg.resample('ME').last().pct_change(12)['Close'])
+bonds_12_pct = pd.DataFrame(agg.resample('ME').last().pct_change(6)['Close'])
 sector_x_ret = pd.DataFrame()
 for each_sector in sectors_12_pct.columns:
     merge_df = merge_dfs([sectors_12_pct[each_sector],
@@ -204,7 +204,7 @@ sector_x_bonds_return_metrics['Return/Risk']
 ### ------------------------------------------------------------------------------------ ###
 
 ### CROSS SECTIONAL SECTOR ROTATION MOMENTUM VS SPX ###
-dxy_12_pct = pd.DataFrame(dxy.resample('ME').last().pct_change(12)['Close'])
+dxy_12_pct = pd.DataFrame(dxy.resample('ME').last().pct_change(6)['Close'])
 sector_x_ret = pd.DataFrame()
 for each_sector in sectors_12_pct.columns:
     merge_df = merge_dfs([sectors_12_pct[each_sector],
