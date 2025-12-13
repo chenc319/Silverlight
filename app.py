@@ -334,6 +334,6 @@ elif page == 'Momentum':
     st.title('SPX Rotation Vol-Scale Backtest')
     app_momo.sector_vol_scale_results()
     st.title('SPX Rotation Excess Return Backtest')
-    app_momo.sector_exces_return_results()
+    app_momo.sector_excess_return_results()
 
 

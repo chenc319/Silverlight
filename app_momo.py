@@ -182,7 +182,7 @@ def sector_vol_scale_results():
                    y_axis_label='%')
     streamlit_return_metrics_table(sector_vol_scale_return_metrics)
 
-def sector_exces_return_results():
+def sector_excess_return_results():
     streamlit_plot(df=(1 + sector_excess_return_backtest[['bt_returns',
                                             'sector_benchmark']]
                        ).cumprod() - 1,
