@@ -30,6 +30,21 @@ def static_beta(return_ts, benchmark_ts,):
     individual_beta = rolling_cov / rolling_var
     return individual_beta
 
+def rolling_beta(return_ts, benchmark_ts,window):
+    returns = merge_dfs([return_ts,benchmark_ts])
+    rolling_cov = returns.iloc[:,0].rolling(window).cov(returns.iloc[:,1])
+    rolling_var = returns.iloc[:,1].rolling(window).var()
+    individual_beta = rolling_cov / rolling_var
+    return individual_beta
+
+def rolling_beta_sign(y, x, window, thresh=-0.2):
+    """
+    Return 1 if beta >= thresh, else -1.
+    """
+    beta = rolling_beta(y, x, window)
+    sign = np.where(beta >= thresh, 1, -1)
+    return pd.Series(sign, index=beta.index)
+
 def return_metrics(backtest_returns_data, benchmark_data, ann_factor):
     backtest_returns_data = pd.DataFrame(backtest_returns_data)
     benchmark_data = pd.DataFrame(benchmark_data)

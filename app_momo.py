@@ -63,9 +63,44 @@ sector_df.sort_index(inplace=True)
 sector_df.drop('Dates', axis=1, inplace=True)
 sector_df = sector_df.dropna()
 
+### MAGS DATA ###
+mags_tickers = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA']
+each_mags_df = pd.DataFrame()
+for mag_ticker in mags_tickers:
+    mag_string = mag_ticker + '.csv'
+    with open(Path(DATA_DIR) / mag_string, 'rb') as file:
+        mag_df = pd.read_csv(file)
+        mag_df.index = pd.to_datetime(mag_df['Date'].values)
+        close_df = pd.DataFrame(mag_df['Close'])
+        close_df.columns = [mag_ticker]
+    each_mags_df = merge_dfs([each_mags_df, close_df])
+each_mags_df = each_mags_df.dropna()
+mags_monthly = each_mags_df.resample('ME').last()
+mags_monthly_pct = mags_monthly.pct_change()
+
+### MAGS WEIGHTS ###
+with open(Path(DATA_DIR) / 'mags_weights.xlsx', 'rb') as file:
+    mags_weights_df = pd.read_excel(file,sheet_name='Sheet1')
+    mags_weights_df.index = mags_weights_df['Date'].values
+    mags_weights_df.drop('Date', axis=1, inplace=True)
+    mags_weights_df['sum'] = mags_weights_df.sum(axis=1)
+normalized_mags_weights = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA'])
+normalized_mags_pct = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA'])
+for col in normalized_mags_weights.columns:
+    normalized_mags_weights[col] = (mags_weights_df[col] / mags_weights_df['sum']).resample('ME').last()
+    col_df = merge_dfs([mags_monthly_pct[col],normalized_mags_weights[col]]).ffill().dropna()
+    col_df.columns = ['pct','weights']
+    normalized_mags_pct[col] = col_df['pct'] * col_df['weights']
+
+mock_mags_monthly_pct = pd.DataFrame(normalized_mags_pct.sum(axis=1))
+mock_mags_monthly_pct.columns = ['mags']
+
 ### PREPARE DFS ###
 sectors_12_pct = sector_df.resample('ME').last().pct_change(12)
 sectors_lag_pct = sector_df.resample('ME').last().pct_change(1).shift(-1)
+mag7_12_pct = mags_monthly.pct_change(12)
+mag7_realized_pct = mags_monthly.pct_change()
+mag7_lagged_pct = mags_monthly.pct_change().shift(-1)
 
 ### ------------------------------------------------------------------------------------ ###
 ### --------------------------------------- MOMO --------------------------------------- ###
@@ -247,72 +282,7 @@ sector_x_dxy_return_metrics['Return/Risk']
 ### --------------------------------------- MOMO --------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
-def sector_x_spx_results():
-    streamlit_plot(df=(1 + sector_x_spx_backtest[['bt_returns',
-                                            'sector_benchmark']]
-                       ).cumprod() - 1,
-                   columns_array=['bt_returns', 'sector_benchmark'],
-                   colors_array=["#8B0000", "#000000"],
-                   graph_title='Equities Historical Performance',
-                   y_axis_label='%')
-    streamlit_return_metrics_table(sector_x_spx_return_metrics)
-
-def sector_x_bcom_results():
-    streamlit_plot(df=(1 + sector_x_bcom_backtest[['bt_returns',
-                                            'sector_benchmark']]
-                       ).cumprod() - 1,
-                   columns_array=['bt_returns', 'sector_benchmark'],
-                   colors_array=["#8B0000", "#000000"],
-                   graph_title='Equities Historical Performance',
-                   y_axis_label='%')
-    streamlit_return_metrics_table(sector_x_bcom_return_metrics)
-
-def sector_x_bonds_results():
-    streamlit_plot(df=(1 + sector_x_bonds_backtest[['bt_returns',
-                                            'sector_benchmark']]
-                       ).cumprod() - 1,
-                   columns_array=['bt_returns', 'sector_benchmark'],
-                   colors_array=["#8B0000", "#000000"],
-                   graph_title='Equities Historical Performance',
-                   y_axis_label='%')
-    streamlit_return_metrics_table(sector_x_bonds_return_metrics)
-
-def sector_x_dxy_results():
-    streamlit_plot(df=(1 + sector_x_dxy_backtest[['bt_returns',
-                                            'sector_benchmark']]
-                       ).cumprod() - 1,
-                   columns_array=['bt_returns', 'sector_benchmark'],
-                   colors_array=["#8B0000", "#000000"],
-                   graph_title='Equities Historical Performance',
-                   y_axis_label='%')
-    streamlit_return_metrics_table(sector_x_dxy_return_metrics)
-
-
-
-
-
-
-
-
-
-
-def rolling_beta(return_ts, benchmark_ts,window):
-    returns = merge_dfs([return_ts,benchmark_ts])
-    rolling_cov = returns.iloc[:,0].rolling(window).cov(returns.iloc[:,1])
-    rolling_var = returns.iloc[:,1].rolling(window).var()
-    individual_beta = rolling_cov / rolling_var
-    return individual_beta
-
-def rolling_beta_sign(y, x, window, thresh=-0.2):
-    """
-    Return 1 if beta >= thresh, else -1.
-    """
-    beta = rolling_beta(y, x, window)
-    sign = np.where(beta >= thresh, 1, -1)
-    return pd.Series(sign, index=beta.index)
-
-
-
+### MOMENTUM RELATIVE TO ALL OF THE CROSS ASSETS ###
 cross_asset_pct = merge_dfs([
     spx_monthly.rename(columns={'spx': 'spx'}),
     bonds_monthly.rename(columns={'bonds': 'bonds'}),
@@ -360,9 +330,9 @@ for each_sector in sectors_12_pct.columns:
 
     merge_df['x_cross_asset_z'] = (
         (merge_df['x_spx_z'] * 0.25 * merge_df['rolling_corr_sign_spx']) +
-        (merge_df['x_bonds_z'] * 0.0 * merge_df['rolling_corr_sign_bonds']) +
-        (merge_df['x_bcom_z'] * 0.0 * merge_df['rolling_corr_sign_bcom']) +
-        (merge_df['x_dxy_z'] * 0.0 * merge_df['rolling_corr_sign_dxy'])
+        (merge_df['x_bonds_z'] * 0.25 * merge_df['rolling_corr_sign_bonds']) +
+        (merge_df['x_bcom_z'] * 0.25 * merge_df['rolling_corr_sign_bcom']) +
+        (merge_df['x_dxy_z'] * 0.25 * merge_df['rolling_corr_sign_dxy'])
     )
     sector_cross_asset_z[each_sector] = merge_df['x_cross_asset_z']
 
@@ -391,25 +361,11 @@ sector_x_all_assets_return_metrics = return_metrics(
 )
 sector_x_all_assets_return_metrics['Return/Risk']
 
+### ------------------------------------------------------------------------------------ ###
+### --------------------------------------- MOMO --------------------------------------- ###
+### ------------------------------------------------------------------------------------ ###
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### MOMENTUM RELATIVE TO ALL OF THE SECTORS ###
 sector_cross_asset_z = pd.DataFrame()
 for each_sector in sectors_12_pct.columns:
     df_subset = sectors_12_pct.drop(columns=[each_sector])
@@ -463,5 +419,129 @@ sector_x_all_assets_return_metrics = return_metrics(
     12
 )
 sector_x_all_assets_return_metrics['Return/Risk']
+
+### ------------------------------------------------------------------------------------ ###
+### --------------------------------------- MOMO --------------------------------------- ###
+### ------------------------------------------------------------------------------------ ###
+
+### MAG7 MOMENTUM RELATIVE TO SPX ###
+mags_x_ret = pd.DataFrame()
+for each_mag in mag7_12_pct.columns:
+    merge_df = merge_dfs([mag7_12_pct[each_mag],
+                          spx_12_pct,
+                          mag7_lagged_pct[each_mag]]).dropna()
+    merge_df.columns = ['mag','spx','lag_mag']
+    merge_df['excess_return'] = merge_df['mag'] - merge_df['spx']
+    mags_x_ret[each_mag] = merge_df['excess_return']
+
+mags_excess_ret_mean = mags_x_ret.rolling(12).mean()
+mags_excess_ret_std = mags_x_ret.rolling(12).std()
+mags_excess_ret_z = (mags_x_ret - mags_excess_ret_mean) / mags_excess_ret_std
+
+mags_x_spx_backtest = pd.DataFrame(columns = ['top1','mid1','mid2','bottom1','bt_returns'])
+for row in mags_excess_ret_z.index:
+    subset = mags_excess_ret_z.loc[row].sort_values(ascending=False)
+    top1 = subset.index[:2]
+    mid1 = subset.index[2:4]
+    mid2 = subset.index[4:6]
+    bottom1 = subset.index[6:7]
+    future_top1 = mag7_lagged_pct.loc[row,top1].mean() * 0.4
+    future_mid1 = mag7_lagged_pct.loc[row,mid1].mean() * 0.3
+    future_mid2 = mag7_lagged_pct.loc[row,mid2].mean() * 0.2
+    future_bottom1 = mag7_lagged_pct.loc[row,bottom1].mean() * 0.1
+    total_bt_returns = future_top1 + future_mid1 + future_mid2 + future_bottom1
+
+    mags_x_spx_backtest.loc[row, 'top1'] = future_top1
+    mags_x_spx_backtest.loc[row, 'mid1'] = future_mid1
+    mags_x_spx_backtest.loc[row, 'mid2'] = future_mid2
+    mags_x_spx_backtest.loc[row, 'bottom1'] = future_bottom1
+    mags_x_spx_backtest.loc[row, 'bt_returns'] = total_bt_returns
+
+mags_x_spx_backtest['mags_benchmark'] = mag7_lagged_pct.mean(axis=1)
+
+mags_x_spx_return_metrics = return_metrics(
+    mags_x_spx_backtest[['bt_returns','mags_benchmark']],
+    mags_x_spx_backtest[['mags_benchmark']],
+    12
+)
+mags_x_spx_return_metrics['Return/Risk']
+
+### ------------------------------------------------------------------------------------ ###
+### --------------------------------------- MOMO --------------------------------------- ###
+### ------------------------------------------------------------------------------------ ###
+
+def sector_x_spx_results():
+    streamlit_plot(df=(1 + sector_x_spx_backtest[['bt_returns',
+                                            'sector_benchmark']]
+                       ).cumprod() - 1,
+                   columns_array=['bt_returns', 'sector_benchmark'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Equities Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(sector_x_spx_return_metrics)
+
+def sector_x_bcom_results():
+    streamlit_plot(df=(1 + sector_x_bcom_backtest[['bt_returns',
+                                            'sector_benchmark']]
+                       ).cumprod() - 1,
+                   columns_array=['bt_returns', 'sector_benchmark'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Equities Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(sector_x_bcom_return_metrics)
+
+def sector_x_bonds_results():
+    streamlit_plot(df=(1 + sector_x_bonds_backtest[['bt_returns',
+                                            'sector_benchmark']]
+                       ).cumprod() - 1,
+                   columns_array=['bt_returns', 'sector_benchmark'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Equities Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(sector_x_bonds_return_metrics)
+
+def sector_x_dxy_results():
+    streamlit_plot(df=(1 + sector_x_dxy_backtest[['bt_returns',
+                                            'sector_benchmark']]
+                       ).cumprod() - 1,
+                   columns_array=['bt_returns', 'sector_benchmark'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Equities Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(sector_x_dxy_return_metrics)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
