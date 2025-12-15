@@ -75,7 +75,7 @@ sum_etf_fund_flow_df.columns = ['fund_flow']
 ### ----------------------------------- FUND FLOW MODEL ----------------------------------- ###
 ### --------------------------------------------------------------------------------------- ###
 
-### Z SCORE ###
+### SPX ###
 etf_fund_flow_std = sum_etf_fund_flow_df.rolling(12).std()
 etf_fund_flow_mean = sum_etf_fund_flow_df.rolling(12).mean()
 sum_etf_fund_flow_z = (sum_etf_fund_flow_df - etf_fund_flow_mean) / etf_fund_flow_std
@@ -85,7 +85,7 @@ fund_flow_spx_merge = merge_dfs([sum_etf_fund_flow_df,
 fund_flow_spx_merge.columns = ['fund_flow','fund_flow_z','spx']
 z_score_bucket(fund_flow_spx_merge,'fund_flow_z','spx')
 
-### MOVING AVERAGES ###
+### MAG7 ###
 
 
 ### --------------------------------------------------------------------------------------- ###

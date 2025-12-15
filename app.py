@@ -337,5 +337,16 @@ elif page == 'Momentum':
     app_momo.sector_x_bonds_results()
     st.title('Sector Rotation Backtest (excess vs. DXY)')
     app_momo.sector_x_dxy_results()
+    st.title('Sector Rotation Backtest (excess vs. All Assets)')
+    app_momo.sector_x_all_assets_results()
+    st.title('Sector Rotation Backtest (excess vs. All Sectors)')
+    app_momo.sector_x_all_sectors_results()
+
+    st.title('MAGs Rotation Backtest (excess vs. SPX)')
+    app_momo.mag7_x_spx_results()
+    st.title('MAGs Rotation Backtest (excess vs. All MAGs)')
+    app_momo.mag7_x_all_mags_results()
+
+
 
 

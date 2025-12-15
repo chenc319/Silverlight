@@ -6,7 +6,6 @@
 from Functions import *
 from pathlib import Path
 import os
-from matplotlib import pyplot as plt
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 ### ------------------------------------------------------------------------------------ ###
@@ -150,7 +149,7 @@ sector_x_spx_return_metrics['Return/Risk']
 ### --------------------------------------- MOMO --------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
-### CROSS SECTIONAL SECTOR ROTATION MOMENTUM VS SPX ###
+### CROSS SECTIONAL SECTOR ROTATION MOMENTUM VS BCOM ###
 bcom_12_pct = pd.DataFrame(bcom.resample('ME').last().pct_change(12)['Close'])
 sector_x_ret = pd.DataFrame()
 for each_sector in sectors_12_pct.columns:
@@ -194,7 +193,7 @@ sector_x_bcom_return_metrics['Return/Risk']
 ### --------------------------------------- MOMO --------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
-### CROSS SECTIONAL SECTOR ROTATION MOMENTUM VS SPX ###
+### CROSS SECTIONAL SECTOR ROTATION MOMENTUM VS BONDS ###
 bonds_12_pct = pd.DataFrame(agg.resample('ME').last().pct_change(12)['Close'])
 sector_x_ret = pd.DataFrame()
 for each_sector in sectors_12_pct.columns:
@@ -238,7 +237,7 @@ sector_x_bonds_return_metrics['Return/Risk']
 ### --------------------------------------- MOMO --------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
-### CROSS SECTIONAL SECTOR ROTATION MOMENTUM VS SPX ###
+### CROSS SECTIONAL SECTOR ROTATION MOMENTUM VS DXY ###
 dxy_12_pct = pd.DataFrame(dxy.resample('ME').last().pct_change(12)['Close'])
 sector_x_ret = pd.DataFrame()
 for each_sector in sectors_12_pct.columns:
@@ -395,7 +394,7 @@ for each_sector in sectors_12_pct.columns:
 sector_cross_asset_z = sector_cross_asset_z.dropna()
 
 
-sector_x_all_assets_backtest = pd.DataFrame(columns = ['top4','mid4','bottom4','bt_returns'])
+sector_x_all_sectors_backtest = pd.DataFrame(columns = ['top4','mid4','bottom4','bt_returns'])
 for row in sector_cross_asset_z.index[:-1]:
     subset = sector_cross_asset_z.loc[row].sort_values(ascending=False)
     top4 = subset.index[:4]
@@ -406,19 +405,19 @@ for row in sector_cross_asset_z.index[:-1]:
     future_bottom4 = sectors_lag_pct.loc[row,bottom3].mean() * 0.15
     total_bt_returns = future_top4 + future_mid3 + future_bottom4
 
-    sector_x_all_assets_backtest.loc[row, 'top4'] = future_top4
-    sector_x_all_assets_backtest.loc[row, 'mid4'] = future_mid3
-    sector_x_all_assets_backtest.loc[row, 'bottom4'] = future_bottom4
-    sector_x_all_assets_backtest.loc[row, 'bt_returns'] = total_bt_returns
+    sector_x_all_sectors_backtest.loc[row, 'top4'] = future_top4
+    sector_x_all_sectors_backtest.loc[row, 'mid4'] = future_mid3
+    sector_x_all_sectors_backtest.loc[row, 'bottom4'] = future_bottom4
+    sector_x_all_sectors_backtest.loc[row, 'bt_returns'] = total_bt_returns
 
-sector_x_all_assets_backtest['sector_benchmark'] = sectors_lag_pct.mean(axis=1)
+sector_x_all_sectors_backtest['sector_benchmark'] = sectors_lag_pct.mean(axis=1)
 
-sector_x_all_assets_return_metrics = return_metrics(
-    sector_x_all_assets_backtest[['bt_returns','sector_benchmark']],
-    sector_x_all_assets_backtest[['sector_benchmark']],
+sector_x_all_sectors_return_metrics = return_metrics(
+    sector_x_all_sectors_backtest[['bt_returns','sector_benchmark']],
+    sector_x_all_sectors_backtest[['sector_benchmark']],
     12
 )
-sector_x_all_assets_return_metrics['Return/Risk']
+sector_x_all_sectors_return_metrics['Return/Risk']
 
 ### ------------------------------------------------------------------------------------ ###
 ### --------------------------------------- MOMO --------------------------------------- ###
@@ -434,26 +433,23 @@ for each_mag in mag7_12_pct.columns:
     merge_df['excess_return'] = merge_df['mag'] - merge_df['spx']
     mags_x_ret[each_mag] = merge_df['excess_return']
 
-mags_excess_ret_mean = mags_x_ret.rolling(12).mean()
-mags_excess_ret_std = mags_x_ret.rolling(12).std()
+mags_excess_ret_mean = mags_x_ret.rolling(6).mean()
+mags_excess_ret_std = mags_x_ret.rolling(6).std()
 mags_excess_ret_z = (mags_x_ret - mags_excess_ret_mean) / mags_excess_ret_std
 
-mags_x_spx_backtest = pd.DataFrame(columns = ['top1','mid1','mid2','bottom1','bt_returns'])
+mags_x_spx_backtest = pd.DataFrame(columns = ['top1','mid1','bottom1','bt_returns'])
 for row in mags_excess_ret_z.index:
     subset = mags_excess_ret_z.loc[row].sort_values(ascending=False)
-    top1 = subset.index[:2]
-    mid1 = subset.index[2:4]
-    mid2 = subset.index[4:6]
-    bottom1 = subset.index[6:7]
-    future_top1 = mag7_lagged_pct.loc[row,top1].mean() * 0.4
-    future_mid1 = mag7_lagged_pct.loc[row,mid1].mean() * 0.3
-    future_mid2 = mag7_lagged_pct.loc[row,mid2].mean() * 0.2
-    future_bottom1 = mag7_lagged_pct.loc[row,bottom1].mean() * 0.1
-    total_bt_returns = future_top1 + future_mid1 + future_mid2 + future_bottom1
+    top1 = subset.index[:3]
+    mid1 = subset.index[3:5]
+    bottom1 = subset.index[5:7]
+    future_top1 = mag7_lagged_pct.loc[row,top1].mean() * 0.15
+    future_mid1 = mag7_lagged_pct.loc[row,mid1].mean() * 0.35
+    future_bottom1 = mag7_lagged_pct.loc[row,bottom1].mean() * 0.5
+    total_bt_returns = future_top1 + future_mid1 + future_bottom1
 
     mags_x_spx_backtest.loc[row, 'top1'] = future_top1
     mags_x_spx_backtest.loc[row, 'mid1'] = future_mid1
-    mags_x_spx_backtest.loc[row, 'mid2'] = future_mid2
     mags_x_spx_backtest.loc[row, 'bottom1'] = future_bottom1
     mags_x_spx_backtest.loc[row, 'bt_returns'] = total_bt_returns
 
@@ -465,6 +461,65 @@ mags_x_spx_return_metrics = return_metrics(
     12
 )
 mags_x_spx_return_metrics['Return/Risk']
+
+### ------------------------------------------------------------------------------------ ###
+### --------------------------------------- MOMO --------------------------------------- ###
+### ------------------------------------------------------------------------------------ ###
+
+### MOMENTUM RELATIVE TO ALL OF THE MAGS ###
+mags_cross_asset_z = pd.DataFrame()
+for each_mag in mag7_12_pct.columns:
+    df_subset = mag7_12_pct.drop(columns=[each_mag])
+    merge_df = merge_dfs([df_subset,
+                          mag7_12_pct[each_mag]]).dropna()
+    comp_mag_excess_return = pd.DataFrame()
+    comp_mag_rolling_beta = pd.DataFrame()
+    comp_mag_excess_return_beta_sign = pd.DataFrame()
+    for comp_mag in df_subset.columns:
+        comp_mag_excess_return[comp_mag] = (
+                mag7_12_pct[each_mag] - mag7_12_pct[comp_mag])
+        comp_mag_rolling_beta[comp_mag] = rolling_beta_sign(
+            mag7_12_pct[each_mag],
+            mag7_12_pct[comp_mag],
+            12,
+            0
+        )
+        comp_mag_excess_return_beta_sign[comp_mag] = (
+            comp_mag_excess_return[comp_mag] *
+            comp_mag_rolling_beta[comp_mag]
+        )
+    comp_mag_mean = comp_mag_excess_return_beta_sign.rolling(12).mean()
+    comp_mag_std = comp_mag_excess_return_beta_sign.rolling(12).std()
+    comp_mag_z = ((comp_mag_excess_return_beta_sign -
+                      comp_mag_mean) / comp_mag_std).mean(axis=1)
+    mags_cross_asset_z[each_mag] = comp_mag_z
+mags_cross_asset_z = mags_cross_asset_z.dropna()
+
+
+mags_x_all_mags_backtest = pd.DataFrame(columns = ['top','mid','bottom','bt_returns'])
+for row in mags_cross_asset_z.index:
+    subset = mags_cross_asset_z.loc[row].sort_values(ascending=False)
+    top = subset.index[:3]
+    mid = subset.index[3:5]
+    bottom = subset.index[5:7]
+    future_top = mag7_lagged_pct.loc[row,top].mean() * 0.15
+    future_mid = mag7_lagged_pct.loc[row,mid].mean() * 0.35
+    future_bottom = mag7_lagged_pct.loc[row,bottom].mean() * 0.5
+    total_bt_returns = future_top + future_mid + future_bottom
+
+    mags_x_all_mags_backtest.loc[row, 'top'] = future_top
+    mags_x_all_mags_backtest.loc[row, 'mid'] = future_mid
+    mags_x_all_mags_backtest.loc[row, 'bottom'] = future_bottom
+    mags_x_all_mags_backtest.loc[row, 'bt_returns'] = total_bt_returns
+
+mags_x_all_mags_backtest['sector_benchmark'] = mag7_lagged_pct.mean(axis=1)
+
+mags_x_all_mags_return_metrics = return_metrics(
+    mags_x_all_mags_backtest[['bt_returns','sector_benchmark']],
+    mags_x_all_mags_backtest[['sector_benchmark']],
+    12
+)
+mags_x_all_mags_return_metrics['Return/Risk']
 
 ### ------------------------------------------------------------------------------------ ###
 ### --------------------------------------- MOMO --------------------------------------- ###
@@ -510,12 +565,45 @@ def sector_x_dxy_results():
                    y_axis_label='%')
     streamlit_return_metrics_table(sector_x_dxy_return_metrics)
 
+def sector_x_all_assets_results():
+    streamlit_plot(df=(1 + sector_x_all_assets_backtest[['bt_returns',
+                                            'sector_benchmark']]
+                       ).cumprod() - 1,
+                   columns_array=['bt_returns', 'sector_benchmark'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Equities Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(sector_x_all_assets_return_metrics)
 
+def sector_x_all_sectors_results():
+    streamlit_plot(df=(1 + sector_x_all_sectors_backtest[['bt_returns',
+                                            'sector_benchmark']]
+                       ).cumprod() - 1,
+                   columns_array=['bt_returns', 'sector_benchmark'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Equities Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(sector_x_all_sectors_return_metrics)
 
+def mag7_x_spx_results():
+    streamlit_plot(df=(1 + mags_x_spx_backtest[['bt_returns',
+                                            'sector_benchmark']]
+                       ).cumprod() - 1,
+                   columns_array=['bt_returns', 'sector_benchmark'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Equities Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(mags_x_spx_return_metrics)
 
-
-
-
+def mag7_x_all_mags_results():
+    streamlit_plot(df=(1 + mags_x_all_mags_backtest[['bt_returns',
+                                            'sector_benchmark']]
+                       ).cumprod() - 1,
+                   columns_array=['bt_returns', 'sector_benchmark'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Equities Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(mags_x_all_mags_return_metrics)
 
 
 
