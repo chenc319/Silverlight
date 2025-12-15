@@ -87,7 +87,7 @@ z_score_bucket(fund_flow_spx_merge,'fund_flow_z','spx')
 
 ### MAG7 ###
 fund_flow_mags_merge = merge_dfs([sum_etf_fund_flow_df,
-                                 sum_etf_fund_flow_z.diff(12),
+                                 sum_etf_fund_flow_z,
                                  mock_mags_monthly_pct.shift(-1)]).dropna()
 fund_flow_mags_merge.columns = ['fund_flow','fund_flow_z','mags']
 z_score_bucket(fund_flow_mags_merge,'fund_flow_z','mags')
@@ -119,10 +119,10 @@ spx_fund_flow_return_metrics = return_metrics(
 spx_fund_flow_return_metrics['Return/Risk']
 
 def fund_flow_mags_z_backtest(row,signal_colname_1):
-    if row[signal_colname_1] < -0.5:
-        return 1
-    elif row[signal_colname_1] > 0.5:
+    if row[signal_colname_1] < -1:
         return 0.6
+    elif row[signal_colname_1] > -1:
+        return 1
     else:
         return 1
 
