@@ -321,8 +321,10 @@ elif page == 'Seasonality':
 elif page == 'Fund Flows':
     st.title('Top 6 Fund Flows')
     app_fund_flows.display_etf_fund_flows()
-    st.title('Fund Flows Backtest')
+    st.title('SPX Fund Flows Backtest')
     app_fund_flows.equity_fund_flow_results()
+    st.title('MAGs Fund Flows Backtest')
+    app_fund_flows.mags_fund_flow_results()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### --------------------------------------- MOMENTUM --------------------------------------- ###
