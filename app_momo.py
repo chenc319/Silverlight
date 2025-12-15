@@ -512,11 +512,11 @@ for row in mags_cross_asset_z.index:
     mags_x_all_mags_backtest.loc[row, 'bottom'] = future_bottom
     mags_x_all_mags_backtest.loc[row, 'bt_returns'] = total_bt_returns
 
-mags_x_all_mags_backtest['sector_benchmark'] = mag7_lagged_pct.mean(axis=1)
+mags_x_all_mags_backtest['mags_benchmark'] = mag7_lagged_pct.mean(axis=1)
 
 mags_x_all_mags_return_metrics = return_metrics(
-    mags_x_all_mags_backtest[['bt_returns','sector_benchmark']],
-    mags_x_all_mags_backtest[['sector_benchmark']],
+    mags_x_all_mags_backtest[['bt_returns','mags_benchmark']],
+    mags_x_all_mags_backtest[['mags_benchmark']],
     12
 )
 mags_x_all_mags_return_metrics['Return/Risk']
@@ -587,9 +587,9 @@ def sector_x_all_sectors_results():
 
 def mag7_x_spx_results():
     streamlit_plot(df=(1 + mags_x_spx_backtest[['bt_returns',
-                                            'sector_benchmark']]
+                                            'mags_benchmark']]
                        ).cumprod() - 1,
-                   columns_array=['bt_returns', 'sector_benchmark'],
+                   columns_array=['bt_returns', 'mags_benchmark'],
                    colors_array=["#8B0000", "#000000"],
                    graph_title='Equities Historical Performance',
                    y_axis_label='%')
@@ -597,9 +597,9 @@ def mag7_x_spx_results():
 
 def mag7_x_all_mags_results():
     streamlit_plot(df=(1 + mags_x_all_mags_backtest[['bt_returns',
-                                            'sector_benchmark']]
+                                            'mags_benchmark']]
                        ).cumprod() - 1,
-                   columns_array=['bt_returns', 'sector_benchmark'],
+                   columns_array=['bt_returns', 'mags_benchmark'],
                    colors_array=["#8B0000", "#000000"],
                    graph_title='Equities Historical Performance',
                    y_axis_label='%')
