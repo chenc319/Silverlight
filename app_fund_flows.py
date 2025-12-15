@@ -86,13 +86,17 @@ fund_flow_spx_merge.columns = ['fund_flow','fund_flow_z','spx']
 z_score_bucket(fund_flow_spx_merge,'fund_flow_z','spx')
 
 ### MAG7 ###
-
+fund_flow_mags_merge = merge_dfs([sum_etf_fund_flow_df,
+                                 sum_etf_fund_flow_z.diff(12),
+                                 mock_mags_monthly_pct.shift(-1)]).dropna()
+fund_flow_mags_merge.columns = ['fund_flow','fund_flow_z','mags']
+z_score_bucket(fund_flow_mags_merge,'fund_flow_z','mags')
 
 ### --------------------------------------------------------------------------------------- ###
 ### ----------------------------------- FUND FLOW MODEL ----------------------------------- ###
 ### --------------------------------------------------------------------------------------- ###
 
-def fund_flow_z_backtest(row,signal_colname_1):
+def fund_flow_spx_z_backtest(row,signal_colname_1):
     if row[signal_colname_1] < -0.5:
         return 1
     elif row[signal_colname_1] > 0.5:
@@ -101,7 +105,7 @@ def fund_flow_z_backtest(row,signal_colname_1):
         return 1
 
 fund_flow_spx_merge['z_weights'] = fund_flow_spx_merge.apply(
-    lambda row: fund_flow_z_backtest(row,
+    lambda row: fund_flow_spx_z_backtest(row,
                                            'fund_flow_z'), axis=1
 )
 
@@ -113,6 +117,28 @@ spx_fund_flow_return_metrics = return_metrics(
     12
 )
 spx_fund_flow_return_metrics['Return/Risk']
+
+def fund_flow_mags_z_backtest(row,signal_colname_1):
+    if row[signal_colname_1] < -0.5:
+        return 1
+    elif row[signal_colname_1] > 0.5:
+        return 0.6
+    else:
+        return 1
+
+fund_flow_mags_merge['z_weights'] = fund_flow_mags_merge.apply(
+    lambda row: fund_flow_mags_z_backtest(row,
+                                           'fund_flow_z'), axis=1
+)
+
+fund_flow_mags_merge['bt_returns'] = (fund_flow_mags_merge['z_weights'] *
+                                     fund_flow_mags_merge['mags'])
+mags_fund_flow_return_metrics = return_metrics(
+    fund_flow_mags_merge[['bt_returns','mags']],
+    fund_flow_mags_merge[['mags']],
+    12
+)
+mags_fund_flow_return_metrics['Return/Risk']
 
 ### --------------------------------------------------------------------------------------- ###
 ### ----------------------------------- FUND FLOW MODEL ----------------------------------- ###
@@ -148,3 +174,13 @@ def equity_fund_flow_results():
                    graph_title='Equities Historical Performance',
                    y_axis_label='%')
     streamlit_return_metrics_table(spx_fund_flow_return_metrics)
+
+def mags_fund_flow_results():
+    streamlit_plot(df=(1 + fund_flow_mags_merge[['bt_returns',
+                                                'mags']]
+                       ).cumprod() - 1,
+                   columns_array=['bt_returns', 'mags'],
+                   colors_array=["#8B0000", "#000000"],
+                   graph_title='Equities Historical Performance',
+                   y_axis_label='%')
+    streamlit_return_metrics_table(mags_fund_flow_return_metrics)
