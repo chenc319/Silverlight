@@ -74,6 +74,7 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime('today'))
 
 def reset_other_selections(current_section):
     sections = ["Macro Regime Models",
+                "DeMark",
                 "Monitors",
                 "Analysis",
                 'Passive Bubble'
@@ -93,6 +94,10 @@ with st.sidebar:
             "Cross-Asset Model": "Cross-Asset Model",
             "Prometheus Model": "Prometheus Model",
             "Yield Curve Model": "Yield Curve Model",
+        },
+        "DeMark": {
+            "Select an option...": "Select an option...",
+            "Trend Exhaustion": "Trend Exhaustion"
         },
         "Monitors": {
             "Select an option...": "Select an option...",
@@ -130,6 +135,15 @@ with st.sidebar:
         label_visibility="collapsed"
     )
 
+    st.markdown("### DeMark")
+    demark = st.selectbox(
+        "DeMark",
+        list(sections["Demark"].keys()),
+        key="Demark_selection",
+        on_change=lambda: reset_other_selections("Demark"),
+        label_visibility="collapsed"
+    )
+
     st.markdown("### Monitors")
     monitors_selection = st.selectbox(
         "Monitors",
@@ -160,6 +174,7 @@ with st.sidebar:
     # Set the current page based on any non-default selection
     page = "Select an option..."
     for selection in [macro_regime_models,
+                      demark,
                       monitors_selection,
                       analysis_selection,
                       passive_bubble_selection
