@@ -1,5 +1,5 @@
 ### ------------------------------------------------------------------------------------ ###
-### --------------------------------------- MOMO --------------------------------------- ###
+### ------------------------------------- TD COMBO ------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
 ### PACKAGES ###
@@ -9,7 +9,7 @@ import os
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
 ### ------------------------------------------------------------------------------------ ###
-### --------------------------------------- MOMO --------------------------------------- ###
+### ------------------------------------- TD COMBO ------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
 ### MAGS DATA ###
@@ -32,209 +32,118 @@ with open(Path(DATA_DIR) / 'mags_weights.xlsx', 'rb') as file:
     mags_weights_df.index = mags_weights_df['Date'].values
     mags_weights_df.drop('Date', axis=1, inplace=True)
     mags_weights_df['sum'] = mags_weights_df.sum(axis=1)
-normalized_mags_weights = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA'])
-normalized_mags_pct = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA'])
+normalized_mags_weights = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL',
+                                                  'META','MSFT','NVDA','TSLA'])
+normalized_mags_pct = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL',
+                                              'META','MSFT','NVDA','TSLA'])
 for col in normalized_mags_weights.columns:
-    normalized_mags_weights[col] = (mags_weights_df[col] / mags_weights_df['sum']).resample('ME').last()
-    col_df = merge_dfs([mags_monthly_pct[col],normalized_mags_weights[col]]).ffill().dropna()
+    normalized_mags_weights[col] = (mags_weights_df[col] /
+                                    mags_weights_df['sum']).resample('ME').last()
+    col_df = merge_dfs([mags_monthly_pct[col],
+                        normalized_mags_weights[col]]).ffill().dropna()
     col_df.columns = ['pct','weights']
     normalized_mags_pct[col] = col_df['pct'] * col_df['weights']
 
 mock_mags_monthly_pct = pd.DataFrame(normalized_mags_pct.sum(axis=1))
 mock_mags_monthly_pct.columns = ['mags']
 
-c = pd.DataFrame(each_mags_df['GOOGL'])
 
+### ------------------------------------------------------------------------------------ ###
+### ------------------------------------- TD COMBO ------------------------------------- ###
+### ------------------------------------------------------------------------------------ ###
 
+sample_df = pd.DataFrame(each_mags_df['GOOGL'])
+sample_df.columns = ['close']
 
-
-
-# Use close series, not whole DataFrame, in the logic
-def td_setup(c: pd.DataFrame) -> pd.DataFrame:
-    close = c.iloc[:, 0]  # 'GOOGL' column as Series
-
-    # price flip
-    flip_buy  = (close.shift(1) > close.shift(5)) & (close <= close.shift(4))
-    flip_sell = (close.shift(1) < close.shift(5)) & (close >= close.shift(4))
-
-    setup_buy = pd.Series(0, index=c.index, dtype=int)
-    setup_sell = pd.Series(0, index=c.index, dtype=int)
-
-    for i in range(len(c)):
-        # BUY SETUP 1–9
-        if flip_buy.iat[i]:
-            setup_buy.iat[i] = 1
-        elif (
-            i >= 4 and
-            setup_buy.iat[i-1] > 0 and
-            setup_buy.iat[i-1] < 9 and
-            close.iat[i] < close.iat[i-4]
-        ):
-            setup_buy.iat[i] = setup_buy.iat[i-1] + 1
+def close_higher_lower_t_4(df):
+    df['h/l'] = np.nan
+    input_col = df.columns[0]
+    for idx in range(4,len(df)):
+        row = df.index[idx]
+        row_4 = df.index[idx-4]
+        if df.loc[row,input_col] > df.loc[row_4,input_col]:
+            df.loc[row,'h/l'] = 'h'
         else:
-            # reset when condition fails
-            if setup_buy.iat[i-1] < 9 if i > 0 else True:
-                setup_buy.iat[i] = 0
+            df.loc[row, 'h/l'] = 'l'
+    return df.dropna()
 
-        # SELL SETUP 1–9 (mirror)
-        if flip_sell.iat[i]:
-            setup_sell.iat[i] = 1
-        elif (
-            i >= 4 and
-            setup_sell.iat[i-1] > 0 and
-            setup_sell.iat[i-1] < 9 and
-            close.iat[i] > close.iat[i-4]
-        ):
-            setup_sell.iat[i] = setup_sell.iat[i-1] + 1
-        else:
-            if setup_sell.iat[i-1] < 9 if i > 0 else True:
-                setup_sell.iat[i] = 0
-
-    out = c.copy()
-    out['td_setup_buy'] = setup_buy
-    out['td_setup_sell'] = setup_sell
-    return out
-
-# apply to your GOOGL close series
-c = pd.DataFrame(each_mags_df['GOOGL'])
-df = td_setup(c)
-
-
-
-def td_combo_buy(df: pd.DataFrame) -> pd.Series:
-    """
-    TD Combo buy countdown (1–13) built on top of td_setup_buy.
-    Assumes df has columns: 'GOOGL' (or 'Close'), 'td_setup_buy'.
-    """
-    close = df.iloc[:, 0]          # your GOOGL close
-    # if you later add High/Low, change this to df['Low']; for now approximate with close
-    low = close                    # placeholder if you only have closes
-
-    setup = df['td_setup_buy']
-
-    cd = pd.Series(0, index=df.index, dtype=int)
-    last_cd_idx = None
-    k = 0  # current countdown number (0–13)
-
-    for i in range(len(df)):
-        # only count while a buy setup is active (1–9)
-        if setup.iat[i] == 0:
-            continue
-
-        if k >= 13:
-            # countdown complete for this setup
-            continue
-
-        qualifies = False
-
-        if k < 10:
-            # STRICT RULES for countdown 1–10
-            if i >= 2:
-                cond1 = close.iat[i] <= low.iat[i-2]       # close <= low 2 bars ago
-            else:
-                cond1 = False
-            if i >= 1:
-                cond2 = low.iat[i] < low.iat[i-1]          # low < prior low
-                cond3 = close.iat[i] < close.iat[i-1]      # close < prior close
-            else:
-                cond2 = cond3 = False
-
-            cond4 = True if last_cd_idx is None else close.iat[i] < close.iat[last_cd_idx]
-            qualifies = cond1 and cond2 and cond3 and cond4
-
-        else:
-            # RELAXED RULES for countdown 11–13:
-            # each new countdown bar must close below the previous countdown bar
-            cond = True if last_cd_idx is None else close.iat[i] < close.iat[last_cd_idx]
-            qualifies = cond
-
-        if qualifies:
-            k += 1
-            cd.iat[i] = k
-            last_cd_idx = i
-
-    return cd
-
-df['td_combo_buy'] = td_combo_buy(df)
-
-
-
-# text labels
-df['td_setup_buy_label']  = df['td_setup_buy'].astype(str).where(df['td_setup_buy']  > 0, '')
-df['td_combo_buy_label']  = df['td_combo_buy'].astype(str).where(df['td_combo_buy']  > 0, '')
-
-# quick sanity check
-print(df[['GOOGL','td_setup_buy','td_combo_buy']].tail(25))
-
-
-import pandas as pd
-
-df['td_setup_buy_label'] = df['td_setup_buy'].astype(str).where(df['td_setup_buy'] > 0, '')
-df['td_combo_buy_label'] = df['td_combo_buy'].astype(str).where(df['td_combo_buy'] > 0, '')
+def setup_countdown(df, setup_type) -> pd.Series:
 
 
 
 
-df = df['2025-01-01':]
-import plotly.graph_objects as go
+countdown_df = close_higher_lower_t_4(sample_df)
+countdown_df['sell_setup'] = setup_countdown(sample_df,'h')
+countdown_df['buy_setup'] = setup_countdown(sample_df,'l')
 
-fig = go.Figure()
+df = countdown_df['2025-01-01':]
 
-# Candles (using close only; if you later add Open/High/Low, plug them in here)
-fig.add_trace(
-    go.Candlestick(
-        x=df.index,
-        open=df['GOOGL'],   # if you only have close, you can duplicate it for mock candles
-        high=df['GOOGL'],
-        low=df['GOOGL'],
-        close=df['GOOGL'],
-        name='GOOGL'
-    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import matplotlib.pyplot as plt
+
+# assumes df has: 'close', 'sell_setup', 'buy_setup'
+fig, ax = plt.subplots(figsize=(14, 6))
+
+# 1) Price line
+ax.plot(df.index, df['close'], color='white', linewidth=1.2, label='Close')
+
+# 2) SELL setups – light green
+sell_mask = df['sell_setup'] > 0
+ax.scatter(
+    df.index[sell_mask],
+    df['close'][sell_mask] * 1.01,
+    c='#7CFC00',          # light green
+    s=25,
+    zorder=3
 )
+for t, y, n in zip(df.index[sell_mask],
+                   df['close'][sell_mask] * 1.01,
+                   df['sell_setup'][sell_mask]):
+    ax.text(t, y, str(int(n)),
+            color='#7CFC00', ha='center', va='bottom', fontsize=7)
 
-# Y positions for labels: small offsets above/below price
-y_setup = df['GOOGL'] * 0.995
-y_combo = df['GOOGL'] * 1.005
-
-# Green setup numbers below bars
-mask_setup = df['td_setup_buy'] > 0
-fig.add_trace(
-    go.Scatter(
-        x=df.index[mask_setup],
-        y=y_setup[mask_setup],
-        mode='text',
-        text=df.loc[mask_setup, 'td_setup_buy_label'],
-        textposition='bottom center',
-        textfont=dict(color='green', size=10),
-        showlegend=False
-    )
+# 3) BUY setups – dark green
+buy_mask = df['buy_setup'] > 0
+ax.scatter(
+    df.index[buy_mask],
+    df['close'][buy_mask] * 0.99,
+    c='#006400',          # dark green
+    s=25,
+    zorder=3
 )
+for t, y, n in zip(df.index[buy_mask],
+                   df['close'][buy_mask] * 0.99,
+                   df['buy_setup'][buy_mask]):
+    ax.text(t, y, str(int(n)),
+            color='#006400', ha='center', va='top', fontsize=7)
 
-# Red combo numbers above bars
-mask_combo = df['td_combo_buy'] > 0
-fig.add_trace(
-    go.Scatter(
-        x=df.index[mask_combo],
-        y=y_combo[mask_combo],
-        mode='text',
-        text=df.loc[mask_combo, 'td_combo_buy_label'],
-        textposition='top center',
-        textfont=dict(color='red', size=10),
-        showlegend=False
-    )
-)
+# 4) Styling (same dark background look)
+ax.set_facecolor('black')
+fig.patch.set_facecolor('black')
+ax.tick_params(colors='white')
+for spine in ax.spines.values():
+    spine.set_color('white')
+ax.set_xlabel('')
+ax.set_ylabel('GOOGL Close', color='white')
+ax.set_title('GOOGL – TD Buy/Sell Setups', color='white')
+ax.grid(False)
 
-fig.update_layout(
-    title='GOOGL with TD Setup (green) and TD Combo (red)',
-    xaxis_title='Date',
-    yaxis_title='Price',
-    xaxis_rangeslider_visible=False,
-    template='plotly_white',
-    height=700,
-    width=1200
-)
+plt.tight_layout()
+plt.show()
 
-fig.show()
 
 
 

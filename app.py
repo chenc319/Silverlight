@@ -138,9 +138,9 @@ with st.sidebar:
     st.markdown("### DeMark")
     demark = st.selectbox(
         "DeMark",
-        list(sections["Demark"].keys()),
-        key="Demark_selection",
-        on_change=lambda: reset_other_selections("Demark"),
+        list(sections["DeMark"].keys()),
+        key="DeMark_selection",
+        on_change=lambda: reset_other_selections("DeMark"),
         label_visibility="collapsed"
     )
 
