@@ -132,7 +132,9 @@ for setup_start in buy_setup_rows_to_iterate:
 
         ### BARS 11-13 ###
         else:
-            if last_cdn_bar is not None and c < df.loc[last_cdn_bar, 'Close']:
+            if (last_cdn_bar is not None
+                    and (c < df.loc[last_cdn_bar, 'Close'] or
+                         c < df.loc[last_cdn_bar, 'Open'])):
                 df.loc[row, 'buy_countdown'] = cdn_num
                 last_cdn_bar = row
                 cdn_num += 1
