@@ -8,6 +8,39 @@ from pathlib import Path
 import os
 DATA_DIR = os.getenv('DATA_DIR', 'data')
 
+### FUNCTIONS ###
+def close_hl_setup(df,close_col_name):
+    df['h/l'] = np.nan
+    for idx in range(4,len(df)):
+        row_name = df.index[idx]
+        row_4 = df.index[idx-4]
+        if df.loc[row_name,close_col_name] > df.loc[row_4,close_col_name]:
+            df.loc[row_name, 'h/l'] = 'h'
+        else:
+            df.loc[row_name, 'h/l'] = 'l'
+    return df['h/l']
+
+def td_combo_setup(df,setup_type):
+    ### CONSECUTIVE DAYS ###
+    df['setup'] = 0
+    for idx in range(1,len(df.index)):
+        row_name = df.index[idx]
+        prev_row = df.index[idx-1]
+        if df.loc[prev_row,'setup'] != 9:
+            if df.loc[row_name, 'h/l'] == setup_type:
+                df.loc[row_name, 'setup'] = df.loc[prev_row, 'setup'] + 1
+
+    ### FILTER OUT INCOMPLETE 9S ###
+    for idx in range(8,len(df.index)):
+        row_name = df.index[idx]
+        prev_row = df.index[idx - 1]
+        if ((df.loc[row_name, 'setup'] < df.loc[prev_row, 'setup'])
+                and (df.loc[prev_row, 'setup'] != 9)):
+            total_rows_to_delete = df.loc[prev_row, 'setup']
+            for num_row_to_delete in range(0,total_rows_to_delete+1):
+                df.loc[df.index[idx-num_row_to_delete],'setup'] = 0
+    return df['setup']
+
 ### ------------------------------------------------------------------------------------ ###
 ### ------------------------------------- TD COMBO ------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
@@ -23,51 +56,17 @@ for mag_ticker in mags_tickers:
         mag_df.drop('Date', axis=1, inplace=True)
     mags_ohlc_dict[mag_ticker] = mag_df
 
-sample_df = pd.DataFrame(mags_ohlc_dict['GOOGL'])
-
 ### ------------------------------------------------------------------------------------ ###
 ### -------------------------------------- SETUP --------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
-### SETUP ###
-def close_hl_setup(df,close_col_name):
-    df['h/l'] = np.nan
-    for idx in range(4,len(df)):
-        row = df.index[idx]
-        row_4 = df.index[idx-4]
-        if df.loc[row,close_col_name] > df.loc[row_4,close_col_name]:
-            df.loc[row,'h/l'] = 'h'
-        else:
-            df.loc[row, 'h/l'] = 'l'
-    return df['h/l']
-
-def td_combo_setup(df,setup_type):
-    ### CONSECUTIVE DAYS ###
-    df['setup'] = 0
-    for idx in range(1,len(df.index)):
-        row = df.index[idx]
-        prev_row = df.index[idx-1]
-        if df.loc[prev_row,'setup'] != 9:
-            if df.loc[row,'h/l'] == setup_type:
-                df.loc[row,'setup'] = df.loc[prev_row,'setup'] + 1
-
-    ### FILTER OUT INCOMPLETE 9S ###
-    for idx in range(8,len(df.index)):
-        row = df.index[idx]
-        prev_row = df.index[idx - 1]
-        if ((df.loc[row, 'setup'] < df.loc[prev_row, 'setup'])
-                and (df.loc[prev_row, 'setup'] != 9)):
-            total_rows_to_delete = df.loc[prev_row, 'setup']
-            for num_row_to_delete in range(0,total_rows_to_delete+1):
-                df.loc[df.index[idx-num_row_to_delete],'setup'] = 0
-    return df['setup']
-
+sample_df = pd.DataFrame(mags_ohlc_dict['GOOGL'])
 sample_df['h/l'] = close_hl_setup(sample_df,'Close')
 sample_df['sell_setup'] = td_combo_setup(sample_df,'h')
 sample_df['buy_setup'] = td_combo_setup(sample_df,'l')
 
 ### ------------------------------------------------------------------------------------ ###
-### ------------------------------------ COUNTDOWN ------------------------------------- ###
+### ------------------------------- BUY SETUP COUNTDOWN -------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
 ### COUNTDOWN BUY SETUP ###
@@ -75,122 +74,113 @@ df = sample_df['2025-01-01':]
 buy_setup_rows_to_iterate = df[df['buy_setup'] == 1].index
 buy_setup_countdown_dict = dict()
 
-### ------------------------------------ BUY SETUP ------------------------------------- ###
-
 buy_setup_dict_key_index = 1
-for first_bar_of_setup_date in buy_setup_rows_to_iterate:
-    ### TDST FILTER ###
-    tdst_possible_candidates = df[date_before_first_bar_setup:date_t_9_after_first_bar_setup].copy()
-    prev_close = tdst_possible_candidates['Close'].shift(1)
-    # true high for each of the 9 setup bars
-    tdst_possible_candidates['true_high'] = tdst_possible_candidates['High'].combine(prev_close, max)
-    tdst_possible_candidates = tdst_possible_candidates.iloc[1:]
-    # 1) TDST resistance value
-    tdst_resistance = tdst_possible_candidates['true_high'].max()
-    # 2) index where that max occurs
-    tdst_idx = tdst_possible_candidates['true_high'].idxmax()
-    # 3) buy_setup value on that row
-    tdst_buy_setup_value = tdst_possible_candidates.loc[tdst_idx, 'buy_setup']
+first_bar_of_setup_date = buy_setup_rows_to_iterate[0]
 
-    ### TD RISK LEVEL ###
-    s = tdst_possible_candidates.copy()
-
-    prev_close = s['Close'].shift(1)
-    s['true_high'] = s['High'].combine(prev_close, max)
-    s['true_low'] = s['Low'].combine(prev_close, min)
-    s['true_range'] = s['true_high'] - s['true_low']
-
-    # bar with lowest true low
-    risk_idx = s['true_low'].idxmin()
-
-    risk_true_low = s.loc[risk_idx, 'true_low']
-    risk_true_range = s.loc[risk_idx, 'true_range']
-
-    td_risk_level_buy = risk_true_low - risk_true_range
-
-
-    ### COUNTDOWN PARAMETERS ###
-    df['buy_countdown'] = 0
-    setup_row_idx = df.index.get_loc(first_bar_of_setup_date)
-    td_buy_setup_int = 1
-
-    ### SET COUNTDOWN BAR ROWS AND IDX ###
-    prev_countdown_bar_idx = None
-    prev_countdown_bar_row = None
-
-    for idx in range(setup_row_idx, len(df.index)):
-        if td_buy_setup_int > 13:
-            break
-
-        row = df.index[idx]
-        t_2_prev_row = df.index[idx - 2]
-        t_1_prev_row = df.index[idx - 1]
-
-        ### BARS 1-10 ###
-        if td_buy_setup_int <= 10:
-            if (df.loc[row, 'Close'] <= df.loc[t_2_prev_row, 'Low'] and
-                    df.loc[row, 'Low'] <= df.loc[t_1_prev_row, 'Low'] and
-                    df.loc[row, 'Close'] <= df.loc[t_1_prev_row, 'Close']):
-
-                # Condition 4 only if we have a previous countdown bar
-                if prev_countdown_bar_row is not None:
-                    if df.loc[row, 'Close'] < df.loc[prev_countdown_bar_row, 'Close']:
-                        df.loc[row, 'buy_countdown'] = td_buy_setup_int
-                        prev_countdown_bar_idx = idx
-                        prev_countdown_bar_row = row
-                        td_buy_setup_int += 1
-                else:
-                    # first countdown bar: skip condition 4
-                    df.loc[row, 'buy_countdown'] = td_buy_setup_int
-                    prev_countdown_bar_idx = idx
-                    prev_countdown_bar_row = row
-                    td_buy_setup_int += 1
-
-        ### BARS 11–13 ###
-        elif 11 <= td_buy_setup_int <= 13:
-            if prev_countdown_bar_row is not None:
-                # Version 2: close must be less than previous COUNTDOWN bar close
-                if df.loc[row, 'Close'] < df.loc[prev_countdown_bar_row, 'Close']:
-                    df.loc[row, 'buy_countdown'] = td_buy_setup_int
-                    prev_countdown_bar_idx = idx
-                    prev_countdown_bar_row = row
-                    td_buy_setup_int += 1
-
-    ### CHECK TO SEE IF THERE ARE ANY 13s ###
-    filtered_df = df[first_bar_of_setup_date:first_tdst_idx]
-    final_dict = dict()
-    dict_name = 'buy_setup_countdown #' + str(buy_setup_dict_key_index)
-    buy_setup_dict_key_index += 1
-
-    if td_buy_setup_int == 14:
-        final_dict['valid setup-countown_pair'] = 'yes'
-        final_dict['dataframe'] = filtered_df[first_bar_of_setup_date:
-                                              prev_countdown_bar_row]
-    else:
-        final_dict['valid setup-countown_pair'] = 'no'
-        final_dict['dataframe'] = filtered_df
+for setup_start in buy_setup_rows_to_iterate:
 
     ### TDST ###
-    final_dict['tdst_value'] = tdst_resistance
-    final_dict['tdst_date'] = tdst_idx
-    final_dict['tdst_setup_bar_start'] = tdst_buy_setup_value
+    prev_bar = df.index[df.index.get_loc(setup_start) - 1]
+    bar9 = df.index[df.index.get_loc(setup_start) + 8]
 
-    ### TD RISK LEVEL ###
-    final_dict['td_risk_level_val'] =
-    buy_setup_countdown_dict[dict_name] = final_dict
+    tdst_win = df.loc[prev_bar:bar9].copy()
+    prev_close = tdst_win['Close'].shift(1)
 
-### ------------------------------------ SELL SETUP ------------------------------------- ###
+    tdst_win['true_high'] = tdst_win['High'].combine(prev_close, max)
+    tdst_win = tdst_win.iloc[1:]  # drop pre-setup bar
 
+    tdst_val  = tdst_win['true_high'].max()
+    tdst_date = tdst_win['true_high'].idxmax()
+    tdst_setup_num = tdst_win.loc[tdst_date, 'buy_setup']
 
+    first_tdst_break = (df.loc[setup_start:, 'Close'] > tdst_val).idxmax()
+
+    ### COUNTDOWN ###
+    df['buy_countdown'] = 0
+    setup_idx = df.index.get_loc(setup_start)
+    cdn_num   = 1
+    last_cdn_bar = None
+    for i in range(setup_idx, len(df.index)):
+        if cdn_num > 13:
+            break
+        row = df.index[i]
+        row_t1 = df.index[i - 1]
+        row_t2 = df.index[i - 2]
+        c = df.loc[row, 'Close']
+        l = df.loc[row, 'Low']
+
+        ### BARS 1-10 ###
+        if cdn_num <= 10:
+            base_ok = (
+                c <= df.loc[row_t2, 'Low'] and
+                l <= df.loc[row_t1, 'Low'] and
+                c <= df.loc[row_t1, 'Close']
+            )
+            if not base_ok:
+                continue
+
+            if last_cdn_bar is None or cdn_num == 1:
+                df.loc[row, 'buy_countdown'] = cdn_num
+                last_cdn_bar = row
+                cdn_num += 1
+                continue
+
+            if c < df.loc[last_cdn_bar, 'Close']:
+                df.loc[row, 'buy_countdown'] = cdn_num
+                last_cdn_bar = row
+                cdn_num += 1
+
+        ### BARS 11-13 ###
+        else:
+            if last_cdn_bar is not None and c < df.loc[last_cdn_bar, 'Close']:
+                df.loc[row, 'buy_countdown'] = cdn_num
+                last_cdn_bar = row
+                cdn_num += 1
+
+    ### STORE DATA IN DICTIONARIES ###
+    window = df.loc[setup_start:first_tdst_break]
+    name   = f"buy_setup_countdown #{buy_setup_dict_key_index}"
+    buy_setup_dict_key_index += 1
+
+    result = {
+        'tdst_val': tdst_val,
+        'tdst_date': tdst_date,
+        'tdst_setup_start_bar': tdst_setup_num,
+    }
+
+    if cdn_num == 14 and last_cdn_bar is not None:
+        risk_win = window.loc[setup_start:last_cdn_bar].copy()
+        prev_close = risk_win['Close'].shift(1)
+
+        risk_win['true_high'] = risk_win['High'].combine(prev_close, max)
+        risk_win['true_low'] = risk_win['Low'].combine(prev_close, min)
+        risk_win['true_range'] = risk_win['true_high'] - risk_win['true_low']
+        risk_win = risk_win.iloc[1:]
+
+        risk_date  = risk_win['true_low'].idxmin()
+        risk_low   = risk_win.loc[risk_date, 'true_low']
+        risk_range = risk_win.loc[risk_date, 'true_range']
+        risk_val   = risk_low - risk_range
+
+        result.update({
+            'valid setup-cdn_pair': 'yes',
+            'dataframe': window.loc[setup_start:last_cdn_bar],
+            'risk_lvl':  risk_val,
+            'risk_date': risk_date,
+        })
+    else:
+        result.update({
+            'valid setup-cdn_pair': 'no',
+            'dataframe': window,
+            'risk_lvl':  None,
+            'risk_date': None,
+        })
+    buy_setup_countdown_dict[name] = result
 
 ### ------------------------------------------------------------------------------------ ###
-### --------------------------- TDST RESISTANCE/SUPPORT LINES -------------------------- ###
+### ------------------------------- SELL SETUP COUNTDOWN ------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
-### TDST RESISTANCE - BUY SETUP ###
-
-
-list(buy_setup_countdown_dict.keys())
 
 
 
@@ -215,53 +205,97 @@ list(buy_setup_countdown_dict.keys())
 ### -------------------------------------- CHARTS -------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
+def plot_googl_initial_results():
+    df = buy_setup_countdown_dict[list(buy_setup_countdown_dict.keys())[0]]['dataframe']
+    df['Date'] = df.index
+    df['DateStr'] = df.index.strftime('%Y-%m-%d')
+    df.set_index('Date', inplace=True)
 
-import matplotlib.pyplot as plt
+    # Create series that span the whole visible window
+    df['TDST'] = buy_setup_countdown_dict[list(buy_setup_countdown_dict.keys())[0]]['tdst_val']
+    df['TD_Risk'] = buy_setup_countdown_dict[list(buy_setup_countdown_dict.keys())[0]]['risk_lvl']
 
-# assumes df has: 'close', 'sell_setup', 'buy_setup'
-fig, ax = plt.subplots(figsize=(14, 6))
 
-# 1) Price line
-ax.plot(df.index, df['Close'], color='white', linewidth=1.2, label='Close')
 
-# 2) SELL setups – light green numbers only (above price)
-sell_mask = df['sell_setup'] > 0
-for t, n in zip(df.index[sell_mask], df['sell_setup'][sell_mask]):
-    y = df.loc[t, 'Close'] * 1.01
-    ax.text(
-        t, y, str(int(n)),
-        color='#7CFC00',        # light green
-        ha='center', va='bottom',
-        fontsize=7
+    # --- 3. Base OHLC candlestick chart over ALL rows ---
+    fig = go.Figure()
+
+    # 1) Candles over ALL bars, x = DateStr (categorical, no gaps)
+    fig.add_trace(
+        go.Ohlc(
+            x=df['DateStr'],
+            open=df['Open'],
+            high=df['High'],
+            low=df['Low'],
+            close=df['Close'],
+            increasing_line_color='white',
+            decreasing_line_color='white',
+            name='Price'
+        )
     )
 
-# 3) BUY setups – dark green numbers only (below price)
-buy_mask = df['buy_setup'] > 0
-for t, n in zip(df.index[buy_mask], df['buy_setup'][buy_mask]):
-    y = df.loc[t, 'Close'] * 0.99
-    ax.text(
-        t, y, str(int(n)),
-        color='#006400',        # dark green
-        ha='center', va='top',
-        fontsize=7
+    # 2) Setup labels
+    setup_mask = df['setup'] > 0
+    fig.add_trace(
+        go.Scatter(
+            x=df.loc[setup_mask, 'DateStr'],
+            y=df.loc[setup_mask, 'High'] * 1.01,
+            mode='text',
+            text=df.loc[setup_mask, 'setup'].astype(int).astype(str),
+            textfont=dict(color='lime', size=12),
+            textposition='top center',
+            name='TD Setup'
+        )
     )
 
-# 4) Styling – dark chart look
-ax.set_facecolor('black')
-fig.patch.set_facecolor('black')
+    # 3) Countdown labels
+    cd_mask = df['buy_countdown'] > 0
+    fig.add_trace(
+        go.Scatter(
+            x=df.loc[cd_mask, 'DateStr'],
+            y=df.loc[cd_mask, 'Low'] * 0.99,
+            mode='text',
+            text=df.loc[cd_mask, 'buy_countdown'].astype(int).astype(str),
+            textfont=dict(color='magenta', size=12),
+            textposition='bottom center',
+            name='TD Buy Countdown'
+        )
+    )
 
-ax.tick_params(colors='white')
-for spine in ax.spines.values():
-    spine.set_color('white')
+    # 4) Single TDST + TD Risk lines
+    fig.add_trace(
+        go.Scatter(
+            x=df['DateStr'],
+            y=df['TDST'],
+            mode='lines',
+            line=dict(color='limegreen', width=1.5),
+            name='TD TDST Level'
+        )
+    )
 
-ax.set_xlabel('')
-ax.set_ylabel('GOOGL Close', color='white')
-ax.set_title('GOOGL – TD Buy/Sell Setups', color='white')
-ax.grid(False)
+    fig.add_trace(
+        go.Scatter(
+            x=df['DateStr'],
+            y=df['TD_Risk'],
+            mode='lines',
+            line=dict(color='magenta', width=1.5, dash='dot'),
+            name='TD Risk Level'
+        )
+    )
 
-plt.tight_layout()
-plt.show()
+    fig.update_layout(
+        template='plotly_dark',
+        plot_bgcolor='black',
+        paper_bgcolor='black',
+        xaxis=dict(
+            showgrid=False,
+            type='category',      # ensure categorical axis (no date gaps)
+            rangeslider_visible=False
+        ),
+        yaxis=dict(showgrid=False),
+        height=700,
+        width=1200
+    )
 
-
-
+    st.plotly_chart(fig, use_container_width=True)
 

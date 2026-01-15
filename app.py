@@ -275,7 +275,8 @@ elif page == 'Yield Curve Model':
 ### ---------------------------------------------------------------------------------------- ###
 
 elif page == 'TD Combo':
-    st.title('MAGs TD Combo Indicator')
+    st.title('GOOGL TD Combo Buy Case Study Example')
+    app_td_combo.plot_googl_initial_results()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- GROWTH ---------------------------------------- ###
