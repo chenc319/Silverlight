@@ -19,6 +19,7 @@ import app_cross_asset
 import app_flowcluster
 import app_yc
 import app_momo
+import app_td_combo
 
 ### FUNCTIONS ###
 def merge_dfs(array_of_dfs):
@@ -97,7 +98,7 @@ with st.sidebar:
         },
         "DeMark": {
             "Select an option...": "Select an option...",
-            "Trend Exhaustion": "Trend Exhaustion"
+            "TD Combo": "TD Combo"
         },
         "Monitors": {
             "Select an option...": "Select an option...",
@@ -268,6 +269,13 @@ elif page == 'Yield Curve Model':
     app_yc.plot_colorcoded_regime()
     st.title('Equity Yield Curve Backtest')
     app_yc.equity_yc_results()
+
+### ---------------------------------------------------------------------------------------- ###
+### --------------------------------------- TD COMBO --------------------------------------- ###
+### ---------------------------------------------------------------------------------------- ###
+
+elif page == 'TD Combo':
+    st.title('MAGs TD Combo Indicator')
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- GROWTH ---------------------------------------- ###
