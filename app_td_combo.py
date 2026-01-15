@@ -108,6 +108,7 @@ for setup_start in buy_setup_rows_to_iterate:
         row_t2 = df.index[i - 2]
         c = df.loc[row, 'Close']
         l = df.loc[row, 'Low']
+        o = df.loc[row, 'Open']
 
         ### BARS 1-10 ###
         if cdn_num <= 10:
@@ -134,7 +135,7 @@ for setup_start in buy_setup_rows_to_iterate:
         else:
             if (last_cdn_bar is not None
                     and (c < df.loc[last_cdn_bar, 'Close'] or
-                         c < df.loc[last_cdn_bar, 'Open'])):
+                         o < df.loc[last_cdn_bar, 'Close'])):
                 df.loc[row, 'buy_countdown'] = cdn_num
                 last_cdn_bar = row
                 cdn_num += 1
