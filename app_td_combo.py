@@ -41,9 +41,31 @@ googl_dict = compute_setup_countdown_pairs(
     df = mini_googl_df['2025-01-01':]
 )
 
+
+
 ### ------------------------------------------------------------------------------------ ###
 ### -------------------------------------- CHARTS -------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
 def plot_googl_case_study_1():
     plot_td_combo_case_study(googl_dict,0)
+
+
+def plot_googl_case_study_2():
+    plot_td_combo_case_study(googl_dict,1)
+
+
+def plot_googl_case_study_3():
+    plot_td_combo_case_study(googl_dict,2)
+
+
+def plot_googl_case_study_4():
+    plot_td_combo_case_study(googl_dict,3)
+
+
+def plot_googl_case_study_5():
+    plot_td_combo_case_study(googl_dict,4)
+
+
+def plot_googl_case_study_6():
+    plot_td_combo_case_study(googl_dict,5)

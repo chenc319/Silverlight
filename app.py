@@ -277,6 +277,16 @@ elif page == 'Yield Curve Model':
 elif page == 'TD Combo':
     st.title('GOOGL TD Combo Buy Case Study Example')
     app_td_combo.plot_googl_case_study_1()
+    st.title('GOOGL TD Combo Buy Case Study Example')
+    app_td_combo.plot_googl_case_study_2()
+    st.title('GOOGL TD Combo Buy Case Study Example')
+    app_td_combo.plot_googl_case_study_3()
+    st.title('GOOGL TD Combo Buy Case Study Example')
+    app_td_combo.plot_googl_case_study_4()
+    st.title('GOOGL TD Combo Buy Case Study Example')
+    app_td_combo.plot_googl_case_study_5()
+    st.title('GOOGL TD Combo Buy Case Study Example')
+    app_td_combo.plot_googl_case_study_6()
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- GROWTH ---------------------------------------- ###

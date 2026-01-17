@@ -727,7 +727,7 @@ def compute_setup_countdown_pairs(df):
     """
     df = df.copy()
 
-    setup_col     = "setup"
+    setup_col = "setup"
     countdown_col = "countdown"
     df[countdown_col] = 0
 
@@ -736,6 +736,8 @@ def compute_setup_countdown_pairs(df):
 
     setup_countdown_dict = dict()
     setup_dict_key_index = 1
+
+    setup_start = setup_rows_to_iterate[2]
 
     for setup_start in setup_rows_to_iterate:
 
@@ -776,7 +778,11 @@ def compute_setup_countdown_pairs(df):
         if side == "buy":
             first_tdst_break = (df.loc[setup_start:, 'Close'] > tdst_val).idxmax()
         else:
-            first_tdst_break = (df.loc[setup_start:, 'Close'] < tdst_val).idxmax()
+            first_tdst_break = (df.loc[setup_start:, 'Close'] < tdst_val).idxmin()
+
+
+        if first_tdst_break == setup_start:
+            first_tdst_break = df.index[len(df.index) - 1]
 
         # ---------- COUNTDOWN ----------
         # (Note: this reinitializes countdown for each setup window, just like your original.)
@@ -789,7 +795,7 @@ def compute_setup_countdown_pairs(df):
             if cdn_num > 13:
                 break
 
-            row    = df.index[i]
+            row = df.index[i]
             row_t1 = df.index[i - 1]
             row_t2 = df.index[i - 2]
 
@@ -925,7 +931,6 @@ def compute_setup_countdown_pairs(df):
         setup_countdown_dict[name] = result
 
     return setup_countdown_dict
-
 
 def plot_td_combo_case_study(setup_countdown_dict,index_val):
     df = setup_countdown_dict[list(setup_countdown_dict.keys())[index_val]]['dataframe']
