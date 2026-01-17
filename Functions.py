@@ -714,35 +714,40 @@ def get_perfected_9(df):
             df.at[idx9_bar, 'perfected'] = "Perfected"
     return df['perfected']
 
-def compute_setup_countdown_pairs(df: pd.DataFrame):
+def compute_setup_countdown_pairs(df):
     """
     Uses unified 'setup' column:
       -1..-9 = Buy setup
       +1..+9 = Sell setup
 
-    For each setup start (|setup| == 1),
-    runs the appropriate TD Combo-style countdown,
-    writing countdown numbers into 'setup' on subsequent bars.
+    For each setup start (setup == -1 or +1), runs the
+    corresponding TD Combo-style countdown into 'countdown'.
 
-    Returns dict of setup-countdown pairs (per setup instance).
+    Returns dict of setup-countdown pairs (for both sides).
     """
     df = df.copy()
-    setup_countdown_dict = {}
+
+    setup_col     = "setup"
+    countdown_col = "countdown"
+    df[countdown_col] = 0
+
+    # Setup starts: -1 (buy) or +1 (sell)
+    setup_rows_to_iterate = df[(df[setup_col] == -1) | (df[setup_col] == 1)].index
+
+    setup_countdown_dict = dict()
     setup_dict_key_index = 1
 
-    # All setup starts: +1 (sell) or -1 (buy)
-    setup_rows_to_iterate = df.index[(df['setup'] == 1) | (df['setup'] == -1)]
-
     for setup_start in setup_rows_to_iterate:
-        setup_pos = df.index.get_loc(setup_start)
-        n = len(df.index)
 
-        # Need one bar before and 8 bars after: indices [setup_pos-1 .. setup_pos+8]
+        n = len(df.index)
+        setup_pos = df.index.get_loc(setup_start)
+
+        # need one bar before and 8 bars after: indices [setup_pos-1 .. setup_pos+8]
         if setup_pos - 1 < 0 or setup_pos + 8 >= n:
             continue
 
-        # Determine side from sign at setup_start
-        start_val = df.at[setup_start, 'setup']
+        # ----- DETECT SIDE FROM SIGN -----
+        start_val = df.at[setup_start, setup_col]
         side = "buy" if start_val < 0 else "sell"
 
         # ---------- TDST ----------
@@ -765,7 +770,7 @@ def compute_setup_countdown_pairs(df: pd.DataFrame):
             tdst_val  = tdst_win['true_low'].min()
             tdst_date = tdst_win['true_low'].idxmin()
 
-        tdst_setup_num = tdst_win.loc[tdst_date, 'setup']
+        tdst_setup_num = tdst_win.loc[tdst_date, setup_col]
 
         # First TDST break
         if side == "buy":
@@ -774,18 +779,15 @@ def compute_setup_countdown_pairs(df: pd.DataFrame):
             first_tdst_break = (df.loc[setup_start:, 'Close'] < tdst_val).idxmax()
 
         # ---------- COUNTDOWN ----------
-        countdown_col = 'setup'   # always use 'setup'
-        setup_idx     = setup_pos
-        cdn_num       = 1
-        last_cdn_bar  = None
+        # (Note: this reinitializes countdown for each setup window, just like your original.)
+        df[countdown_col] = 0
+        setup_idx    = setup_pos
+        cdn_num      = 1
+        last_cdn_bar = None
 
         for i in range(setup_idx, len(df.index)):
             if cdn_num > 13:
                 break
-
-            # Need t-1 and t-2
-            if i - 2 < 0:
-                continue
 
             row    = df.index[i]
             row_t1 = df.index[i - 1]
@@ -797,7 +799,7 @@ def compute_setup_countdown_pairs(df: pd.DataFrame):
             o = df.loc[row, 'Open']
 
             if side == "buy":
-                # BUY COUNTDOWN
+                # ---------- BUY COUNTDOWN ----------
                 if cdn_num <= 10:
                     base_ok = (
                         c <= df.loc[row_t2, 'Low'] and
@@ -832,7 +834,7 @@ def compute_setup_countdown_pairs(df: pd.DataFrame):
                         cdn_num += 1
 
             else:
-                # SELL COUNTDOWN (mirror)
+                # ---------- SELL COUNTDOWN (mirrored) ----------
                 if cdn_num <= 10:
                     base_ok = (
                         c >= df.loc[row_t2, 'High'] and
@@ -922,4 +924,98 @@ def compute_setup_countdown_pairs(df: pd.DataFrame):
 
         setup_countdown_dict[name] = result
 
-    return df, setup_countdown_dict
+    return setup_countdown_dict
+
+
+def plot_td_combo_case_study(setup_countdown_dict):
+    df = setup_countdown_dict[list(setup_countdown_dict.keys())[0]]['dataframe']
+    df['Date'] = df.index
+    df['DateStr'] = df.index.strftime('%Y-%m-%d')
+    df.set_index('Date', inplace=True)
+
+    # Create series that span the whole visible window
+    df['TDST'] = setup_countdown_dict[list(setup_countdown_dict.keys())[0]]['tdst_val']
+    df['TD_Risk'] = setup_countdown_dict[list(setup_countdown_dict.keys())[0]]['risk_lvl']
+
+    # --- 3. Base OHLC candlestick chart over ALL rows ---
+    fig = go.Figure()
+
+    # 1) Candles over ALL bars, x = DateStr (categorical, no gaps)
+    fig.add_trace(
+        go.Ohlc(
+            x=df['DateStr'],
+            open=df['Open'],
+            high=df['High'],
+            low=df['Low'],
+            close=df['Close'],
+            increasing_line_color='white',
+            decreasing_line_color='white',
+            name='Price'
+        )
+    )
+
+    # 2) Setup labels
+    setup_mask = df['setup'] > 0
+    fig.add_trace(
+        go.Scatter(
+            x=df.loc[setup_mask, 'DateStr'],
+            y=df.loc[setup_mask, 'High'] * 1.01,
+            mode='text',
+            text=df.loc[setup_mask, 'setup'].astype(int).astype(str),
+            textfont=dict(color='lime', size=12),
+            textposition='top center',
+            name='TD Setup'
+        )
+    )
+
+    # 3) Countdown labels
+    cd_mask = df['countdown'] > 0
+    fig.add_trace(
+        go.Scatter(
+            x=df.loc[cd_mask, 'DateStr'],
+            y=df.loc[cd_mask, 'Low'] * 0.99,
+            mode='text',
+            text=df.loc[cd_mask, 'countdown'].astype(int).astype(str),
+            textfont=dict(color='magenta', size=12),
+            textposition='bottom center',
+            name='TD Countdown'
+        )
+    )
+
+    # 4) Single TDST + TD Risk lines
+    fig.add_trace(
+        go.Scatter(
+            x=df['DateStr'],
+            y=df['TDST'],
+            mode='lines',
+            line=dict(color='limegreen', width=1.5),
+            name='TD TDST Level'
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=df['DateStr'],
+            y=df['TD_Risk'],
+            mode='lines',
+            line=dict(color='magenta', width=1.5, dash='dot'),
+            name='TD Risk Level'
+        )
+    )
+
+    fig.update_layout(
+        template='plotly_dark',
+        plot_bgcolor='black',
+        paper_bgcolor='black',
+        xaxis=dict(
+            showgrid=False,
+            type='category',      # ensure categorical axis (no date gaps)
+            rangeslider_visible=False
+        ),
+        yaxis=dict(showgrid=False),
+        height=700,
+        width=1200
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+

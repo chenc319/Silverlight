@@ -27,135 +27,23 @@ for mag_ticker in mags_tickers:
 ### -------------------------------------- SETUP --------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
-sample_df = pd.DataFrame(mags_ohlc_dict['GOOGL'])
-sample_df['h/l'] = close_hl_setup(sample_df,'Close')
-sample_df['sell_setup'] = td_combo_setup(sample_df,'h')
-sample_df['buy_setup'] = td_combo_setup(sample_df,'l')
+### GET DATAFRAME ###
+googl_df = pd.DataFrame(mags_ohlc_dict['GOOGL'])
+googl_df['h/l'] = close_hl_setup(googl_df,'Close')
 
-sample_df = build_td_combo_v2_setups(sample_df)
-sample_df['perfected'] = get_perfected_9(sample_df)
+### SETUP AND PERFECTED ###
+googl_df =  build_td_combo_v2_setups(googl_df)
+googl_df['perfected'] = get_perfected_9(googl_df)
+mini_googl_df = googl_df['2025-01-01':]
 
-### ------------------------------------------------------------------------------------ ###
-### ------------------------------- BUY SETUP COUNTDOWN -------------------------------- ###
-### ------------------------------------------------------------------------------------ ###
-
-### COUNTDOWN BUY SETUP ###
-df = sample_df['2025-01-01':]
-df,setup_dict_key_index = compute_setup_countdown_pairs(df)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### COUNTDOWN DICTIONARY ###
+googl_dict = compute_setup_countdown_pairs(
+    df = mini_googl_df['2025-01-01':]
+)
 
 ### ------------------------------------------------------------------------------------ ###
 ### -------------------------------------- CHARTS -------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
 
-def plot_googl_initial_results():
-    df = setup_dict_key_index[list(setup_dict_key_index.keys())[0]]['dataframe']
-    df['Date'] = df.index
-    df['DateStr'] = df.index.strftime('%Y-%m-%d')
-    df.set_index('Date', inplace=True)
-
-    # Create series that span the whole visible window
-    df['TDST'] = setup_dict_key_index[list(setup_dict_key_index.keys())[0]]['tdst_val']
-    df['TD_Risk'] = setup_dict_key_index[list(setup_dict_key_index.keys())[0]]['risk_lvl']
-
-
-
-    # --- 3. Base OHLC candlestick chart over ALL rows ---
-    fig = go.Figure()
-
-    # 1) Candles over ALL bars, x = DateStr (categorical, no gaps)
-    fig.add_trace(
-        go.Ohlc(
-            x=df['DateStr'],
-            open=df['Open'],
-            high=df['High'],
-            low=df['Low'],
-            close=df['Close'],
-            increasing_line_color='white',
-            decreasing_line_color='white',
-            name='Price'
-        )
-    )
-
-    # 2) Setup labels
-    setup_mask = df['setup'] > 0
-    fig.add_trace(
-        go.Scatter(
-            x=df.loc[setup_mask, 'DateStr'],
-            y=df.loc[setup_mask, 'High'] * 1.01,
-            mode='text',
-            text=df.loc[setup_mask, 'setup'].astype(int).astype(str),
-            textfont=dict(color='lime', size=12),
-            textposition='top center',
-            name='TD Setup'
-        )
-    )
-
-    # 3) Countdown labels
-    cd_mask = df['buy_countdown'] > 0
-    fig.add_trace(
-        go.Scatter(
-            x=df.loc[cd_mask, 'DateStr'],
-            y=df.loc[cd_mask, 'Low'] * 0.99,
-            mode='text',
-            text=df.loc[cd_mask, 'buy_countdown'].astype(int).astype(str),
-            textfont=dict(color='magenta', size=12),
-            textposition='bottom center',
-            name='TD Buy Countdown'
-        )
-    )
-
-    # 4) Single TDST + TD Risk lines
-    fig.add_trace(
-        go.Scatter(
-            x=df['DateStr'],
-            y=df['TDST'],
-            mode='lines',
-            line=dict(color='limegreen', width=1.5),
-            name='TD TDST Level'
-        )
-    )
-
-    fig.add_trace(
-        go.Scatter(
-            x=df['DateStr'],
-            y=df['TD_Risk'],
-            mode='lines',
-            line=dict(color='magenta', width=1.5, dash='dot'),
-            name='TD Risk Level'
-        )
-    )
-
-    fig.update_layout(
-        template='plotly_dark',
-        plot_bgcolor='black',
-        paper_bgcolor='black',
-        xaxis=dict(
-            showgrid=False,
-            type='category',      # ensure categorical axis (no date gaps)
-            rangeslider_visible=False
-        ),
-        yaxis=dict(showgrid=False),
-        height=700,
-        width=1200
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
+def plot_googl_case_study_1():
+    plot_td_combo_case_study(googl_dict[list(googl_dict.keys())[0]]['dataframe'])
