@@ -46,4 +46,4 @@ googl_dict = compute_setup_countdown_pairs(
 ### ------------------------------------------------------------------------------------ ###
 
 def plot_googl_case_study_1():
-    plot_td_combo_case_study(googl_dict[list(googl_dict.keys())[0]]['dataframe'])
+    plot_td_combo_case_study(googl_dict,0)

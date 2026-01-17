@@ -927,15 +927,15 @@ def compute_setup_countdown_pairs(df):
     return setup_countdown_dict
 
 
-def plot_td_combo_case_study(setup_countdown_dict):
-    df = setup_countdown_dict[list(setup_countdown_dict.keys())[0]]['dataframe']
+def plot_td_combo_case_study(setup_countdown_dict,index_val):
+    df = setup_countdown_dict[list(setup_countdown_dict.keys())[index_val]]['dataframe']
     df['Date'] = df.index
     df['DateStr'] = df.index.strftime('%Y-%m-%d')
     df.set_index('Date', inplace=True)
 
     # Create series that span the whole visible window
-    df['TDST'] = setup_countdown_dict[list(setup_countdown_dict.keys())[0]]['tdst_val']
-    df['TD_Risk'] = setup_countdown_dict[list(setup_countdown_dict.keys())[0]]['risk_lvl']
+    df['TDST'] = setup_countdown_dict[list(setup_countdown_dict.keys())[index_val]]['tdst_val']
+    df['TD_Risk'] = setup_countdown_dict[list(setup_countdown_dict.keys())[index_val]]['risk_lvl']
 
     # --- 3. Base OHLC candlestick chart over ALL rows ---
     fig = go.Figure()
