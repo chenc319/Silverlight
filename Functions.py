@@ -932,94 +932,146 @@ def compute_setup_countdown_pairs(df):
 
     return setup_countdown_dict
 
-def plot_td_combo_case_study(setup_countdown_dict,index_val):
-    df = setup_countdown_dict[list(setup_countdown_dict.keys())[index_val]]['dataframe']
-    df['Date'] = df.index
-    df['DateStr'] = df.index.strftime('%Y-%m-%d')
-    df.set_index('Date', inplace=True)
+def plot_td_combo_case_study(setup_countdown_dict, index_val):
+    """
+    direction: 'buy' or 'sell'
+    """
 
-    # Create series that span the whole visible window
-    df['TDST'] = setup_countdown_dict[list(setup_countdown_dict.keys())[index_val]]['tdst_val']
-    df['TD_Risk'] = setup_countdown_dict[list(setup_countdown_dict.keys())[index_val]]['risk_lvl']
+    rec = setup_countdown_dict[list(setup_countdown_dict.keys())[index_val]]
+    df = rec["dataframe"].copy()
+    direction = rec['side']
 
-    # --- 3. Base OHLC candlestick chart over ALL rows ---
+    # basic date handling
+    df["Date"] = df.index
+    df["DateStr"] = df.index.strftime("%Y-%m-%d")
+    df.set_index("Date", inplace=True)
+
+    # TDST / Risk levels as flat series
+    df["TDST"] = rec["tdst_val"]
+    df["TD_Risk"] = rec["risk_lvl"]
+
+    # magnitude reference for offsets
+    price_span = (df["High"].max() - df["Low"].min())
+    if price_span == 0:
+        price_span = max(df["Close"].abs().max(), 1.0)
+    small_off = 0.01 * price_span    # between labels
+    large_off = 0.02 * price_span    # away from candles
+
+    # convenience masks
+    setup_mask = df["setup"] > 0
+    cd_mask = df["countdown"] > 0
+    perfected_mask = df["perfected"].fillna("").astype(str).str.lower().eq("perfected")
+
+    # y positions depend on buy/sell
+    if direction.lower() == "buy":
+        # labels below candles
+        setup_y = df["Low"] - large_off
+        cd_y = df["Low"] - large_off - small_off  # magenta below green
+        # perfected arrow on top of bar (above candle)
+        perfected_y = df["High"] + large_off
+        arrow_yanchor = "bottom"
+    else:  # 'sell'
+        # labels above candles
+        setup_y = df["High"] + large_off
+        cd_y = df["High"] + large_off + small_off  # magenta above green
+        # perfected arrow above both labels: top of cd_y + extra
+        perfected_y = cd_y + small_off
+        arrow_yanchor = "bottom"
+
     fig = go.Figure()
 
-    # 1) Candles over ALL bars, x = DateStr (categorical, no gaps)
+    # 1) Candles
     fig.add_trace(
         go.Ohlc(
-            x=df['DateStr'],
-            open=df['Open'],
-            high=df['High'],
-            low=df['Low'],
-            close=df['Close'],
-            increasing_line_color='white',
-            decreasing_line_color='white',
-            name='Price'
+            x=df["DateStr"],
+            open=df["Open"],
+            high=df["High"],
+            low=df["Low"],
+            close=df["Close"],
+            increasing_line_color="white",
+            decreasing_line_color="white",
+            name="Price",
         )
     )
 
-    # 2) Setup labels
-    setup_mask = df['setup'] > 0
+    # 2) Setup labels (green)
     fig.add_trace(
         go.Scatter(
-            x=df.loc[setup_mask, 'DateStr'],
-            y=df.loc[setup_mask, 'High'] * 1.01,
-            mode='text',
-            text=df.loc[setup_mask, 'setup'].astype(int).astype(str),
-            textfont=dict(color='lime', size=12),
-            textposition='top center',
-            name='TD Setup'
+            x=df.loc[setup_mask, "DateStr"],
+            y=setup_y.loc[setup_mask],
+            mode="text",
+            text=df.loc[setup_mask, "setup"].astype(int).astype(str),
+            textfont=dict(color="lime", size=12),
+            textposition="middle center",
+            name="TD Setup",
         )
     )
 
-    # 3) Countdown labels
-    cd_mask = df['countdown'] > 0
+    # 3) Countdown labels (magenta)
     fig.add_trace(
         go.Scatter(
-            x=df.loc[cd_mask, 'DateStr'],
-            y=df.loc[cd_mask, 'Low'] * 0.99,
-            mode='text',
-            text=df.loc[cd_mask, 'countdown'].astype(int).astype(str),
-            textfont=dict(color='magenta', size=12),
-            textposition='bottom center',
-            name='TD Countdown'
+            x=df.loc[cd_mask, "DateStr"],
+            y=cd_y.loc[cd_mask],
+            mode="text",
+            text=df.loc[cd_mask, "countdown"].astype(int).astype(str),
+            textfont=dict(color="magenta", size=12),
+            textposition="middle center",
+            name="TD Countdown",
         )
     )
 
-    # 4) Single TDST + TD Risk lines
+    # 4) TDST line
     fig.add_trace(
         go.Scatter(
-            x=df['DateStr'],
-            y=df['TDST'],
-            mode='lines',
-            line=dict(color='limegreen', width=1.5),
-            name='TD TDST Level'
+            x=df["DateStr"],
+            y=df["TDST"],
+            mode="lines",
+            line=dict(color="limegreen", width=1.5),
+            name="TD TDST Level",
         )
     )
 
+    # 5) TD Risk line
     fig.add_trace(
         go.Scatter(
-            x=df['DateStr'],
-            y=df['TD_Risk'],
-            mode='lines',
-            line=dict(color='magenta', width=1.5, dash='dot'),
-            name='TD Risk Level'
+            x=df["DateStr"],
+            y=df["TD_Risk"],
+            mode="lines",
+            line=dict(color="magenta", width=1.5, dash="dot"),
+            name="TD Risk Level",
         )
     )
+
+    # 6) Perfected arrow (next to 9, column == 'Perfected')
+    perfected_dates = df.index[perfected_mask]
+    for dt in perfected_dates:
+        date_str = dt.strftime("%Y-%m-%d")
+        fig.add_annotation(
+            x=date_str,
+            y=perfected_y.loc[dt],
+            xref="x",
+            yref="y",
+            showarrow=True,
+            arrowhead=2,
+            arrowsize=1.0,
+            arrowwidth=1.5,
+            arrowcolor="red",
+            ax=0,
+            ay=-15 if direction.lower() == "sell" else -15,  # vertical pixel offset
+        )
 
     fig.update_layout(
-        template='plotly_dark',
-        plot_bgcolor='black',
-        paper_bgcolor='black',
+        template="plotly_dark",
+        plot_bgcolor="black",
+        paper_bgcolor="black",
         xaxis=dict(
             showgrid=False,
-            type='category',      # ensure categorical axis (no date gaps)
-            rangeslider_visible=False
+            type="category",
+            rangeslider_visible=False,
         ),
         yaxis=dict(showgrid=False),
         height=700,
-        width=1200
+        width=1200,
     )
 
     st.plotly_chart(fig, use_container_width=True)
