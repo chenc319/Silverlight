@@ -41,46 +41,6 @@ googl_dict = compute_setup_countdown_pairs(
     df = mini_googl_df['2025-01-01':]
 )
 
-def resolve_countdown(series):
-    """Pick the countdown that should win for a given date."""
-    non_na = series.dropna()
-    if non_na.empty:
-        return np.nan
-    # choose the highest countdown value (earlier in the sequence)
-    return non_na.max()
-
-def stitch_td_dataframes(dfs):
-    # concat all, aligning on index (dates)
-    big = pd.concat(dfs, axis=0)
-
-    # if your index is not DatetimeIndex yet:
-    # big.index = pd.to_datetime(big.index)
-
-    # group by date index
-    grouped = big.groupby(big.index)
-
-    # columns that should be 'any non-null' (these should not conflict across dfs)
-    any_cols = ["Open", "High", "Low", "Close", "setup", "perfected"]
-    # countdown has special rule
-    cd_col = "countdown"
-
-    out_parts = []
-
-    for date, g in grouped:
-        row = {}
-        # handle the straightforward columns
-        for col in any_cols:
-            vals = g[col].dropna()
-            row[col] = vals.iloc[0] if not vals.empty else np.nan
-
-        # handle countdown with custom resolver
-        row[cd_col] = resolve_countdown(g[cd_col])
-
-        out_parts.append(pd.Series(row, name=date))
-
-    stitched = pd.DataFrame(out_parts).sort_index()
-
-    return stitched
 
 
 def build_stitched_td_df(setup_countdown_dict):
@@ -171,9 +131,104 @@ def build_stitched_td_df(setup_countdown_dict):
 
     return df
 
+def build_stitched_td_df(full_df: pd.DataFrame, setup_countdown_dict: dict) -> pd.DataFrame:
+    """
+    full_df: the master time series with columns like:
+       Open, High, Low, Close, h/l, setup, perfected (and possibly others)
+
+    setup_countdown_dict: output of compute_setup_countdown_pairs, where each entry has:
+       'dataframe' with columns including: Open, High, Low, Close, setup, perfected, countdown
+
+    Returns stitched_df with index == full_df.index and columns:
+       Open, High, Low, Close, h/l, setup, perfected,
+       countdown, tdst_level, risk_level
+    """
+
+    # Ensure datetime index on full_df
+    base = full_df.copy()
+    base.index = pd.to_datetime(base.index)
+
+    # Initialize countdown / levels on the full index
+    base["countdown"] = 0.0
+    base["tdst_level"] = np.nan
+    base["risk_level"] = np.nan
+
+    # Collect TDST and risk events (date, level)
+    tdst_events = []
+    risk_events = []
+
+    for _, rec in setup_countdown_dict.items():
+        leg_df = rec["dataframe"].copy()
+        leg_df.index = pd.to_datetime(leg_df.index)
+
+        # Align leg countdown to the full index
+        # Reindex with 0 for missing dates so we don't contaminate other periods
+        aligned_cdn = (
+            leg_df["countdown"]
+            .reindex(base.index)
+            .fillna(0.0)
+        )
+
+        # Keep the max countdown per bar across legs
+        base["countdown"] = np.maximum(base["countdown"], aligned_cdn)
+
+        # Collect TDST / risk events for the staircase
+        tdst_val = rec.get("tdst_val")
+        tdst_date = rec.get("tdst_date")
+        if tdst_val is not None and tdst_date is not None:
+            tdst_events.append((pd.to_datetime(tdst_date), float(tdst_val)))
+
+        risk_val = rec.get("risk_lvl")
+        risk_date = rec.get("risk_date")
+        if risk_val is not None and risk_date is not None:
+            risk_events.append((pd.to_datetime(risk_date), float(risk_val)))
+
+    # Build TDST staircase on the full index
+    if tdst_events:
+        tdst_events_sorted = sorted(tdst_events, key=lambda x: x[0])
+        for i, (start_date, level) in enumerate(tdst_events_sorted):
+            start_date = pd.to_datetime(start_date)
+            end_date = (
+                tdst_events_sorted[i + 1][0] - pd.Timedelta(days=1)
+                if i + 1 < len(tdst_events_sorted)
+                else base.index.max()
+            )
+            mask = (base.index >= start_date) & (base.index <= end_date)
+            base.loc[mask, "tdst_level"] = level
+
+    # Build Risk staircase on the full index
+    if risk_events:
+        risk_events_sorted = sorted(risk_events, key=lambda x: x[0])
+        for i, (start_date, level) in enumerate(risk_events_sorted):
+            start_date = pd.to_datetime(start_date)
+            end_date = (
+                risk_events_sorted[i + 1][0] - pd.Timedelta(days=1)
+                if i + 1 < len(risk_events_sorted)
+                else base.index.max()
+            )
+            mask = (base.index >= start_date) & (base.index <= end_date)
+            base.loc[mask, "risk_level"] = level
+
+    # Ensure countdown is integer-like
+    base["countdown"] = base["countdown"].astype(int)
+
+    # You now have one cohesive dataframe on the original time series
+    return base
+
+test_stitch = build_stitched_td_df(mini_googl_df,googl_dict)
 
 
-test_stitch = build_stitched_td_df(googl_dict)
+
+
+
+
+
+
+### ------------------------------------------------------------------------------------ ###
+### -------------------------------------- CHARTS -------------------------------------- ###
+### ------------------------------------------------------------------------------------ ###
+
+
 def plot_td_combo_case_study_stitched(stitched_df):
     df = stitched_df.copy()
     df.index = pd.to_datetime(df.index)
@@ -313,12 +368,6 @@ def plot_td_combo_case_study_stitched(stitched_df):
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
-
-
-### ------------------------------------------------------------------------------------ ###
-### -------------------------------------- CHARTS -------------------------------------- ###
-### ------------------------------------------------------------------------------------ ###
 
 def plot_googl_case_study_1():
     plot_td_combo_case_study(googl_dict,0)
