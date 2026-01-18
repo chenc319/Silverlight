@@ -250,26 +250,38 @@ def plot_td_combo_case_study_stitched(stitched_df):
 
     # label Y positions
     setup_y_buy = df["Low"] - (large_off + 0.5 * small_off)
-    cd_y_buy = df["Low"] - (large_off + 2.5 * small_off)
+    cd_y_buy    = df["Low"] - (large_off + 2.5 * small_off)
 
     setup_y_sell = df["High"] + (large_off + 0.5 * small_off)
-    cd_y_sell = df["High"] + (large_off + 2.5 * small_off)
+    cd_y_sell    = df["High"] + (large_off + 2.5 * small_off)
 
     setup_y = pd.Series(index=df.index, dtype=float)
-    setup_y[buy_mask] = setup_y_buy[buy_mask]
+    setup_y[buy_mask]  = setup_y_buy[buy_mask]
     setup_y[sell_mask] = setup_y_sell[sell_mask]
 
+    # countdown y: independent of setup, but side‑aware
     cd_y = pd.Series(index=df.index, dtype=float)
-    cd_y[cd_mask & buy_mask] = cd_y_buy[cd_mask & buy_mask]
+    cd_y[cd_mask & buy_mask]  = cd_y_buy[cd_mask & buy_mask]
     cd_y[cd_mask & sell_mask] = cd_y_sell[cd_mask & sell_mask]
 
+    # if there is a countdown but no setup (e.g. continuation), decide side
+    # by last non‑zero setup sign
+    no_setup_cd = cd_mask & ~buy_mask & ~sell_mask
+    if no_setup_cd.any():
+        last_setup = df["setup"].replace(0, np.nan).ffill()
+        extra_buy  = no_setup_cd & (last_setup < 0)
+        extra_sell = no_setup_cd & (last_setup > 0)
+        cd_y[extra_buy]  = cd_y_buy[extra_buy]
+        cd_y[extra_sell] = cd_y_sell[extra_sell]
+
+    # setup text: abs for buys, raw for sells
     setup_text = pd.Series(index=df.index, dtype=object)
-    setup_text[buy_mask] = df.loc[buy_mask, "setup"].abs().astype(int).astype(str)
+    setup_text[buy_mask]  = df.loc[buy_mask,  "setup"].abs().astype(int).astype(str)
     setup_text[sell_mask] = df.loc[sell_mask, "setup"].astype(int).astype(str)
 
     fig = go.Figure()
 
-    # candles
+    # 1) Candles
     fig.add_trace(
         go.Ohlc(
             x=df["DateStr"],
@@ -283,7 +295,7 @@ def plot_td_combo_case_study_stitched(stitched_df):
         )
     )
 
-    # setup labels
+    # 2) Setup labels
     fig.add_trace(
         go.Scatter(
             x=df.loc[setup_mask, "DateStr"],
@@ -296,7 +308,7 @@ def plot_td_combo_case_study_stitched(stitched_df):
         )
     )
 
-    # countdown labels
+    # 3) Countdown labels (magenta numbers should appear wherever countdown > 0)
     fig.add_trace(
         go.Scatter(
             x=df.loc[cd_mask, "DateStr"],
@@ -309,36 +321,67 @@ def plot_td_combo_case_study_stitched(stitched_df):
         )
     )
 
-    # TDST staircase (already piecewise horizontal in column)
+    # 4) TDST pure horizontal segments
     tdst_mask = df["tdst_level"].notna()
     if tdst_mask.any():
-        fig.add_trace(
-            go.Scatter(
-                x=df.loc[tdst_mask, "DateStr"],
-                y=df.loc[tdst_mask, "tdst_level"],
-                mode="lines",
-                line=dict(color="limegreen", width=1.5),
-                name="TDST Level",
-            )
-        )
+        # find contiguous ranges of same tdst_level
+        level = df["tdst_level"]
+        change = (level != level.shift()).fillna(False)
+        start_idx = df.index[change & tdst_mask]
 
-    # Risk staircase
+        for start in start_idx:
+            current_level = level.loc[start]
+            # extend until level changes or becomes NaN
+            seg_mask = (df.index >= start) & (tdst_mask) & (level == current_level)
+            seg_dates = df.index[seg_mask]
+            if len(seg_dates) < 2:
+                continue
+            fig.add_trace(
+                go.Scatter(
+                    x=df.loc[seg_dates, "DateStr"],
+                    y=[current_level] * len(seg_dates),
+                    mode="lines",
+                    line=dict(color="limegreen", width=1.5),
+                    name="TDST Level",
+                    showlegend=False,
+                )
+            )
+
+    # 5) Risk pure horizontal segments
     risk_mask = df["risk_level"].notna()
     if risk_mask.any():
-        fig.add_trace(
-            go.Scatter(
-                x=df.loc[risk_mask, "DateStr"],
-                y=df.loc[risk_mask, "risk_level"],
-                mode="lines",
-                line=dict(color="magenta", width=1.5, dash="dot"),
-                name="TD Risk Level",
-            )
-        )
+        level = df["risk_level"]
+        change = (level != level.shift()).fillna(False)
+        start_idx = df.index[change & risk_mask]
 
-    # perfected arrows
+        for start in start_idx:
+            current_level = level.loc[start]
+            seg_mask = (df.index >= start) & (risk_mask) & (level == current_level)
+            seg_dates = df.index[seg_mask]
+            if len(seg_dates) < 2:
+                continue
+            fig.add_trace(
+                go.Scatter(
+                    x=df.loc[seg_dates, "DateStr"],
+                    y=[current_level] * len(seg_dates),
+                    mode="lines",
+                    line=dict(color="magenta", width=1.5, dash="dot"),
+                    name="TD Risk Level",
+                    showlegend=False,
+                )
+            )
+
+    # 6) Perfected arrows (higher for sell setups)
+    # use last non‑zero setup sign to decide side per perfected bar
+    last_setup = df["setup"].replace(0, np.nan).ffill()
     for dt in df.index[perfected_mask]:
         date_str = dt.strftime("%Y-%m-%d")
-        y_arrow = df.loc[dt, "High"] + large_off
+        side_val = last_setup.loc[dt]
+        if side_val > 0:  # sell: push arrow further up
+            y_arrow = df.loc[dt, "High"] + (large_off + 3 * small_off)
+        else:             # buy or unknown: just above bar
+            y_arrow = df.loc[dt, "High"] + large_off
+
         fig.add_annotation(
             x=date_str,
             y=y_arrow,
