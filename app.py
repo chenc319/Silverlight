@@ -287,6 +287,8 @@ elif page == 'TD Combo':
     app_td_combo.plot_googl_case_study_5()
     st.title('GOOGL TD Combo Buy Case Study Example')
     app_td_combo.plot_googl_case_study_6()
+    app_td_combo.plot_stitched_googl()
+
 
 ### ---------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- GROWTH ---------------------------------------- ###
