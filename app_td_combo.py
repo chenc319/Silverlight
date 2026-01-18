@@ -344,4 +344,4 @@ def plot_googl_case_study_6():
     plot_td_combo_case_study(googl_dict,5)
 
 def plot_stitched_googl():
-    plot_td_combo_stitched(test_stitch)
+    plot_td_combo_case_study_stitched(test_stitch)
