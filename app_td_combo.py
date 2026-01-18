@@ -13,7 +13,7 @@ DATA_DIR = os.getenv('DATA_DIR', 'data')
 ### ------------------------------------------------------------------------------------ ###
 
 ### OHLC MAGS DATA ###
-mags_tickers = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA']
+mags_tickers = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA','TSM']
 mags_ohlc_dict = dict()
 for mag_ticker in mags_tickers:
     mag_string = mag_ticker + '.csv'
@@ -41,95 +41,19 @@ googl_dict = compute_setup_countdown_pairs(
     df = mini_googl_df['2025-01-01':]
 )
 
+### GET DATAFRAME ###
+tsm_df = pd.DataFrame(mags_ohlc_dict['TSM'])
+tsm_df['h/l'] = close_hl_setup(tsm_df,'Close')
 
+### SETUP AND PERFECTED ###
+tsm_df =  build_td_combo_v2_setups(tsm_df)
+tsm_df['perfected'] = get_perfected_9(tsm_df)
+mini_tsm_df = tsm_df['2025-01-01':]
 
-def build_stitched_td_df(setup_countdown_dict):
-    """
-    Convert your setup_countdown_dict into one time‑series with:
-      Open, High, Low, Close, setup, perfected, countdown,
-      tdst_level, risk_level
-
-    TDST: horizontal from each leg's tdst_date to just before the next leg's tdst_date.
-    Risk: horizontal from each leg's risk_date (if not None) to just before the next leg's risk_date.
-    """
-
-    # 1) collect all per‑leg data
-    leg_frames = []
-    tdst_events = []   # (date, level)
-    risk_events = []   # (date, level)
-
-    for name, rec in setup_countdown_dict.items():
-        df_leg = rec["dataframe"].copy()
-        df_leg.index = pd.to_datetime(df_leg.index)
-
-        # keep original structure; we will fill tdst_level / risk_level AFTER stitching
-        leg_frames.append(df_leg)
-
-        # TDST event
-        tdst_val = rec.get("tdst_val", None)
-        tdst_date = rec.get("tdst_date", None)
-        if (tdst_val is not None) and (tdst_date is not None):
-            tdst_events.append((pd.to_datetime(tdst_date), float(tdst_val)))
-
-        # Risk event
-        risk_val = rec.get("risk_lvl", None)
-        risk_date = rec.get("risk_date", None)
-        if (risk_val is not None) and (risk_date is not None):
-            risk_events.append((pd.to_datetime(risk_date), float(risk_val)))
-
-    # 2) stitch price / setup / countdown etc.
-    big = pd.concat(leg_frames, axis=0)
-    big.index.name = "Date"
-
-    grouped = big.groupby(big.index)
-
-    def first_non_nan(series):
-        s = series.dropna()
-        return s.iloc[0] if not s.empty else np.nan
-
-    def max_countdown(series):
-        s = series.dropna()
-        return s.max() if not s.empty else np.nan
-
-    rows = []
-    for dt, g in grouped:
-        row = {}
-        for col in ["Open", "High", "Low", "Close", "setup", "perfected"]:
-            row[col] = first_non_nan(g[col])
-        row["countdown"] = max_countdown(g["countdown"])
-        rows.append(pd.Series(row, name=dt))
-
-    df = pd.DataFrame(rows).sort_index()
-
-    # 3) build TDST staircase from tdst_events
-    df["tdst_level"] = np.nan
-    if tdst_events:
-        tdst_events_sorted = sorted(tdst_events, key=lambda x: x[0])
-        for i, (start_date, level) in enumerate(tdst_events_sorted):
-            start_date = pd.to_datetime(start_date)
-            end_date = (
-                tdst_events_sorted[i + 1][0] - pd.Timedelta(days=1)
-                if i + 1 < len(tdst_events_sorted)
-                else df.index.max()
-            )
-            mask = (df.index >= start_date) & (df.index <= end_date)
-            df.loc[mask, "tdst_level"] = level
-
-    # 4) build Risk staircase from risk_events
-    df["risk_level"] = np.nan
-    if risk_events:
-        risk_events_sorted = sorted(risk_events, key=lambda x: x[0])
-        for i, (start_date, level) in enumerate(risk_events_sorted):
-            start_date = pd.to_datetime(start_date)
-            end_date = (
-                risk_events_sorted[i + 1][0] - pd.Timedelta(days=1)
-                if i + 1 < len(risk_events_sorted)
-                else df.index.max()
-            )
-            mask = (df.index >= start_date) & (df.index <= end_date)
-            df.loc[mask, "risk_level"] = level
-
-    return df
+### COUNTDOWN DICTIONARY ###
+tsm_dict = compute_setup_countdown_pairs(
+    df = mini_tsm_df['2025-01-01':]
+)
 
 def build_stitched_td_df(full_df: pd.DataFrame, setup_countdown_dict: dict) -> pd.DataFrame:
     """
@@ -216,11 +140,7 @@ def build_stitched_td_df(full_df: pd.DataFrame, setup_countdown_dict: dict) -> p
     return base
 
 test_stitch = build_stitched_td_df(mini_googl_df,googl_dict)
-
-
-
-
-
+tsm_stitch = build_stitched_td_df(mini_tsm_df,tsm_dict)
 
 
 
@@ -437,3 +357,6 @@ def plot_googl_case_study_6():
 
 def plot_stitched_googl():
     plot_td_combo_case_study_stitched(test_stitch)
+
+def plot_stitched_tsm():
+    plot_td_combo_case_study_stitched(tsm_stitch)
