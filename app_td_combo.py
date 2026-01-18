@@ -85,58 +85,42 @@ def stitch_td_dataframes(dfs):
 
 def build_stitched_td_df(setup_countdown_dict):
     """
-    From your setup_countdown_dict:
+    Convert your setup_countdown_dict into one time‑series with:
+      Open, High, Low, Close, setup, perfected, countdown,
+      tdst_level, risk_level
 
-        {
-          'setup_countdown #1': {
-              'side': 'buy'/'sell',
-              'tdst_val': float or None,
-              'tdst_date': Timestamp or None,
-              'risk_lvl': float or None,
-              'risk_date': Timestamp or None,
-              'dataframe': df_with_OHLC_setup_perfected_countdown
-          },
-          ...
-        }
-
-    Return one stitched dataframe indexed by Date with:
-        Open, High, Low, Close, setup, perfected, countdown,
-        tdst_level, risk_level
+    TDST: horizontal from each leg's tdst_date to just before the next leg's tdst_date.
+    Risk: horizontal from each leg's risk_date (if not None) to just before the next leg's risk_date.
     """
-    dfs = []
 
-    for key, rec in setup_countdown_dict.items():
-        df = rec["dataframe"].copy()
-        side = rec["side"]
+    # 1) collect all per‑leg data
+    leg_frames = []
+    tdst_events = []   # (date, level)
+    risk_events = []   # (date, level)
 
-        # ensure datetime index
-        df.index = pd.to_datetime(df.index)
+    for name, rec in setup_countdown_dict.items():
+        df_leg = rec["dataframe"].copy()
+        df_leg.index = pd.to_datetime(df_leg.index)
 
-        # initialize columns
-        df["tdst_level"] = np.nan
-        df["risk_level"] = np.nan
+        # keep original structure; we will fill tdst_level / risk_level AFTER stitching
+        leg_frames.append(df_leg)
 
-        # TDST horizontal from tdst_date onward (within this df)
+        # TDST event
         tdst_val = rec.get("tdst_val", None)
         tdst_date = rec.get("tdst_date", None)
-        if tdst_val is not None and pd.notna(tdst_val) and tdst_date is not None:
-            tdst_date = pd.to_datetime(tdst_date)
-            df.loc[df.index >= tdst_date, "tdst_level"] = float(tdst_val)
+        if (tdst_val is not None) and (tdst_date is not None):
+            tdst_events.append((pd.to_datetime(tdst_date), float(tdst_val)))
 
-        # Risk horizontal from risk_date onward (within this df)
+        # Risk event
         risk_val = rec.get("risk_lvl", None)
         risk_date = rec.get("risk_date", None)
-        if risk_val is not None and pd.notna(risk_val) and risk_date is not None:
-            risk_date = pd.to_datetime(risk_date)
-            df.loc[df.index >= risk_date, "risk_level"] = float(risk_val)
+        if (risk_val is not None) and (risk_date is not None):
+            risk_events.append((pd.to_datetime(risk_date), float(risk_val)))
 
-        dfs.append(df)
-
-    # concat all
-    big = pd.concat(dfs, axis=0)
+    # 2) stitch price / setup / countdown etc.
+    big = pd.concat(leg_frames, axis=0)
     big.index.name = "Date"
 
-    # group by date to resolve overlaps
     grouped = big.groupby(big.index)
 
     def first_non_nan(series):
@@ -147,40 +131,50 @@ def build_stitched_td_df(setup_countdown_dict):
         s = series.dropna()
         return s.max() if not s.empty else np.nan
 
-    def max_or_nan(series):
-        s = series.dropna()
-        return s.max() if not s.empty else np.nan
-
     rows = []
     for dt, g in grouped:
         row = {}
-        # price and discrete columns: take first non-null (they shouldn't conflict)
         for col in ["Open", "High", "Low", "Close", "setup", "perfected"]:
             row[col] = first_non_nan(g[col])
-
-        # countdown: choose higher value (earlier in TD terms)
         row["countdown"] = max_countdown(g["countdown"])
-
-        # TDST/risk: if multiple, take max (usually same value; if conflicts, you prefer higher)
-        row["tdst_level"] = max_or_nan(g["tdst_level"])
-        row["risk_level"] = max_or_nan(g["risk_level"])
-
         rows.append(pd.Series(row, name=dt))
 
-    stitched = pd.DataFrame(rows).sort_index()
-    return stitched
+    df = pd.DataFrame(rows).sort_index()
+
+    # 3) build TDST staircase from tdst_events
+    df["tdst_level"] = np.nan
+    if tdst_events:
+        tdst_events_sorted = sorted(tdst_events, key=lambda x: x[0])
+        for i, (start_date, level) in enumerate(tdst_events_sorted):
+            start_date = pd.to_datetime(start_date)
+            end_date = (
+                tdst_events_sorted[i + 1][0] - pd.Timedelta(days=1)
+                if i + 1 < len(tdst_events_sorted)
+                else df.index.max()
+            )
+            mask = (df.index >= start_date) & (df.index <= end_date)
+            df.loc[mask, "tdst_level"] = level
+
+    # 4) build Risk staircase from risk_events
+    df["risk_level"] = np.nan
+    if risk_events:
+        risk_events_sorted = sorted(risk_events, key=lambda x: x[0])
+        for i, (start_date, level) in enumerate(risk_events_sorted):
+            start_date = pd.to_datetime(start_date)
+            end_date = (
+                risk_events_sorted[i + 1][0] - pd.Timedelta(days=1)
+                if i + 1 < len(risk_events_sorted)
+                else df.index.max()
+            )
+            mask = (df.index >= start_date) & (df.index <= end_date)
+            df.loc[mask, "risk_level"] = level
+
+    return df
 
 
 
 test_stitch = build_stitched_td_df(googl_dict)
-def plot_td_combo_stitched(stitched_df):
-    """
-    stitched_df columns:
-      Open, High, Low, Close, setup, perfected, countdown,
-      tdst_level, risk_level
-    Buy setups are negative ( -1..-9 ), sell setups positive ( 1..9 ).
-    """
-
+def plot_td_combo_case_study_stitched(stitched_df):
     df = stitched_df.copy()
     df.index = pd.to_datetime(df.index)
     df["DateStr"] = df.index.strftime("%Y-%m-%d")
@@ -192,20 +186,17 @@ def plot_td_combo_stitched(stitched_df):
     cd_mask = df["countdown"] > 0
     perfected_mask = df["perfected"].fillna("").astype(str).str.lower().eq("perfected")
 
-    # magnitude reference for offsets
+    # magnitude reference
     price_span = df["High"].max() - df["Low"].min()
     if price_span == 0:
         price_span = max(df["Close"].abs().max(), 1.0)
-    small_off = 0.01 * price_span    # base step between text rows
-    large_off = 0.02 * price_span    # distance from candles
+    small_off = 0.01 * price_span
+    large_off = 0.02 * price_span
 
-    # --- label Y positions ---
-
-    # buy: labels below candles
+    # label Y positions
     setup_y_buy = df["Low"] - (large_off + 0.5 * small_off)
     cd_y_buy = df["Low"] - (large_off + 2.5 * small_off)
 
-    # sell: labels above candles
     setup_y_sell = df["High"] + (large_off + 0.5 * small_off)
     cd_y_sell = df["High"] + (large_off + 2.5 * small_off)
 
@@ -217,14 +208,13 @@ def plot_td_combo_stitched(stitched_df):
     cd_y[cd_mask & buy_mask] = cd_y_buy[cd_mask & buy_mask]
     cd_y[cd_mask & sell_mask] = cd_y_sell[cd_mask & sell_mask]
 
-    # setup text: abs for buys, raw for sells
     setup_text = pd.Series(index=df.index, dtype=object)
     setup_text[buy_mask] = df.loc[buy_mask, "setup"].abs().astype(int).astype(str)
     setup_text[sell_mask] = df.loc[sell_mask, "setup"].astype(int).astype(str)
 
     fig = go.Figure()
 
-    # 1) Candles
+    # candles
     fig.add_trace(
         go.Ohlc(
             x=df["DateStr"],
@@ -238,7 +228,7 @@ def plot_td_combo_stitched(stitched_df):
         )
     )
 
-    # 2) Setup labels
+    # setup labels
     fig.add_trace(
         go.Scatter(
             x=df.loc[setup_mask, "DateStr"],
@@ -251,7 +241,7 @@ def plot_td_combo_stitched(stitched_df):
         )
     )
 
-    # 3) Countdown labels
+    # countdown labels
     fig.add_trace(
         go.Scatter(
             x=df.loc[cd_mask, "DateStr"],
@@ -264,7 +254,7 @@ def plot_td_combo_stitched(stitched_df):
         )
     )
 
-    # 4) TDST horizontal lines (from stitched tdst_level)
+    # TDST staircase (already piecewise horizontal in column)
     tdst_mask = df["tdst_level"].notna()
     if tdst_mask.any():
         fig.add_trace(
@@ -277,7 +267,7 @@ def plot_td_combo_stitched(stitched_df):
             )
         )
 
-    # 5) Risk horizontal lines (from stitched risk_level)
+    # Risk staircase
     risk_mask = df["risk_level"].notna()
     if risk_mask.any():
         fig.add_trace(
@@ -290,11 +280,9 @@ def plot_td_combo_stitched(stitched_df):
             )
         )
 
-    # 6) Perfected arrows
-    perfected_dates = df.index[perfected_mask]
-    for dt in perfected_dates:
+    # perfected arrows
+    for dt in df.index[perfected_mask]:
         date_str = dt.strftime("%Y-%m-%d")
-        # put arrow above bar; works for both buy/sell
         y_arrow = df.loc[dt, "High"] + large_off
         fig.add_annotation(
             x=date_str,
