@@ -572,19 +572,6 @@ def td_combo_setup(df,setup_type):
     return df['setup']
 
 def build_td_combo_v2_setups(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Create a single 'setup' column:
-      +1..+9 = completed Sell setup
-      -1..-9 = completed Buy setup
-       0     = no completed setup
-
-    Uses existing df['h/l'] with 'h' / 'l' values.
-    Enforces:
-      - Bullish flip (l -> h) required before a Sell setup can begin.
-      - Bearish flip (h -> l) required before a Buy setup can begin.
-      - Flip must occur AFTER the previous completed setup (of any side).
-      - Only fully completed 1–9 / -1–-9 sequences are printed; partial runs are discarded.
-    """
     df = df.copy()
 
     side = df['h/l'].map({'h': 1, 'l': -1}).fillna(0)
@@ -592,15 +579,11 @@ def build_td_combo_v2_setups(df: pd.DataFrame) -> pd.DataFrame:
     bull_flip = (side.shift(1) == -1) & (side == 1)   # l -> h
     bear_flip = (side.shift(1) == 1) & (side == -1)   # h -> l
 
-    # Track “eligibility windows” for starting a new setup of each type
-    # after an appropriate flip has occurred.
     last_bull_flip_idx = None
     last_bear_flip_idx = None
-    last_completed_setup_idx = None   # index of bar 9 of the last completed setup
+    last_completed_setup_idx = None
 
-    # This will hold only completed sequences.
     df['setup'] = 0
-
     idx_list = df.index.to_list()
     n = len(idx_list)
 
@@ -608,72 +591,79 @@ def build_td_combo_v2_setups(df: pd.DataFrame) -> pd.DataFrame:
     while i < n:
         idx = idx_list[i]
 
-        # Update flip trackers
         if bull_flip.iloc[i]:
             last_bull_flip_idx = idx
         if bear_flip.iloc[i]:
             last_bear_flip_idx = idx
 
-        # Decide if we *can* start a new setup here and in which direction.
-        # Conditions:
-        #   1) Side at this bar must be 'h' (sell) or 'l' (buy).
-        #   2) There must be a flip of the correct type AFTER the last completed setup.
-        #   3) That flip must occur at or before this bar.
         direction = 0
-
         if side.iloc[i] == 1:
-            # Candidate Sell bar (needs bullish flip since last completed setup)
             if last_bull_flip_idx is not None:
                 if (last_completed_setup_idx is None) or (last_bull_flip_idx > last_completed_setup_idx):
-                    # The bullish flip that enables this sell setup window is after the last completed setup.
-                    # Setup can start on any later 'h' bar.
                     direction = +1
-
         elif side.iloc[i] == -1:
-            # Candidate Buy bar (needs bearish flip since last completed setup)
             if last_bear_flip_idx is not None:
                 if (last_completed_setup_idx is None) or (last_bear_flip_idx > last_completed_setup_idx):
                     direction = -1
 
-        # If we cannot start a setup here, just advance.
         if direction == 0:
             i += 1
             continue
 
-        # Attempt to build a full 9‑bar run starting at i.
-        ok = True
-        if i + 9 > n:
-            ok = False
-        else:
+        # ----- main: attempt full 9‑bar run -----
+        if i + 9 <= n:
+            ok = True
             for k in range(9):
                 j = i + k
                 if direction == +1:
-                    # Sell setup requires 'h' (close > close[-4])
                     if side.iloc[j] != 1:
                         ok = False
                         break
                 else:
-                    # Buy setup requires 'l' (close < close[-4])
                     if side.iloc[j] != -1:
                         ok = False
                         break
 
-        if ok:
-            # Completed setup: write +1..+9 or -1..-9 into df['setup'].
-            for k in range(1, 10):
-                j = i + (k - 1)
-                df.at[idx_list[j], 'setup'] = direction * k
+            if ok:
+                for k in range(1, 10):
+                    j = i + (k - 1)
+                    df.at[idx_list[j], 'setup'] = direction * k
 
-            # Mark completion index; new setups of either side must wait for a new flip after this.
-            last_completed_setup_idx = idx_list[i + 8]
+                last_completed_setup_idx = idx_list[i + 8]
+                i = i + 9
+                continue
+            else:
+                i += 1
+                continue
 
-            # Jump past the completed sequence.
-            i = i + 9
-        else:
-            # Not a valid 9‑bar run; do nothing, leave setup as 0 and step forward.
-            i += 1
+        # ----- edge case: partial run at series end -----
+        # We are here only when i + 9 > n
+        remaining = n - i
+        # Require at least 1 bar and all of them to satisfy side condition
+        if remaining > 0:
+            ok_partial = True
+            for k in range(remaining):
+                j = i + k
+                if direction == +1 and side.iloc[j] != 1:
+                    ok_partial = False
+                    break
+                if direction == -1 and side.iloc[j] != -1:
+                    ok_partial = False
+                    break
+
+            if ok_partial:
+                # number them 1..remaining (or -1..-remaining)
+                for k in range(1, remaining + 1):
+                    j = i + (k - 1)
+                    df.at[idx_list[j], 'setup'] = direction * k
+                # no last_completed_setup_idx update (not a full 9‑bar completion)
+                # end of series anyway
+                break
+
+        i += 1
 
     return df
+
 
 def get_perfected_9(df):
     df['perfected'] = None
@@ -715,44 +705,28 @@ def get_perfected_9(df):
     return df['perfected']
 
 def compute_setup_countdown_pairs(df):
-    """
-    Uses unified 'setup' column:
-      -1..-9 = Buy setup
-      +1..+9 = Sell setup
-
-    For each setup start (setup == -1 or +1), runs the
-    corresponding TD Combo-style countdown into 'countdown'.
-
-    Returns dict of setup-countdown pairs (for both sides).
-    """
     df = df.copy()
 
     setup_col = "setup"
     countdown_col = "countdown"
     df[countdown_col] = 0
 
-    # Setup starts: -1 (buy) or +1 (sell)
     setup_rows_to_iterate = df[(df[setup_col] == -1) | (df[setup_col] == 1)].index
 
     setup_countdown_dict = dict()
     setup_dict_key_index = 1
-
-    setup_start = setup_rows_to_iterate[2]
 
     for setup_start in setup_rows_to_iterate:
 
         n = len(df.index)
         setup_pos = df.index.get_loc(setup_start)
 
-        # need one bar before and 8 bars after: indices [setup_pos-1 .. setup_pos+8]
         if setup_pos - 1 < 0 or setup_pos + 8 >= n:
             continue
 
-        # ----- DETECT SIDE FROM SIGN -----
         start_val = df.at[setup_start, setup_col]
         side = "buy" if start_val < 0 else "sell"
 
-        # ---------- TDST ----------
         prev_bar = df.index[setup_pos - 1]
         bar9     = df.index[setup_pos + 8]
 
@@ -761,31 +735,26 @@ def compute_setup_countdown_pairs(df):
 
         if side == "buy":
             tdst_win['true_high'] = tdst_win['High'].combine(prev_close, max)
-            tdst_win = tdst_win.iloc[1:]  # drop first row with NaN prev_close
-
+            tdst_win = tdst_win.iloc[1:]
             tdst_val  = tdst_win['true_high'].max()
             tdst_date = tdst_win['true_high'].idxmax()
         else:
             tdst_win['true_low'] = tdst_win['Low'].combine(prev_close, min)
             tdst_win = tdst_win.iloc[1:]
-
             tdst_val  = tdst_win['true_low'].min()
             tdst_date = tdst_win['true_low'].idxmin()
 
         tdst_setup_num = tdst_win.loc[tdst_date, setup_col]
 
-        # First TDST break
         if side == "buy":
             first_tdst_break = (df.loc[setup_start:, 'Close'] > tdst_val).idxmax()
         else:
             first_tdst_break = (df.loc[setup_start:, 'Close'] < tdst_val).idxmin()
 
-
         if first_tdst_break == setup_start:
             first_tdst_break = df.index[len(df.index) - 1]
 
-        # ---------- COUNTDOWN ----------
-        # (Note: this reinitializes countdown for each setup window, just like your original.)
+        # countdown
         df[countdown_col] = 0
         setup_idx    = setup_pos
         cdn_num      = 1
@@ -794,6 +763,9 @@ def compute_setup_countdown_pairs(df):
         for i in range(setup_idx, len(df.index)):
             if cdn_num > 13:
                 break
+
+            if i < 2:
+                continue
 
             row = df.index[i]
             row_t1 = df.index[i - 1]
@@ -805,7 +777,6 @@ def compute_setup_countdown_pairs(df):
             o = df.loc[row, 'Open']
 
             if side == "buy":
-                # ---------- BUY COUNTDOWN ----------
                 if cdn_num <= 10:
                     base_ok = (
                         c <= df.loc[row_t2, 'Low'] and
@@ -839,8 +810,7 @@ def compute_setup_countdown_pairs(df):
                         last_cdn_bar = row
                         cdn_num += 1
 
-            else:
-                # ---------- SELL COUNTDOWN (mirrored) ----------
+            else:  # sell
                 if cdn_num <= 10:
                     base_ok = (
                         c >= df.loc[row_t2, 'High'] and
@@ -886,7 +856,9 @@ def compute_setup_countdown_pairs(df):
             'tdst_setup_start_bar': tdst_setup_num,
         }
 
-        if cdn_num == 14 and last_cdn_bar is not None:
+        completed_cdn = cdn_num - 1  # last number actually written
+
+        if completed_cdn >= 13 and last_cdn_bar is not None:
             risk_win = window.loc[setup_start:last_cdn_bar].copy()
 
             if len(risk_win) <= 1:
@@ -921,9 +893,11 @@ def compute_setup_countdown_pairs(df):
                     'risk_date': risk_date,
                 })
         else:
+            # live / partial countdown (e.g. ends at 11 because data ends)
+            live_end = last_cdn_bar if last_cdn_bar is not None else window.index[-1]
             result.update({
-                'valid setup-cdn_pair': 'no',
-                'dataframe': window,
+                'valid setup-cdn_pair': 'live',
+                'dataframe': window.loc[setup_start:live_end],
                 'risk_lvl':  None,
                 'risk_date': None,
             })
@@ -931,6 +905,7 @@ def compute_setup_countdown_pairs(df):
         setup_countdown_dict[name] = result
 
     return setup_countdown_dict
+
 
 def plot_td_combo_case_study(setup_countdown_dict, index_val):
     rec = setup_countdown_dict[list(setup_countdown_dict.keys())[index_val]]
