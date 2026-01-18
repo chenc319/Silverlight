@@ -933,13 +933,9 @@ def compute_setup_countdown_pairs(df):
     return setup_countdown_dict
 
 def plot_td_combo_case_study(setup_countdown_dict, index_val):
-    """
-    direction: 'buy' or 'sell'
-    """
-
     rec = setup_countdown_dict[list(setup_countdown_dict.keys())[index_val]]
     df = rec["dataframe"].copy()
-    direction = rec['side']
+    direction = rec["side"]  # 'buy' or 'sell'
 
     # basic date handling
     df["Date"] = df.index
@@ -954,29 +950,33 @@ def plot_td_combo_case_study(setup_countdown_dict, index_val):
     price_span = (df["High"].max() - df["Low"].min())
     if price_span == 0:
         price_span = max(df["Close"].abs().max(), 1.0)
-    small_off = 0.01 * price_span    # between labels
-    large_off = 0.02 * price_span    # away from candles
+    small_off = 0.01 * price_span    # base step between text rows
+    large_off = 0.02 * price_span    # distance from candles
 
     # convenience masks
-    setup_mask = df["setup"] > 0
+    setup_mask = df["setup"] != 0   # you have -1..-9 for buys, 1..9 for sells
     cd_mask = df["countdown"] > 0
     perfected_mask = df["perfected"].fillna("").astype(str).str.lower().eq("perfected")
 
     # y positions depend on buy/sell
     if direction.lower() == "buy":
-        # labels below candles
-        setup_y = df["Low"] - large_off
-        cd_y = df["Low"] - large_off - small_off  # magenta below green
-        # perfected arrow on top of bar (above candle)
+        # green below low, magenta further below
+        setup_y = df["Low"] - (large_off + 0.5 * small_off)
+        cd_y = df["Low"] - (large_off + 2.5 * small_off)
+        # perfected arrow just above bar
         perfected_y = df["High"] + large_off
-        arrow_yanchor = "bottom"
+
+        # convert negative setup values to positive labels
+        setup_text = df.loc[setup_mask, "setup"].abs().astype(int).astype(str)
     else:  # 'sell'
-        # labels above candles
-        setup_y = df["High"] + large_off
-        cd_y = df["High"] + large_off + small_off  # magenta above green
-        # perfected arrow above both labels: top of cd_y + extra
-        perfected_y = cd_y + small_off
-        arrow_yanchor = "bottom"
+        # green above high, magenta further above
+        setup_y = df["High"] + (large_off + 0.5 * small_off)
+        cd_y = df["High"] + (large_off + 2.5 * small_off)
+        # perfected arrow above the magenta row
+        perfected_y = df["High"] + (large_off + 4.0 * small_off)
+
+        # sells already positive 1..9
+        setup_text = df.loc[setup_mask, "setup"].astype(int).astype(str)
 
     fig = go.Figure()
 
@@ -1000,7 +1000,7 @@ def plot_td_combo_case_study(setup_countdown_dict, index_val):
             x=df.loc[setup_mask, "DateStr"],
             y=setup_y.loc[setup_mask],
             mode="text",
-            text=df.loc[setup_mask, "setup"].astype(int).astype(str),
+            text=setup_text,  # abs() already applied for buy
             textfont=dict(color="lime", size=12),
             textposition="middle center",
             name="TD Setup",
@@ -1042,7 +1042,7 @@ def plot_td_combo_case_study(setup_countdown_dict, index_val):
         )
     )
 
-    # 6) Perfected arrow (next to 9, column == 'Perfected')
+    # 6) Perfected arrow
     perfected_dates = df.index[perfected_mask]
     for dt in perfected_dates:
         date_str = dt.strftime("%Y-%m-%d")
@@ -1057,7 +1057,7 @@ def plot_td_combo_case_study(setup_countdown_dict, index_val):
             arrowwidth=1.5,
             arrowcolor="red",
             ax=0,
-            ay=-15 if direction.lower() == "sell" else -15,  # vertical pixel offset
+            ay=-15,
         )
 
     fig.update_layout(
