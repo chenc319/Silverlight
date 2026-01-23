@@ -275,10 +275,21 @@ elif page == 'Yield Curve Model':
 ### ---------------------------------------------------------------------------------------- ###
 
 elif page == 'TD Combo':
-    st.title('GOOGL TD Combo')
+    st.title('GOOGL Historical TD Combo')
     app_td_combo.plot_stitched_googl()
-    st.title('TSM TD Combo')
-    app_td_combo.plot_stitched_tsm()
+    st.title('AMZN Historical TD Combo')
+    app_td_combo.plot_stitched_amzn()
+    st.title('AAPL Historical TD Combo')
+    app_td_combo.plot_stitched_aapl()
+    st.title('META Historical TD Combo')
+    app_td_combo.plot_stitched_meta()
+    st.title('MSFT Historical TD Combo')
+    app_td_combo.plot_stitched_msft()
+    st.title('NVDA Historical TD Combo')
+    app_td_combo.plot_stitched_nvda()
+    st.title('TSLA Historical TD Combo')
+    app_td_combo.plot_stitched_tsla()
+
 
 
 ### ---------------------------------------------------------------------------------------- ###
