@@ -688,17 +688,17 @@ def get_perfected_9(df):
             low8 = df.at[idx8, 'Low']
             low9 = df.at[idx9_bar, 'Low']
 
-            cond = ((low8 <= low6 and low8 <= low7) or
-                    (low9 <= low6 and low9 <= low7))
+            cond = ((low8 <= low6 or low8 <= low7) or
+                    (low9 <= low6 or low9 <= low7))
         else:
-            # Sell perfected rule: high(8 or 9) >= highs of 6 and 7
+            # Sell perfected rule: high(8 or 9) >= highs of 6 or 7
             high6 = df.at[idx6, 'High']
             high7 = df.at[idx7, 'High']
             high8 = df.at[idx8, 'High']
             high9 = df.at[idx9_bar, 'High']
 
-            cond = ((high8 >= high6 and high8 >= high7) or
-                    (high9 >= high6 and high9 >= high7))
+            cond = ((high8 >= high6 or high8 >= high7) or
+                    (high9 >= high6 or high9 >= high7))
 
         if cond:
             df.at[idx9_bar, 'perfected'] = "Perfected"
