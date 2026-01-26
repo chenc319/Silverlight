@@ -49,6 +49,235 @@ for mag_ticker in mags_tickers:
     mags_td_combo_complete_stitches[mag_ticker] = test_stitch
 
 
+
+
+def add_td_recycle_buy_and_sell(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add 'recycle' column marking 'R' on bars where a TD Buy/Sell Countdown bar 13
+    would be recycled by an 18-bar extended Setup in the same direction.
+
+    Assumes:
+      - index is chronological (Date-like)
+      - columns: 'Close', 'setup', 'countdown'
+      - buy setups:  -1 .. -9
+      - sell setups:  1 ..  9
+      - countdown > 0 for both buy & sell Countdowns (direction inferred from setup sign nearby)
+    """
+    df = df.copy()
+    df['recycle'] = None
+
+    close = df['Close']
+
+    # --- 1) Build Sequential-style extension conditions ---
+
+    # Buy-type extension: close < close[ t-4 ]
+    cond_buy_ext = close < close.shift(4)
+
+    # Sell-type extension (mirror): close > close[ t-4 ]
+    cond_sell_ext = close > close.shift(4)
+
+    def build_run_lengths(cond_series: pd.Series) -> pd.Series:
+        """Return a Series of run lengths of consecutive True values in cond_series."""
+        idx = cond_series.index
+        run_id = 0
+        run_ids = np.zeros(len(idx), dtype=int)
+        run_lengths = np.zeros(len(idx), dtype=int)
+
+        prev_true = False
+        for i, (_, is_true) in enumerate(cond_series.items()):
+            if is_true:
+                if not prev_true:
+                    run_id += 1
+                run_ids[i] = run_id
+                prev_true = True
+            else:
+                prev_true = False
+
+        run_id_series = pd.Series(run_ids, index=idx)
+        for rid in range(1, run_id + 1):
+            mask = run_id_series == rid
+            length = mask.sum()
+            run_lengths[mask.values] = length
+
+        return pd.Series(run_lengths, index=idx)
+
+    buy_run_len  = build_run_lengths(cond_buy_ext)
+    sell_run_len = build_run_lengths(cond_sell_ext)
+
+    # --- 2) Helpers to test for 18-bar extended Setup near a given bar ---
+
+    def has_extended_buy_setup_near(idx_label, window=5, min_len=22):
+        if idx_label not in df.index:
+            return False
+        pos = df.index.get_loc(idx_label)
+        start = max(0, pos - window)
+        end = min(len(df.index) - 1, pos + window)
+        local_idx = df.index[start:end+1]
+        return (buy_run_len.loc[local_idx] >= min_len).any()
+
+    def has_extended_sell_setup_near(idx_label, window=5, min_len=22):
+        if idx_label not in df.index:
+            return False
+        pos = df.index.get_loc(idx_label)
+        start = max(0, pos - window)
+        end = min(len(df.index) - 1, pos + window)
+        local_idx = df.index[start:end+1]
+        return (sell_run_len.loc[local_idx] >= min_len).any()
+
+    # --- 3) Mark recycles for buy and sell Countdowns at bar 13 ---
+
+    for t in df.index:
+        cdn = df.at[t, 'countdown']
+        if cdn != 13:
+            continue
+
+        # Infer direction of Countdown: look back a bit at setup sign around this bar
+        # If the dominant setup sign nearby is negative => buy, positive => sell.
+        pos = df.index.get_loc(t)
+        start = max(0, pos - 15)
+        end = pos
+        local_setups = df['setup'].iloc[start:end+1]
+
+        neg_count = (local_setups < 0).sum()
+        pos_count = (local_setups > 0).sum()
+
+        if neg_count > pos_count:
+            # Treat as buy Countdown
+            if has_extended_buy_setup_near(t):
+                df.at[t, 'recycle'] = 'R'
+        elif pos_count > neg_count:
+            # Treat as sell Countdown
+            if has_extended_sell_setup_near(t):
+                df.at[t, 'recycle'] = 'R'
+        else:
+            # If ambiguous, you can skip or choose one side; here we skip.
+            continue
+
+    return df
+
+
+def rebuild_tdst_and_risk_compact(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Rebuilds tdst_level and risk_level so that:
+      - Each row has either a valid level for that bar or NaN.
+      - Lines start at the correct event bars and stop when terminated.
+      - Multiple legs can overlap, but are collapsed into one value per bar.
+    Assumes:
+      - 'Date' column or datetime index
+      - 'Close','High','Low','setup','tdst_level','risk_level'
+      - buy setups: -1..-9, sell setups: 1..9
+    """
+    df = df.copy()
+
+    # Ensure datetime index
+    if 'Date' in df.columns:
+        df['Date'] = pd.to_datetime(df['Date'])
+        df.set_index('Date', inplace=True)
+    df = df.sort_index()
+
+    # store originals
+    orig_tdst = df['tdst_level'].copy()
+    orig_risk = df['risk_level'].copy()
+
+    # reset working columns
+    df['tdst_level'] = np.nan
+    df['risk_level'] = np.nan
+
+    # -------- utilities --------
+    def infer_side(at_time):
+        local = df.loc[:at_time, 'setup'].tail(15)
+        neg = (local < 0).sum()
+        pos = (local > 0).sum()
+        return 'buy' if neg >= pos else 'sell'
+
+    # Each leg: (start, end, level, side)
+    tdst_legs = []
+    risk_legs = []
+
+    # -------- build TDST legs --------
+    # find all event starts from original data
+    tdst_events = []
+    for t in df.index:
+        v = orig_tdst.loc[t]
+        if pd.notna(v):
+            tdst_events.append((t, float(v), infer_side(t)))
+
+    for i, (start_t, level, side) in enumerate(tdst_events):
+        # walk forward to find termination
+        end_t = df.index[-1]
+        for t in df.index[df.index >= start_t]:
+            # TDST break
+            if side == 'buy':
+                broken = df.at[t, 'Close'] > level
+            else:
+                broken = df.at[t, 'Close'] < level
+
+            # optional: terminate if a *different* TDST event (any side) starts here
+            is_new_event = (t != start_t) and pd.notna(orig_tdst.loc[t])
+
+            if broken or is_new_event:
+                # stop at previous bar if not at start
+                pos = df.index.get_loc(t)
+                end_t = df.index[pos - 1] if pos > 0 else start_t
+                break
+        tdst_legs.append((start_t, end_t, level, side))
+
+    # -------- build Risk legs --------
+    risk_events = []
+    for t in df.index:
+        v = orig_risk.loc[t]
+        if pd.notna(v):
+            risk_events.append((t, float(v), infer_side(t)))
+
+    for i, (start_t, level, side) in enumerate(risk_events):
+        end_t = df.index[-1]
+        for t in df.index[df.index >= start_t]:
+            # risk violation
+            if side == 'buy':
+                broken = df.at[t, 'Low'] < level
+            else:
+                broken = df.at[t, 'High'] > level
+
+            is_new_event = (t != start_t) and pd.notna(orig_risk.loc[t])
+
+            if broken or is_new_event:
+                pos = df.index.get_loc(t)
+                end_t = df.index[pos - 1] if pos > 0 else start_t
+                break
+        risk_legs.append((start_t, end_t, level, side))
+
+    # -------- per-bar combine logic --------
+    # For each bar, collect all active levels and pick one.
+    for t in df.index:
+        # TDST: all legs active on this bar
+        active_tdst = [level for (s, e, level, side)
+                       in tdst_legs if (t >= s and t <= e)]
+        # Risk:
+        active_risk = [level for (s, e, level, side)
+                       in risk_legs if (t >= s and t <= e)]
+
+        # Define your combine rule:
+        # Example: if multiple TDST lines, keep the *latest* one (by start date).
+        if active_tdst:
+            # take the leg whose start is latest <= t
+            candidates = [(s, level) for (s, e, level, side) in tdst_legs
+                          if (t >= s and t <= e)]
+            latest_start, chosen_level = max(candidates, key=lambda x: x[0])
+            df.at[t, 'tdst_level'] = chosen_level
+
+        if active_risk:
+            candidates = [(s, level) for (s, e, level, side) in risk_legs
+                          if (t >= s and t <= e)]
+            latest_start, chosen_level = max(candidates, key=lambda x: x[0])
+            df.at[t, 'risk_level'] = chosen_level
+
+    return df
+
+export_csv = mags_td_combo_complete_stitches['GOOGL']
+recycled_export_df = add_td_recycle_buy_and_sell(export_csv)
+
+test_export_df = rebuild_tdst_and_risk_compact(export_csv)
+
 ### ------------------------------------------------------------------------------------ ###
 ### ------------------------------------- BACKTEST ------------------------------------- ###
 ### ------------------------------------------------------------------------------------ ###
