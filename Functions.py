@@ -1283,27 +1283,48 @@ def plot_td_combo_case_study_stitched(stitched_df, streamlit_y_n: str = "y"):
     # 6) Perfected arrows (higher for sell setups)
     # use last non‑zero setup sign to decide side per perfected bar
     last_setup = df["setup"].replace(0, np.nan).ffill()
+
     for dt in df.index[perfected_mask]:
         date_str = dt.strftime("%Y-%m-%d")
         side_val = last_setup.loc[dt]
-        if side_val > 0:  # sell: push arrow further up
-            y_arrow = df.loc[dt, "High"] + (large_off + 3 * small_off)
-        else:             # buy or unknown: just above bar
-            y_arrow = df.loc[dt, "High"] + large_off
 
-        fig.add_annotation(
-            x=date_str,
-            y=y_arrow,
-            xref="x",
-            yref="y",
-            showarrow=True,
-            arrowhead=2,
-            arrowsize=1.0,
-            arrowwidth=1.5,
-            arrowcolor="red",
-            ax=0,
-            ay=-15,
-        )
+        if side_val > 0:
+            # perfected SELL (9): keep your existing behavior
+            y_arrow = df.loc[dt, "High"] + (large_off + 3 * small_off)
+            fig.add_annotation(
+                x=date_str,
+                y=y_arrow,
+                xref="x",
+                yref="y",
+                showarrow=True,
+                arrowhead=2,
+                arrowsize=1.0,
+                arrowwidth=1.5,
+                arrowcolor="red",
+                ax=0,
+                ay=-15,
+            )
+
+        elif side_val < 0:
+            # perfected BUY (-9): new behavior
+            # put the arrow BELOW the bar and below all buy-label space
+            # reuse your offsets consistently
+            # lowest region: low - (large_off + 3 * small_off) for more separation
+            y_arrow = df.loc[dt, "Low"] - (large_off + 3 * small_off)
+
+            fig.add_annotation(
+                x=date_str,
+                y=y_arrow,
+                xref="x",
+                yref="y",
+                showarrow=True,
+                arrowhead=2,  # same shape
+                arrowsize=1.0,
+                arrowwidth=1.5,
+                arrowcolor="lime",  # green for buy
+                ax=0,
+                ay=15,  # arrow points UP from below
+            )
 
     fig.update_layout(
         template="plotly_dark",
