@@ -48,7 +48,6 @@ for mag_ticker in mags_tickers:
     mags_td_combo_individual_stitches[mag_ticker] = mag_dict
     mags_td_combo_complete_stitches[mag_ticker] = test_stitch
 
-mags_td_combo_individual_stitches
 
 ### ------------------------------------------------------------------------------------ ###
 ### ------------------------------------- BACKTEST ------------------------------------- ###
@@ -89,28 +88,6 @@ for each_stitch in each_mags_backtest_dict:
         each_mags_return_stream_dict[each_stitch] = daily_returns_cumulative_returns_df
 
         sum_cumulative_ret += daily_returns_cumulative_returns_df['cumulative_ret'][-1]
-
-px = pd.DataFrame(mags_ohlc_dict['GOOGL']['2025-01-01':]['Close'])
-strat = pd.DataFrame(pd.concat(each_mags_return_stream_dict.values()))
-
-px.index = pd.to_datetime(px.index)
-strat.index = pd.to_datetime(strat.index)
-
-# 1) Reindex strategy to the full trading-day index of px
-strat_full = strat.reindex(px.index)
-
-# 2) Fill missing pct with 0 on days the strategy is not live
-strat_full['pct'] = strat_full['pct'].fillna(0.0)
-
-# 3) (Optional) recompute cumulative_ret from the filled pct
-strat_full['cumulative_ret'] = (1 + strat_full['pct']).cumprod() - 1
-
-
-
-
-
-
-
 
 
 # 0) Build px and strat as you already do
