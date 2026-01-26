@@ -1188,6 +1188,13 @@ def plot_td_combo_case_study_stitched(stitched_df, streamlit_y_n: str = "y"):
     setup_text[buy_mask]  = df.loc[buy_mask,  "setup"].abs().astype(int).astype(str)
     setup_text[sell_mask] = df.loc[sell_mask, "setup"].astype(int).astype(str)
 
+    # --- NEW: highlight masks ---
+    highlight_setup_mask = setup_mask & df["setup"].abs().isin([9])  # -9 or 9
+    normal_setup_mask    = setup_mask & ~highlight_setup_mask
+
+    highlight_cd_mask = cd_mask & (df["countdown"] == 13)
+    normal_cd_mask    = cd_mask & ~highlight_cd_mask
+
     fig = go.Figure()
 
     # 1) Candles
@@ -1204,43 +1211,71 @@ def plot_td_combo_case_study_stitched(stitched_df, streamlit_y_n: str = "y"):
         )
     )
 
-    # 2) Setup labels
+    # 2) Setup labels (normal)
     fig.add_trace(
         go.Scatter(
-            x=df.loc[setup_mask, "DateStr"],
-            y=setup_y.loc[setup_mask],
+            x=df.loc[normal_setup_mask, "DateStr"],
+            y=setup_y.loc[normal_setup_mask],
             mode="text",
-            text=setup_text.loc[setup_mask],
+            text=setup_text.loc[normal_setup_mask],
             textfont=dict(color="lime", size=12),
             textposition="middle center",
             name="TD Setup",
+            showlegend=True,
         )
     )
 
-    # 3) Countdown labels (magenta numbers should appear wherever countdown > 0)
+    # 2b) Setup labels (highlighted -9/9)
     fig.add_trace(
         go.Scatter(
-            x=df.loc[cd_mask, "DateStr"],
-            y=cd_y.loc[cd_mask],
+            x=df.loc[highlight_setup_mask, "DateStr"],
+            y=setup_y.loc[highlight_setup_mask],
             mode="text",
-            text=df.loc[cd_mask, "countdown"].astype(int).astype(str),
+            text=setup_text.loc[highlight_setup_mask],
+            textfont=dict(color="lime", size=14),  # slightly larger
+            textposition="middle center",
+            name="TD Setup",
+            showlegend=False,  # avoid duplicate legend entry
+        )
+    )
+
+    # 3) Countdown labels (normal)
+    fig.add_trace(
+        go.Scatter(
+            x=df.loc[normal_cd_mask, "DateStr"],
+            y=cd_y.loc[normal_cd_mask],
+            mode="text",
+            text=df.loc[normal_cd_mask, "countdown"].astype(int).astype(str),
             textfont=dict(color="magenta", size=12),
             textposition="middle center",
             name="TD Countdown",
+            showlegend=True,
+        )
+    )
+
+    # 3b) Countdown labels (highlighted 13)
+    fig.add_trace(
+        go.Scatter(
+            x=df.loc[highlight_cd_mask, "DateStr"],
+            y=cd_y.loc[highlight_cd_mask],
+            mode="text",
+            text=df.loc[highlight_cd_mask, "countdown"].astype(int).astype(str),
+            textfont=dict(color="magenta", size=14),  # slightly larger
+            textposition="middle center",
+            name="TD Countdown",
+            showlegend=False,
         )
     )
 
     # 4) TDST pure horizontal segments
     tdst_mask = df["tdst_level"].notna()
     if tdst_mask.any():
-        # find contiguous ranges of same tdst_level
         level = df["tdst_level"]
         change = (level != level.shift()).fillna(False)
         start_idx = df.index[change & tdst_mask]
 
         for start in start_idx:
             current_level = level.loc[start]
-            # extend until level changes or becomes NaN
             seg_mask = (df.index >= start) & (tdst_mask) & (level == current_level)
             seg_dates = df.index[seg_mask]
             if len(seg_dates) < 2:
@@ -1280,8 +1315,7 @@ def plot_td_combo_case_study_stitched(stitched_df, streamlit_y_n: str = "y"):
                 )
             )
 
-    # 6) Perfected arrows (higher for sell setups)
-    # use last non‑zero setup sign to decide side per perfected bar
+    # 6) Perfected arrows (unchanged)
     last_setup = df["setup"].replace(0, np.nan).ffill()
 
     for dt in df.index[perfected_mask]:
@@ -1289,7 +1323,6 @@ def plot_td_combo_case_study_stitched(stitched_df, streamlit_y_n: str = "y"):
         side_val = last_setup.loc[dt]
 
         if side_val > 0:
-            # perfected SELL (9): keep your existing behavior
             y_arrow = df.loc[dt, "High"] + (large_off + 3 * small_off)
             fig.add_annotation(
                 x=date_str,
@@ -1306,24 +1339,19 @@ def plot_td_combo_case_study_stitched(stitched_df, streamlit_y_n: str = "y"):
             )
 
         elif side_val < 0:
-            # perfected BUY (-9): new behavior
-            # put the arrow BELOW the bar and below all buy-label space
-            # reuse your offsets consistently
-            # lowest region: low - (large_off + 3 * small_off) for more separation
             y_arrow = df.loc[dt, "Low"] - (large_off + 3 * small_off)
-
             fig.add_annotation(
                 x=date_str,
                 y=y_arrow,
                 xref="x",
                 yref="y",
                 showarrow=True,
-                arrowhead=2,  # same shape
+                arrowhead=2,
                 arrowsize=1.0,
                 arrowwidth=1.5,
-                arrowcolor="lime",  # green for buy
+                arrowcolor="lime",
                 ax=0,
-                ay=15,  # arrow points UP from below
+                ay=15,
             )
 
     fig.update_layout(
@@ -1344,3 +1372,4 @@ def plot_td_combo_case_study_stitched(stitched_df, streamlit_y_n: str = "y"):
         st.plotly_chart(fig, use_container_width=True)
     else:
         fig.show()
+
