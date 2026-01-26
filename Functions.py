@@ -1173,8 +1173,7 @@ def plot_td_combo_case_study_stitched(stitched_df, streamlit_y_n: str = "y"):
     cd_y[cd_mask & buy_mask]  = cd_y_buy[cd_mask & buy_mask]
     cd_y[cd_mask & sell_mask] = cd_y_sell[cd_mask & sell_mask]
 
-    # if there is a countdown but no setup (e.g. continuation), decide side
-    # by last non‑zero setup sign
+    # continuation countdowns
     no_setup_cd = cd_mask & ~buy_mask & ~sell_mask
     if no_setup_cd.any():
         last_setup = df["setup"].replace(0, np.nan).ffill()
@@ -1188,12 +1187,25 @@ def plot_td_combo_case_study_stitched(stitched_df, streamlit_y_n: str = "y"):
     setup_text[buy_mask]  = df.loc[buy_mask,  "setup"].abs().astype(int).astype(str)
     setup_text[sell_mask] = df.loc[sell_mask, "setup"].astype(int).astype(str)
 
-    # --- NEW: highlight masks ---
-    highlight_setup_mask = setup_mask & df["setup"].abs().isin([9])  # -9 or 9
-    normal_setup_mask    = setup_mask & ~highlight_setup_mask
+    # -------- sizes (key change) --------
+    base_size = 12
+    highlight_size = int(base_size * 1.5)
 
-    highlight_cd_mask = cd_mask & (df["countdown"] == 13)
-    normal_cd_mask    = cd_mask & ~highlight_cd_mask
+    # for setups: only the literal "9" (buy or sell) is bigger
+    setup_idx = df.index[setup_mask]
+    setup_text_vals = setup_text.loc[setup_idx].astype(str)
+    setup_sizes = [
+        highlight_size if t == "9" else base_size
+        for t in setup_text_vals
+    ]
+
+    # for countdowns: only the literal "13" is bigger
+    cd_idx = df.index[cd_mask]
+    cd_text_vals = df.loc[cd_idx, "countdown"].astype(int).astype(str)
+    cd_sizes = [
+        highlight_size if t == "13" else base_size
+        for t in cd_text_vals
+    ]
 
     fig = go.Figure()
 
@@ -1211,63 +1223,33 @@ def plot_td_combo_case_study_stitched(stitched_df, streamlit_y_n: str = "y"):
         )
     )
 
-    # 2) Setup labels (normal)
+    # 2) Setup labels (single trace, per‑point size)
     fig.add_trace(
         go.Scatter(
-            x=df.loc[normal_setup_mask, "DateStr"],
-            y=setup_y.loc[normal_setup_mask],
+            x=df.loc[setup_idx, "DateStr"],
+            y=setup_y.loc[setup_idx],
             mode="text",
-            text=setup_text.loc[normal_setup_mask],
-            textfont=dict(color="lime", size=12),
+            text=setup_text_vals,
+            textfont=dict(color="lime", size=setup_sizes),
             textposition="middle center",
             name="TD Setup",
-            showlegend=True,
         )
     )
 
-    # 2b) Setup labels (highlighted -9/9)
+    # 3) Countdown labels (single trace, per‑point size)
     fig.add_trace(
         go.Scatter(
-            x=df.loc[highlight_setup_mask, "DateStr"],
-            y=setup_y.loc[highlight_setup_mask],
+            x=df.loc[cd_idx, "DateStr"],
+            y=cd_y.loc[cd_idx],
             mode="text",
-            text=setup_text.loc[highlight_setup_mask],
-            textfont=dict(color="lime", size=14),  # slightly larger
-            textposition="middle center",
-            name="TD Setup",
-            showlegend=False,  # avoid duplicate legend entry
-        )
-    )
-
-    # 3) Countdown labels (normal)
-    fig.add_trace(
-        go.Scatter(
-            x=df.loc[normal_cd_mask, "DateStr"],
-            y=cd_y.loc[normal_cd_mask],
-            mode="text",
-            text=df.loc[normal_cd_mask, "countdown"].astype(int).astype(str),
-            textfont=dict(color="magenta", size=12),
+            text=cd_text_vals,
+            textfont=dict(color="magenta", size=cd_sizes),
             textposition="middle center",
             name="TD Countdown",
-            showlegend=True,
         )
     )
 
-    # 3b) Countdown labels (highlighted 13)
-    fig.add_trace(
-        go.Scatter(
-            x=df.loc[highlight_cd_mask, "DateStr"],
-            y=cd_y.loc[highlight_cd_mask],
-            mode="text",
-            text=df.loc[highlight_cd_mask, "countdown"].astype(int).astype(str),
-            textfont=dict(color="magenta", size=14),  # slightly larger
-            textposition="middle center",
-            name="TD Countdown",
-            showlegend=False,
-        )
-    )
-
-    # 4) TDST pure horizontal segments
+    # 4) TDST horizontal segments
     tdst_mask = df["tdst_level"].notna()
     if tdst_mask.any():
         level = df["tdst_level"]
@@ -1291,7 +1273,7 @@ def plot_td_combo_case_study_stitched(stitched_df, streamlit_y_n: str = "y"):
                 )
             )
 
-    # 5) Risk pure horizontal segments
+    # 5) Risk horizontal segments
     risk_mask = df["risk_level"].notna()
     if risk_mask.any():
         level = df["risk_level"]
