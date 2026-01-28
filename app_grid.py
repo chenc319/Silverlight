@@ -181,27 +181,27 @@ inflation_prediction['inflation_signal'] = inflation_prediction['prediction'].di
 
 def regime_label(row):
     if row['inflation'] > 0 and row['growth'] > 0:
-        return 0  # Reflation
+        return 0  # Macro Summer (Reflation)
     elif row['inflation'] > 0 and row['growth'] < 0:
-        return 1  # Stagflation
+        return 1  # Macro Fall (Stagflation)
     elif row['inflation'] < 0 and row['growth'] > 0:
-        return 2  # Goldilocks
+        return 2  # Macro Spring (Goldilocks)
     elif row['inflation'] < 0 and row['growth'] < 0:
-        return 3  # Deflation
+        return 3  # Macro Winter (Deflation)
     else:
         return np.nan
 
 regime_labels = {
-    0: 'Reflation',
-    1: 'Stagflation',
-    2: 'Goldilocks',
-    3: 'Deflation'
+    0: 'Macro Summer (Reflation)',
+    1: 'Macro Fall (Stagflation)',
+    2: 'Macro Spring (Goldilocks)',
+    3: 'Macro Winter (Deflation)'
 }
 regime_colors = {
-    0: '#90ee90',  # Reflation
-    1: '#ffc107',  # Stagflation
-    2: '#28a745',  # Goldilocks
-    3: '#dc3545'   # Deflation
+    0: '#90ee90',  # Macro Summer (Reflation)
+    1: '#ffc107',  # Macro Fall (Stagflation)
+    2: '#28a745',  # Macro Spring (Goldilocks)
+    3: '#dc3545'   # Macro Winter (Deflation)
 }
 
 grid_growth_inflation_spx = merge_dfs([
@@ -242,40 +242,40 @@ grid_growth_inflation_mags['regime_color'] = grid_growth_inflation_mags['regime_
 
 def grid_equity_weights(row):
     regime_weights = {
-        'Goldilocks': 1,
-        'Reflation': 0.75,
-        'Deflation': 0.5,
-        'Stagflation': 0.25
+        'Macro Spring (Goldilocks)': 1,
+        'Macro Summer (Reflation)': 0.75,
+        'Macro Winter (Deflation)': 0.5,
+        'Macro Fall (Stagflation)': 0.25
     }
     return regime_weights.get(row['regime_label'], np.nan)
 
 def grid_bond_weights(row):
     regime_weights = {
-        'Goldilocks': 1,
-        'Reflation': 0.75,
-        'Deflation': 0.5,
-        'Stagflation': 0.25
+        'Macro Spring (Goldilocks)': 1,
+        'Macro Summer (Reflation)': 0.75,
+        'Macro Winter (Deflation)': 0.5,
+        'Macro Fall (Stagflation)': 0.25
     }
     return regime_weights.get(row['regime_label'], np.nan)
 
 occurrences_table = pd.DataFrame(
-    columns=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation'],
+    columns=['Macro Spring (Goldilocks)', 'Macro Summer (Reflation)', 'Macro Fall (Stagflation)', 'Macro Winter (Deflation)'],
     index=['% of Occurrences']
 )
-occurrences_table.loc['% of Occurrences', 'Goldilocks'] = (
-    len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Goldilocks'])
+occurrences_table.loc['% of Occurrences', 'Macro Spring (Goldilocks)'] = (
+    len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Macro Spring (Goldilocks)'])
     / len(grid_growth_inflation_spx)
 )
-occurrences_table.loc['% of Occurrences', 'Reflation'] = (
-    len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Reflation'])
+occurrences_table.loc['% of Occurrences', 'Macro Summer (Reflation)'] = (
+    len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Macro Summer (Reflation)'])
     / len(grid_growth_inflation_spx)
 )
-occurrences_table.loc['% of Occurrences', 'Stagflation'] = (
-    len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Stagflation'])
+occurrences_table.loc['% of Occurrences', 'Macro Fall (Stagflation)'] = (
+    len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Macro Fall (Stagflation)'])
     / len(grid_growth_inflation_spx)
 )
-occurrences_table.loc['% of Occurrences', 'Deflation'] = (
-    len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Deflation'])
+occurrences_table.loc['% of Occurrences', 'Macro Winter (Deflation)'] = (
+    len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Macro Winter (Deflation)'])
     / len(grid_growth_inflation_spx)
 )
 
@@ -322,19 +322,19 @@ def grid_regime_nowcast():
     cli_1st_order_change = cli.pct_change().iloc[-1][0]
 
     if inflation_2nd_order_diff > 0 and cli_1st_order_change > 0:
-        upcoming_grid_regime = 'Reflation'
+        upcoming_grid_regime = 'Macro Summer (Reflation)'
     elif inflation_2nd_order_diff > 0 and cli_1st_order_change < 0:
-        upcoming_grid_regime = 'Stagflation'
+        upcoming_grid_regime = 'Macro Fall (Stagflation)'
     elif inflation_2nd_order_diff < 0 and cli_1st_order_change > 0:
-        upcoming_grid_regime = 'Goldilocks'
+        upcoming_grid_regime = 'Macro Spring (Goldilocks)'
     elif inflation_2nd_order_diff < 0 and cli_1st_order_change < 0:
-        upcoming_grid_regime = 'Deflation'
+        upcoming_grid_regime = 'Macro Winter (Deflation)'
 
     regime_colors = {
-        "Goldilocks": "#28a745",  # Green
-        "Reflation": "#90ee90",   # Super light green
-        "Stagflation": "#ffc107", # Yellow
-        "Deflation": "#dc3545"    # Red
+        "Macro Spring (Goldilocks)": "#28a745",   # Green
+        "Macro Summer (Reflation)": "#90ee90",   # Super light green
+        "Macro Fall (Stagflation)": "#ffc107",   # Yellow
+        "Macro Winter (Deflation)": "#dc3545"    # Red
     }
     regime_color = regime_colors.get(upcoming_grid_regime, "gray")
 
@@ -362,13 +362,13 @@ def grid_regime_nowcast():
             f"font-weight:bold;font-size:1.2em'>{upcoming_grid_regime}</span>",
             unsafe_allow_html=True
         )
-        if upcoming_grid_regime == 'Goldilocks':
+        if upcoming_grid_regime == 'Macro Spring (Goldilocks)':
             st.caption("Growth + Inflation -")
-        elif upcoming_grid_regime == 'Reflation':
+        elif upcoming_grid_regime == 'Macro Summer (Reflation)':
             st.caption("Growth + Inflation +")
-        elif upcoming_grid_regime == 'Deflation':
+        elif upcoming_grid_regime == 'Macro Winter (Deflation)':
             st.caption("Growth - Inflation -")
-        elif upcoming_grid_regime == 'Stagflation':
+        elif upcoming_grid_regime == 'Macro Fall (Stagflation)':
             st.caption("Growth - Inflation +")
 
     st.dataframe(occurrences_table)
@@ -398,7 +398,12 @@ def grid_equity_backtest():
         regime_col='regime_label',
         ann_factor=12
     )
-    desired_order = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
+    desired_order = [
+        'Macro Spring (Goldilocks)',
+        'Macro Summer (Reflation)',
+        'Macro Fall (Stagflation)',
+        'Macro Winter (Deflation)'
+    ]
     regime_stats_df = regime_stats_df.reindex(desired_order)
     streamlit_return_metrics_table(regime_stats_df)
 
@@ -422,7 +427,12 @@ def grid_equity_backtest():
         grid_growth_inflation_spx,
         regime_col='regime_label',
         return_col='spx',
-        regimes=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
+        regimes=[
+            'Macro Spring (Goldilocks)',
+            'Macro Summer (Reflation)',
+            'Macro Fall (Stagflation)',
+            'Macro Winter (Deflation)'
+        ]
     )
 
 def grid_bonds_backtest():
@@ -450,7 +460,12 @@ def grid_bonds_backtest():
         regime_col='regime_label',
         ann_factor=12
     )
-    desired_order = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
+    desired_order = [
+        'Macro Spring (Goldilocks)',
+        'Macro Summer (Reflation)',
+        'Macro Fall (Stagflation)',
+        'Macro Winter (Deflation)'
+    ]
     regime_stats_df = regime_stats_df.reindex(desired_order)
     streamlit_return_metrics_table(regime_stats_df)
 
@@ -474,7 +489,12 @@ def grid_bonds_backtest():
         grid_growth_inflation_agg,
         regime_col='regime_label',
         return_col='bonds',
-        regimes=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
+        regimes=[
+            'Macro Spring (Goldilocks)',
+            'Macro Summer (Reflation)',
+            'Macro Fall (Stagflation)',
+            'Macro Winter (Deflation)'
+        ]
     )
 
 def grid_mags_backtest():
@@ -502,7 +522,12 @@ def grid_mags_backtest():
         regime_col='regime_label',
         ann_factor=12
     )
-    desired_order = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
+    desired_order = [
+        'Macro Spring (Goldilocks)',
+        'Macro Summer (Reflation)',
+        'Macro Fall (Stagflation)',
+        'Macro Winter (Deflation)'
+    ]
     regime_stats_df = regime_stats_df.reindex(desired_order)
     streamlit_return_metrics_table(regime_stats_df)
 
@@ -526,5 +551,10 @@ def grid_mags_backtest():
         grid_growth_inflation_mags,
         regime_col='regime_label',
         return_col='mags',
-        regimes=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
+        regimes=[
+            'Macro Spring (Goldilocks)',
+            'Macro Summer (Reflation)',
+            'Macro Fall (Stagflation)',
+            'Macro Winter (Deflation)'
+        ]
     )
