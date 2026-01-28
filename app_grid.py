@@ -190,6 +190,7 @@ def regime_label(row):
         return 3  # Deflation
     else:
         return np.nan
+
 regime_labels = {
     0: 'Reflation',
     1: 'Stagflation',
@@ -197,11 +198,11 @@ regime_labels = {
     3: 'Deflation'
 }
 regime_colors = {
-    0: '#90ee90',  # Reflation (red)
-    1: '#ffc107',  # Stagflation (yellow)
-    2: '#28a745',  # Goldilocks (green)
-    3: '#dc3545'  # Deflation (blue)
-    }
+    0: '#90ee90',  # Reflation
+    1: '#ffc107',  # Stagflation
+    2: '#28a745',  # Goldilocks
+    3: '#dc3545'   # Deflation
+}
 
 grid_growth_inflation_spx = merge_dfs([
     cli.pct_change(),
@@ -257,23 +258,29 @@ def grid_bond_weights(row):
     }
     return regime_weights.get(row['regime_label'], np.nan)
 
-occurrences_table = pd.DataFrame(columns = ['Goldilocks','Reflation','Deflation','Stagflation'],
-                                     index = ['% of Occurrences'])
-occurrences_table.loc['% of Occurrences','Goldilocks'] = (
-        len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Goldilocks'])
-        / len(grid_growth_inflation_spx))
+occurrences_table = pd.DataFrame(
+    columns=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation'],
+    index=['% of Occurrences']
+)
+occurrences_table.loc['% of Occurrences', 'Goldilocks'] = (
+    len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Goldilocks'])
+    / len(grid_growth_inflation_spx)
+)
 occurrences_table.loc['% of Occurrences', 'Reflation'] = (
-        len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Reflation'])
-        / len(grid_growth_inflation_spx))
-occurrences_table.loc['% of Occurrences', 'Deflation'] = (
-        len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Deflation'])
-        / len(grid_growth_inflation_spx))
+    len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Reflation'])
+    / len(grid_growth_inflation_spx)
+)
 occurrences_table.loc['% of Occurrences', 'Stagflation'] = (
-        len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Stagflation'])
-        / len(grid_growth_inflation_spx))
+    len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Stagflation'])
+    / len(grid_growth_inflation_spx)
+)
+occurrences_table.loc['% of Occurrences', 'Deflation'] = (
+    len(grid_growth_inflation_spx[grid_growth_inflation_spx['regime_label'] == 'Deflation'])
+    / len(grid_growth_inflation_spx)
+)
 
 ### ---------------------------------------------------------------------------------------------------------- ###
-### -------------------------------------------------- GRID -------------------------------------------------- ###
+###-------------------------------------------------- GRID --------------------------------------------------- ###
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 def grid_regime_nowcast():
@@ -309,7 +316,9 @@ def grid_regime_nowcast():
     model = LinearRegression()
     model.fit(factor_train.values.reshape(-1, 1), train['CPIAUCSL'].values)
     inflation_yoy_pred = model.predict(factor_test.values.reshape(-1, 1))[0]
-    inflation_2nd_order_diff = (inflation_yoy_pred - target_feature_df['CPIAUCSL'][-1]) / target_feature_df['CPIAUCSL'][-1]
+    inflation_2nd_order_diff = (
+        inflation_yoy_pred - target_feature_df['CPIAUCSL'][-1]
+    ) / target_feature_df['CPIAUCSL'][-1]
     cli_1st_order_change = cli.pct_change().iloc[-1][0]
 
     if inflation_2nd_order_diff > 0 and cli_1st_order_change > 0:
@@ -321,12 +330,11 @@ def grid_regime_nowcast():
     elif inflation_2nd_order_diff < 0 and cli_1st_order_change < 0:
         upcoming_grid_regime = 'Deflation'
 
-    # Color mapping for regimes (customize as desired)
     regime_colors = {
         "Goldilocks": "#28a745",  # Green
-        "Reflation": "#90ee90",  # Super light green
-        "Stagflation": "#ffc107",  # Yellow
-        "Deflation": "#dc3545"  # Red
+        "Reflation": "#90ee90",   # Super light green
+        "Stagflation": "#ffc107", # Yellow
+        "Deflation": "#dc3545"    # Red
     }
     regime_color = regime_colors.get(upcoming_grid_regime, "gray")
 
@@ -334,19 +342,24 @@ def grid_regime_nowcast():
 
     with col1:
         st.markdown("**Growth**")
-        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{cli_1st_order_change:+.2%}</span>",
-                    unsafe_allow_html=True)
+        st.markdown(
+            f"<span style='font-size:1.5em;font-weight:bold;'>{cli_1st_order_change:+.2%}</span>",
+            unsafe_allow_html=True
+        )
         st.caption("OECD CLI 1st Order % Change")
     with col2:
         st.markdown("**Inflation**")
-        st.markdown(f"<span style='font-size:1.5em;font-weight:bold;'>{inflation_2nd_order_diff:+.2%}</span>",
-                    unsafe_allow_html=True)
-
+        st.markdown(
+            f"<span style='font-size:1.5em;font-weight:bold;'>{inflation_2nd_order_diff:+.2%}</span>",
+            unsafe_allow_html=True
+        )
         st.caption("SAM CPI 2nd Order % Change")
     with col3:
         st.markdown("**Quad Regime**")
         st.markdown(
-            f"<span style='background-color:{regime_color};color:white;padding:0.25em 0.75em;border-radius:0.3em;font-weight:bold;font-size:1.2em'>{upcoming_grid_regime}</span>",
+            f"<span style='background-color:{regime_color};"
+            f"color:white;padding:0.25em 0.75em;border-radius:0.3em;"
+            f"font-weight:bold;font-size:1.2em'>{upcoming_grid_regime}</span>",
             unsafe_allow_html=True
         )
         if upcoming_grid_regime == 'Goldilocks':
@@ -362,35 +375,33 @@ def grid_regime_nowcast():
 
 def grid_equity_backtest():
     grid_growth_inflation_spx['weights'] = grid_growth_inflation_spx.apply(grid_equity_weights, axis=1)
-    grid_growth_inflation_spx['bt_returns'] = (grid_growth_inflation_spx['weights'] * grid_growth_inflation_spx['spx']).shift(1)
-    grid_growth_inflation_spx['cumsum_spx'] = (1 + grid_growth_inflation_spx['spx']).cumprod() -1
-    grid_growth_inflation_spx['cumsum_bt'] = (1 + grid_growth_inflation_spx['bt_returns']).cumprod() -1
+    grid_growth_inflation_spx['bt_returns'] = (
+        grid_growth_inflation_spx['weights'] * grid_growth_inflation_spx['spx']
+    ).shift(1)
+    grid_growth_inflation_spx['cumsum_spx'] = (1 + grid_growth_inflation_spx['spx']).cumprod() - 1
+    grid_growth_inflation_spx['cumsum_bt'] = (1 + grid_growth_inflation_spx['bt_returns']).cumprod() - 1
 
-    # Drawdown calculations using your helper
     grid_growth_inflation_spx['drawdown_bt'] = compute_drawdown(grid_growth_inflation_spx['bt_returns'])
     grid_growth_inflation_spx['drawdown_spx'] = compute_drawdown(grid_growth_inflation_spx['spx'])
 
-    # Performance metrics table with your helper function
     grid_metrics = return_metrics(
-        backtest_returns_data=grid_growth_inflation_spx[['bt_returns','spx']],
+        backtest_returns_data=grid_growth_inflation_spx[['bt_returns', 'spx']],
         benchmark_data=grid_growth_inflation_spx[['spx']],
         ann_factor=12
     )
-
-    # Display main summary table
     streamlit_return_metrics_table(grid_metrics)
 
-    regime_stats_df = return_metrics_by_regime(base_df = grid_growth_inflation_spx,
-                                               return_col = 'bt_returns',
-                                               benchmark_col = 'spx',
-                                               regime_col='regime_label', ann_factor=12)
-    desired_order = ['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+    regime_stats_df = return_metrics_by_regime(
+        base_df=grid_growth_inflation_spx,
+        return_col='bt_returns',
+        benchmark_col='spx',
+        regime_col='regime_label',
+        ann_factor=12
+    )
+    desired_order = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
     regime_stats_df = regime_stats_df.reindex(desired_order)
-
-    # Styled regime table
     streamlit_return_metrics_table(regime_stats_df)
 
-    # Cum return plot
     streamlit_plot(
         df=grid_growth_inflation_spx,
         columns_array=['cumsum_bt', 'cumsum_spx'],
@@ -399,7 +410,6 @@ def grid_equity_backtest():
         y_axis_label="Cumulative Return"
     )
 
-    # Drawdown plot
     streamlit_drawdown_plot(
         df=grid_growth_inflation_spx,
         graph_labels=['GRID', 'SPX'],
@@ -408,46 +418,42 @@ def grid_equity_backtest():
         fill_colors=['rgba(95,179,255,0.3)', 'rgba(45,205,178,0.3)']
     )
 
-    # Regime return distribution subplots
     plot_regime_return_histograms(
         grid_growth_inflation_spx,
         regime_col='regime_label',
         return_col='spx',
-        regimes=['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+        regimes=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
     )
-
 
 def grid_bonds_backtest():
     grid_growth_inflation_agg['weights'] = grid_growth_inflation_agg.apply(grid_bond_weights, axis=1)
-    grid_growth_inflation_agg['bt_returns'] = (grid_growth_inflation_agg['weights'] * grid_growth_inflation_agg['bonds']).shift(1)
-    grid_growth_inflation_agg['cumsum_bonds'] = (1 + grid_growth_inflation_agg['bonds']).cumprod() -1
-    grid_growth_inflation_agg['cumsum_bt'] = (1 + grid_growth_inflation_agg['bt_returns']).cumprod() -1
+    grid_growth_inflation_agg['bt_returns'] = (
+        grid_growth_inflation_agg['weights'] * grid_growth_inflation_agg['bonds']
+    ).shift(1)
+    grid_growth_inflation_agg['cumsum_bonds'] = (1 + grid_growth_inflation_agg['bonds']).cumprod() - 1
+    grid_growth_inflation_agg['cumsum_bt'] = (1 + grid_growth_inflation_agg['bt_returns']).cumprod() - 1
 
-    # Drawdown calculations using your helper
     grid_growth_inflation_agg['drawdown_bt'] = compute_drawdown(grid_growth_inflation_agg['bt_returns'])
     grid_growth_inflation_agg['drawdown_bonds'] = compute_drawdown(grid_growth_inflation_agg['bonds'])
 
-    # Performance metrics table with your helper function
     grid_metrics = return_metrics(
         backtest_returns_data=grid_growth_inflation_agg[['bt_returns', 'bonds']],
         benchmark_data=grid_growth_inflation_agg[['bonds']],
         ann_factor=12
     )
-
-    # Display main summary table
     streamlit_return_metrics_table(grid_metrics)
 
-    regime_stats_df = return_metrics_by_regime(base_df=grid_growth_inflation_agg,
-                                               return_col='bt_returns',
-                                               benchmark_col='bonds',
-                                               regime_col='regime_label', ann_factor=12)
-    desired_order = ['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+    regime_stats_df = return_metrics_by_regime(
+        base_df=grid_growth_inflation_agg,
+        return_col='bt_returns',
+        benchmark_col='bonds',
+        regime_col='regime_label',
+        ann_factor=12
+    )
+    desired_order = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
     regime_stats_df = regime_stats_df.reindex(desired_order)
-
-    # Styled regime table
     streamlit_return_metrics_table(regime_stats_df)
 
-    # Cum return plot
     streamlit_plot(
         df=grid_growth_inflation_agg,
         columns_array=['cumsum_bt', 'cumsum_bonds'],
@@ -456,7 +462,6 @@ def grid_bonds_backtest():
         y_axis_label="Cumulative Return"
     )
 
-    # Drawdown plot
     streamlit_drawdown_plot(
         df=grid_growth_inflation_agg,
         graph_labels=['GRID', 'Bonds'],
@@ -465,46 +470,42 @@ def grid_bonds_backtest():
         fill_colors=['rgba(95,179,255,0.3)', 'rgba(45,205,178,0.3)']
     )
 
-    # Regime return distribution subplots
     plot_regime_return_histograms(
         grid_growth_inflation_agg,
         regime_col='regime_label',
         return_col='bonds',
-        regimes=['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+        regimes=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
     )
 
 def grid_mags_backtest():
     grid_growth_inflation_mags['weights'] = grid_growth_inflation_mags.apply(grid_equity_weights, axis=1)
     grid_growth_inflation_mags['bt_returns'] = (
-                grid_growth_inflation_mags['weights'] * grid_growth_inflation_mags['mags']).shift(1)
-    grid_growth_inflation_mags['cumsum_mags'] = (1 + grid_growth_inflation_mags['mags']).cumprod() -1
-    grid_growth_inflation_mags['cumsum_bt'] = (1 + grid_growth_inflation_mags['bt_returns']).cumprod() -1
+        grid_growth_inflation_mags['weights'] * grid_growth_inflation_mags['mags']
+    ).shift(1)
+    grid_growth_inflation_mags['cumsum_mags'] = (1 + grid_growth_inflation_mags['mags']).cumprod() - 1
+    grid_growth_inflation_mags['cumsum_bt'] = (1 + grid_growth_inflation_mags['bt_returns']).cumprod() - 1
 
-    # Drawdown calculations using your helper
     grid_growth_inflation_mags['drawdown_bt'] = compute_drawdown(grid_growth_inflation_mags['bt_returns'])
     grid_growth_inflation_mags['drawdown_mags'] = compute_drawdown(grid_growth_inflation_mags['mags'])
 
-    # Performance metrics table with your helper function
     grid_metrics = return_metrics(
         backtest_returns_data=grid_growth_inflation_mags[['bt_returns', 'mags']],
         benchmark_data=grid_growth_inflation_mags[['mags']],
         ann_factor=12
     )
-
-    # Display main summary table
     streamlit_return_metrics_table(grid_metrics)
 
-    regime_stats_df = return_metrics_by_regime(base_df=grid_growth_inflation_mags,
-                                               return_col='bt_returns',
-                                               benchmark_col='mags',
-                                               regime_col='regime_label', ann_factor=12)
-    desired_order = ['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+    regime_stats_df = return_metrics_by_regime(
+        base_df=grid_growth_inflation_mags,
+        return_col='bt_returns',
+        benchmark_col='mags',
+        regime_col='regime_label',
+        ann_factor=12
+    )
+    desired_order = ['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
     regime_stats_df = regime_stats_df.reindex(desired_order)
-
-    # Styled regime table
     streamlit_return_metrics_table(regime_stats_df)
 
-    # Cum return plot
     streamlit_plot(
         df=grid_growth_inflation_mags,
         columns_array=['cumsum_bt', 'cumsum_mags'],
@@ -513,7 +514,6 @@ def grid_mags_backtest():
         y_axis_label="Cumulative Return"
     )
 
-    # Drawdown plot
     streamlit_drawdown_plot(
         df=grid_growth_inflation_mags,
         graph_labels=['GRID', 'MAGS'],
@@ -522,11 +522,9 @@ def grid_mags_backtest():
         fill_colors=['rgba(95,179,255,0.3)', 'rgba(45,205,178,0.3)']
     )
 
-    # Regime return distribution subplots
     plot_regime_return_histograms(
         grid_growth_inflation_mags,
         regime_col='regime_label',
         return_col='mags',
-        regimes=['Goldilocks', 'Reflation', 'Deflation', 'Stagflation']
+        regimes=['Goldilocks', 'Reflation', 'Stagflation', 'Deflation']
     )
-
