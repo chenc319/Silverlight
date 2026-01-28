@@ -120,69 +120,49 @@ def rolling_beta_sign(y, x, window, thresh=-0.2):
 
 
 def return_metrics(backtest_returns_data, benchmark_data, ann_factor):
-    """
-    Core metrics function – Beta removed from outputs.
-    """
     backtest_returns_data = pd.DataFrame(backtest_returns_data)
     benchmark_data = pd.DataFrame(benchmark_data)
-
     return_metrics_df = pd.DataFrame(
-        columns=[
-            'Total Return', 'Avg Return', 'Avg Upside Return', 'Avg Downside Return',
-            'Win Ratio', 'Ann. Return', 'Ann. Volatility', 'Return/Risk',
-            'Max Return', 'Min Return',
-            'Upside Capture', 'Downside Capture', 'Capture Ratio'
-        ]
+        columns=['Total Return', 'Avg Return', 'Avg Upside Return', 'Avg Downside Return',
+                 'Win Ratio', 'Ann. Return', 'Ann. Volatility', 'Return/Risk',
+                 'Max Return', 'Min Return',
+                 'Upside Capture', 'Downside Capture', 'Capture Ratio']
     )
-
-    benchmark_returns = benchmark_data.iloc[:, 0].ffill().dropna()
+    benchmark_returns = benchmark_data.iloc[:,0].ffill().dropna()
 
     for x in range(0, len(backtest_returns_data.columns)):
         col = backtest_returns_data.columns[x]
         data = pd.DataFrame(backtest_returns_data[col]).ffill().dropna()
         data.columns = ['returns']
-
-        total_return = ((1 + data['returns']).cumprod() - 1).iloc[-1]
+        total_return = ((1 + data['returns']).cumprod()-1)[-1]
         mean_return = data['returns'].mean()
         avg_win_return = data[data['returns'] > 0]['returns'].mean()
         avg_lose_return = data[data['returns'] < 0]['returns'].mean()
-        win_ratio = len(data[data['returns'] > 0]) / len(data) if len(data) > 0 else np.nan
-
-        ann_return = (1 + mean_return) ** ann_factor - 1
+        win_ratio = len(data[data['returns'] > 0]) / len(data)
+        ann_return = ((1+ mean_return) ** ann_factor)-1
         ann_vol = data['returns'].std() * (ann_factor ** 0.5)
-        return_risk = ann_return / ann_vol if ann_vol not in (0, np.nan) else np.nan
-
+        return_risk = ann_return / ann_vol if ann_vol != 0 else None
         max_return = data['returns'].max()
         min_return = data['returns'].min()
 
-        # Upside / downside capture vs benchmark
+        # Upside/Downside Capture
         upside_mask = benchmark_returns > 0
         downside_mask = benchmark_returns < 0
+        upside_capture = (data['returns'][upside_mask].mean() / benchmark_returns[upside_mask].mean()) if upside_mask.any() else None
+        downside_capture = (data['returns'][downside_mask].mean() / benchmark_returns[downside_mask].mean()) if downside_mask.any() else None
 
-        upside_capture = (
-            data['returns'][upside_mask].mean() / benchmark_returns[upside_mask].mean()
-            if upside_mask.any() else np.nan
-        )
-        downside_capture = (
-            data['returns'][downside_mask].mean() / benchmark_returns[downside_mask].mean()
-            if downside_mask.any() else np.nan
-        )
+        # Capture Ratio: Upside / |Downside|
+        capture_ratio = (upside_capture / abs(downside_capture)) if (upside_capture is not None and downside_capture not in (None, 0)) else None
 
-        capture_ratio = (
-            upside_capture / abs(downside_capture)
-            if (not np.isnan(upside_capture)
-                and not np.isnan(downside_capture)
-                and downside_capture not in (0, np.nan))
-            else np.nan
-        )
+        # beta removed here
 
         return_metrics_df.loc[col] = [
             total_return, mean_return, avg_win_return, avg_lose_return, win_ratio,
             ann_return, ann_vol, return_risk, max_return, min_return,
             upside_capture, downside_capture, capture_ratio
         ]
-
     return return_metrics_df
+
 
 
 def return_metrics_by_regime(base_df, return_col, benchmark_col,
@@ -256,9 +236,6 @@ def posneg_only_red_green(val, min_pos, max_pos, min_neg, max_neg):
 
 
 def streamlit_return_metrics_table(df):
-    """
-    Streamlit table for metrics – Beta removed, formatting preserved.
-    """
     fmt_dict = {
         'Total Return': '{:,.2%}',
         'Avg Return': '{:,.2%}',
@@ -291,6 +268,7 @@ def streamlit_return_metrics_table(df):
         styler = styler.applymap(style_cell, subset=[col])
 
     return st.dataframe(styler)
+
 
 
 def compute_drawdown(daily_returns):
