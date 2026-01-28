@@ -97,7 +97,7 @@ mags_monthly_pct = each_mags_df.resample('ME').last().pct_change().dropna()
 
 ### MAGS WEIGHTS ###
 with open(Path(DATA_DIR) / 'mags_weights.xlsx', 'rb') as file:
-    mags_weights_df = pd.read_excel(file,sheet_name='Sheet1')
+    mags_weights_df = pd.read_excel(file, sheet_name='Sheet1')
     mags_weights_df.index = mags_weights_df['Date'].values
     mags_weights_df.drop('Date', axis=1, inplace=True)
     mags_weights_df['sum'] = mags_weights_df.sum(axis=1)
@@ -105,7 +105,7 @@ normalized_mags_weights = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL','META','
 normalized_mags_pct = pd.DataFrame(columns = ['GOOGL','AMZN','AAPL','META','MSFT','NVDA','TSLA'])
 for col in normalized_mags_weights.columns:
     normalized_mags_weights[col] = (mags_weights_df[col] / mags_weights_df['sum']).resample('ME').last()
-    col_df = merge_dfs([mags_monthly_pct[col],normalized_mags_weights[col]]).ffill().dropna()
+    col_df = merge_dfs([mags_monthly_pct[col], normalized_mags_weights[col]]).ffill().dropna()
     col_df.columns = ['pct','weights']
     normalized_mags_pct[col] = col_df['pct'] * col_df['weights']
 
@@ -198,10 +198,10 @@ regime_labels = {
     3: 'Macro Winter (Deflation)'
 }
 regime_colors = {
-    0: '#90ee90',  # Macro Summer (Reflation)
-    1: '#ffc107',  # Macro Fall (Stagflation)
-    2: '#28a745',  # Macro Spring (Goldilocks)
-    3: '#dc3545'   # Macro Winter (Deflation)
+    0: '#90ee90',   # Macro Summer (Reflation)
+    1: '#ffc107',   # Macro Fall (Stagflation)  (yellow)
+    2: '#28a745',   # Macro Spring (Goldilocks)
+    3: '#dc3545'    # Macro Winter (Deflation)  (red)
 }
 
 grid_growth_inflation_spx = merge_dfs([
@@ -259,7 +259,12 @@ def grid_bond_weights(row):
     return regime_weights.get(row['regime_label'], np.nan)
 
 occurrences_table = pd.DataFrame(
-    columns=['Macro Spring (Goldilocks)', 'Macro Summer (Reflation)', 'Macro Fall (Stagflation)', 'Macro Winter (Deflation)'],
+    columns=[
+        'Macro Spring (Goldilocks)',
+        'Macro Summer (Reflation)',
+        'Macro Fall (Stagflation)',
+        'Macro Winter (Deflation)'
+    ],
     index=['% of Occurrences']
 )
 occurrences_table.loc['% of Occurrences', 'Macro Spring (Goldilocks)'] = (
@@ -331,10 +336,10 @@ def grid_regime_nowcast():
         upcoming_grid_regime = 'Macro Winter (Deflation)'
 
     regime_colors = {
-        "Macro Spring (Goldilocks)": "#28a745",   # Green
-        "Macro Summer (Reflation)": "#90ee90",   # Super light green
-        "Macro Fall (Stagflation)": "#ffc107",   # Yellow
-        "Macro Winter (Deflation)": "#dc3545"    # Red
+        "Macro Spring (Goldilocks)": "#28a745",   # green
+        "Macro Summer (Reflation)": "#90ee90",    # light green
+        "Macro Fall (Stagflation)": "#ffc107",    # yellow
+        "Macro Winter (Deflation)": "#dc3545"     # red
     }
     regime_color = regime_colors.get(upcoming_grid_regime, "gray")
 
