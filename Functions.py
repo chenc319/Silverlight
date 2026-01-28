@@ -344,7 +344,7 @@ def plot_regime_return_histograms(df, regime_col, return_col, regimes):
         k_value = kurtosis(subdata, fisher=True, nan_policy='omit')
         subplot_titles.append(f"{regime} (kurt={k_value:.2f})")
 
-    default_colors = ['#28a745', '#90ee90', '#dc3545', '#ffc107']
+    default_colors = ['#28a745', '#90ee90', '#ffc107', '#dc3545']
     regime_colors = {regimes[i]: default_colors[i % len(default_colors)] for i in range(len(regimes))}
 
     fig = make_subplots(
