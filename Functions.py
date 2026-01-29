@@ -550,26 +550,6 @@ def close_hl_setup(df,close_col_name):
             df.loc[row_name, 'h/l'] = 'l'
     return df['h/l']
 
-def td_combo_setup(df,setup_type):
-    ### CONSECUTIVE DAYS ###
-    df['setup'] = 0
-    for idx in range(1,len(df.index)):
-        row_name = df.index[idx]
-        prev_row = df.index[idx-1]
-        if df.loc[prev_row,'setup'] != 9:
-            if df.loc[row_name, 'h/l'] == setup_type:
-                df.loc[row_name, 'setup'] = df.loc[prev_row, 'setup'] + 1
-
-    ### FILTER OUT INCOMPLETE 9S ###
-    for idx in range(8,len(df.index)):
-        row_name = df.index[idx]
-        prev_row = df.index[idx - 1]
-        if ((df.loc[row_name, 'setup'] < df.loc[prev_row, 'setup'])
-                and (df.loc[prev_row, 'setup'] != 9)):
-            total_rows_to_delete = df.loc[prev_row, 'setup']
-            for num_row_to_delete in range(0,total_rows_to_delete+1):
-                df.loc[df.index[idx-num_row_to_delete],'setup'] = 0
-    return df['setup']
 
 def build_td_combo_v2_setups(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
@@ -1355,3 +1335,97 @@ def plot_td_combo_case_study_stitched(stitched_df, streamlit_y_n: str = "y"):
     else:
         fig.show()
 
+def add_td_recycle_buy_and_sell(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add 'recycle' column marking 'R' on bars where a TD Buy/Sell Countdown bar 13
+    is recycled by an extended Setup in the same direction.
+
+    Assumes:
+      - index is chronological DatetimeIndex
+      - columns: 'Close', 'setup', 'countdown'
+      - buy setups:  -1 .. -9 (and possibly extended negatives)
+      - sell setups:  1 ..  9 (and possibly extended positives)
+      - countdown > 0 for both buy & sell Countdowns
+    """
+    df = df.copy()
+    df["recycle"] = None
+
+    close = df["Close"]
+
+    # --- 1) Build pure DeMark extension conditions (4‑bar comparisons) ---
+
+    cond_buy_ext = close < close.shift(4)   # buy‑type
+    cond_sell_ext = close > close.shift(4)  # sell‑type
+
+    def run_lengths(cond: pd.Series) -> pd.Series:
+        """
+        Length of each contiguous True block, assigned to all bars in that block.
+        Bars with cond == False get length 0.
+        """
+        idx = cond.index
+        run_id = 0
+        run_ids = np.zeros(len(idx), dtype=int)
+        prev_true = False
+
+        for i, is_true in enumerate(cond.to_numpy()):
+            if is_true:
+                if not prev_true:
+                    run_id += 1
+                run_ids[i] = run_id
+                prev_true = True
+            else:
+                prev_true = False
+
+        run_id_series = pd.Series(run_ids, index=idx)
+        lengths = np.zeros(len(idx), dtype=int)
+
+        for rid in range(1, run_id + 1):
+            mask = run_id_series == rid
+            length = int(mask.sum())
+            lengths[mask.to_numpy()] = length
+
+        return pd.Series(lengths, index=idx)
+
+    buy_ext_len  = run_lengths(cond_buy_ext)
+    sell_ext_len = run_lengths(cond_sell_ext)
+
+    # --- 2) Identify the "direction" of each Countdown from setups ---
+
+    # For each bar, infer dominant setup sign in the recent past.
+    setup = df["setup"]
+
+    direction = pd.Series(index=df.index, dtype="object")  # "buy", "sell", or None
+
+    lookback = 15  # like your prior code; can tweak
+    for i, t in enumerate(df.index):
+        start = max(0, i - lookback)
+        local = setup.iloc[start:i+1]
+        neg = (local < 0).sum()
+        pos = (local > 0).sum()
+        if neg > pos:
+            direction.iloc[i] = "buy"
+        elif pos > neg:
+            direction.iloc[i] = "sell"
+        else:
+            direction.iloc[i] = None
+
+    # --- 3) Mark Countdown bar 13 as recycled when overlapping an extended Setup ---
+
+    for i, t in enumerate(df.index):
+        cdn = df.at[t, "countdown"]
+        if cdn != 13:
+            continue
+
+        dir_i = direction.iloc[i]
+        if dir_i is None:
+            continue
+
+        if dir_i == "buy":
+            # Require that this bar lies inside a buy‑type run of length >= 22
+            if buy_ext_len.iloc[i] >= 22:
+                df.at[t, "recycle"] = "R"
+        else:  # dir_i == "sell"
+            if sell_ext_len.iloc[i] >= 22:
+                df.at[t, "recycle"] = "R"
+
+    return df
