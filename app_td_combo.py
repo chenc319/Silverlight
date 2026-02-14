@@ -38,20 +38,22 @@ for mag_ticker in mags_tickers:
     ### SETUP AND PERFECTED ###
     mags_df =  build_td_combo_v2_setups(mags_df)
     mags_df['perfected'] = get_perfected_9(mags_df)
-    mini_mag_df = mags_df['2025-01-01':]
+    mini_mag_df = mags_df['2022-01-01':]
 
     ### COUNTDOWN DICTIONARY ###
     mag_dict = compute_setup_countdown_pairs(
-        df = mini_mag_df['2025-01-01':]
+        df = mini_mag_df['2022-01-01':]
     )
     test_stitch = build_stitched_td_df(mini_mag_df,mag_dict)
     mags_td_combo_individual_stitches[mag_ticker] = mag_dict
     test_stitch_with_recycle = add_td_recycle_buy_and_sell(test_stitch)
     mags_td_combo_complete_stitches[mag_ticker] = test_stitch_with_recycle
 
+### ------------------------------------------------------------------------------------ ###
+### ------------------------------------- RECYCLE -------------------------------------- ###
+### ------------------------------------------------------------------------------------ ###
 
-
-df = mags_td_combo_complete_stitches['GOOGL']['2025-01-01':]
+df = mags_td_combo_complete_stitches['GOOGL']['2023-01-01':]
 recycled_export_df = add_td_recycle_buy_and_sell(df)
 
 
