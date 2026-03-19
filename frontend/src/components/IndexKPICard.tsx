@@ -12,8 +12,11 @@ export default function IndexKPICard({ data, onClick }: IndexKPICardProps) {
   const isSell = data.dailySignal === 'SELL';
 
   // Show the most notable DeMark state in compact form
-  const demarkCompact = data.td9Daily || data.td13Seq || data.td13Combo ||
-    data.setupLabel || data.seqCdLabel || data.comboCdLabel || null;
+  // Priority: demarkSignal > setup > seqCd > comboCd
+  const demarkLabel = data.setupLabel || data.seqCdLabel || data.comboCdLabel || null;
+  const demarkColor = data.setupLabel ? data.setupLabelColor :
+    data.seqCdLabel ? data.seqCdLabelColor :
+    data.comboCdLabel ? data.comboCdLabelColor : null;
 
   return (
     <button
@@ -43,15 +46,23 @@ export default function IndexKPICard({ data, onClick }: IndexKPICardProps) {
 
       <div className="flex items-center gap-1.5 flex-wrap">
         <SignalBadge signal={data.dailySignal} />
-        {demarkCompact && (
+        {data.demarkSignal && (
+          <span className={cn(
+            'text-[9px] font-bold px-1 py-0.5 rounded',
+            data.demarkSignal === 'BUY' && 'bg-signal-green/15 text-signal-green',
+            data.demarkSignal === 'SELL' && 'bg-signal-red/15 text-signal-red',
+            data.demarkSignal === '13+' && 'bg-amber-500/15 text-amber-400',
+          )}>
+            {data.demarkSignal}
+          </span>
+        )}
+        {demarkLabel && (
           <span className={cn(
             'text-[9px] font-bold tabular-nums truncate',
-            data.td9Daily?.includes('BUY') || data.td13Seq?.includes('BUY') || data.td13Combo?.includes('BUY') ||
-            data.tdSetupSide === 'buy' || data.seqCdSide === 'buy' || data.comboCdSide === 'buy'
-              ? 'text-signal-green'
-              : data.comboCdLabel ? 'text-[#ff00ff]' : 'text-signal-red'
+            demarkColor === 'green' ? 'text-signal-green' :
+            demarkColor === 'red' ? 'text-signal-red' : 'text-signal-text-muted'
           )}>
-            {data.td9Daily || data.td13Seq || data.td13Combo || data.setupLabel || data.seqCdLabel || data.comboCdLabel}
+            {demarkLabel}
           </span>
         )}
       </div>

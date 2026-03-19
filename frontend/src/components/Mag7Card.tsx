@@ -1,6 +1,5 @@
 import { cn, formatPrice, formatPct } from '@/lib/utils';
 import SignalBadge from './SignalBadge';
-import DeMarkBadge from './DeMarkBadge';
 import type { TickerSignal } from '@/data/tickers';
 
 interface Mag7CardProps {
@@ -8,10 +7,26 @@ interface Mag7CardProps {
   onClick: (symbol: string) => void;
 }
 
+function DeMarkSignalChip({ signal }: { signal: string | null }) {
+  if (!signal) return null;
+  const isBuy = signal === 'BUY';
+  const isSell = signal === 'SELL';
+  const is13Plus = signal === '13+';
+  return (
+    <span className={cn(
+      'inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase',
+      isBuy && 'bg-signal-green/20 text-signal-green',
+      isSell && 'bg-signal-red/20 text-signal-red',
+      is13Plus && 'bg-amber-500/20 text-amber-400',
+    )}>
+      {signal}
+    </span>
+  );
+}
+
 export default function Mag7Card({ data, onClick }: Mag7CardProps) {
   const isBuy = data.dailySignal === 'BUY';
   const isSell = data.dailySignal === 'SELL';
-  const demarkLabel = data.td9Daily || data.td13Seq || data.td13Combo || null;
 
   return (
     <button
@@ -45,17 +60,17 @@ export default function Mag7Card({ data, onClick }: Mag7CardProps) {
       <div className="flex items-center gap-1.5 flex-wrap">
         <SignalBadge signal={data.dailySignal} />
         <SignalBadge signal={data.weeklySignal} />
-        {demarkLabel && <DeMarkBadge label={demarkLabel} />}
+        <DeMarkSignalChip signal={data.demarkSignal} />
       </div>
 
       {/* DeMark state + indicators row */}
       <div className="space-y-1">
         {/* DeMark active state */}
-        <div className="flex items-center justify-between text-[10px] tabular-nums">
+        <div className="flex items-center justify-between text-[10px] tabular-nums flex-wrap gap-x-2">
           {data.setupLabel && (
             <span className={cn(
               'font-bold',
-              data.tdSetupSide === 'buy' ? 'text-signal-green' : 'text-signal-red'
+              data.setupLabelColor === 'green' ? 'text-signal-green' : 'text-signal-red'
             )}>
               Setup {data.setupLabel}
             </span>
@@ -63,13 +78,17 @@ export default function Mag7Card({ data, onClick }: Mag7CardProps) {
           {data.seqCdLabel && (
             <span className={cn(
               'font-bold',
-              data.seqCdSide === 'buy' ? 'text-signal-green' : 'text-signal-red'
+              data.seqCdLabelColor === 'green' ? 'text-signal-green' : 'text-signal-red'
             )}>
               Seq {data.seqCdLabel}
             </span>
           )}
           {data.comboCdLabel && (
-            <span className="font-bold text-[#ff00ff]">
+            <span className={cn(
+              'font-bold',
+              data.comboCdLabelColor === 'green' ? 'text-signal-green' :
+              data.comboCdLabelColor === 'red' ? 'text-signal-red' : 'text-[#ff00ff]'
+            )}>
               Combo {data.comboCdLabel}
             </span>
           )}

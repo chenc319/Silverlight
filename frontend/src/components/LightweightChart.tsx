@@ -4,6 +4,7 @@ interface DeMarkChartProps {
   symbol: string;
   height?: number;
   timeframe?: 'daily' | 'weekly';
+  showBB?: boolean;
 }
 
 /**
@@ -15,11 +16,12 @@ export default function LightweightChart({
   symbol,
   height = 400,
   timeframe = 'daily',
+  showBB = false,
 }: DeMarkChartProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const imgSrc = `/api/chart/${symbol}/${timeframe}?t=${Date.now()}`;
+  const imgSrc = `/api/chart/${symbol}/${timeframe}?show_bb=${showBB}&t=${Date.now()}`;
 
   return (
     <div className="relative w-full" style={{ height }}>

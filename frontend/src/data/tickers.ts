@@ -48,9 +48,13 @@ export interface TickerSignal {
   td13Seq: string | null;       // e.g. "SEQ 13 BUY", null
   td13Combo: string | null;     // e.g. "COMBO 13 SELL", null
   // Active DeMark state labels for dashboard display
-  setupLabel: string | null;    // e.g. "7/9 BUY" or null
-  seqCdLabel: string | null;    // e.g. "10/13 BUY" or null
-  comboCdLabel: string | null;  // e.g. "8/13 SELL" or null
+  setupLabel: string | null;       // e.g. "Bearish 7" or "Bullish 5" or null
+  setupLabelColor: string | null;  // "red" | "green" | null
+  seqCdLabel: string | null;       // e.g. "Bullish 10" or "Bearish 8" or null
+  seqCdLabelColor: string | null;
+  comboCdLabel: string | null;
+  comboCdLabelColor: string | null;
+  demarkSignal: string | null;     // "BUY" | "SELL" | "13+" | null
   // Numeric DeMark state
   tdSetupCount: number;         // 0-9
   tdSetupSide: string | null;   // "buy" | "sell" | null

@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { cn, formatPrice, formatPct, formatScore, getPctColor } from '@/lib/utils';
 import SignalBadge from './SignalBadge';
-import DeMarkBadge from './DeMarkBadge';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import type { TickerSignal } from '@/data/tickers';
 
@@ -29,6 +28,36 @@ const COLUMNS: Array<{ key: SortKey; label: string; width?: string; align?: 'lef
   { key: 'stochK', label: '%K', align: 'right' },
   { key: 'macdHist', label: 'MACD Hist', align: 'right' },
 ];
+
+function DeMarkLabel({ label, color }: { label: string | null; color: string | null }) {
+  if (!label) return <span className="text-signal-text-muted">—</span>;
+  return (
+    <span className={cn(
+      'font-bold tabular-nums text-xs',
+      color === 'green' ? 'text-signal-green' :
+      color === 'red' ? 'text-signal-red' : 'text-signal-text-secondary'
+    )}>
+      {label}
+    </span>
+  );
+}
+
+function DeMarkSignalBadge({ signal }: { signal: string | null }) {
+  if (!signal) return null;
+  const isBuy = signal === 'BUY';
+  const isSell = signal === 'SELL';
+  const is13Plus = signal === '13+';
+  return (
+    <span className={cn(
+      'inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase',
+      isBuy && 'bg-signal-green/20 text-signal-green',
+      isSell && 'bg-signal-red/20 text-signal-red',
+      is13Plus && 'bg-amber-500/20 text-amber-400',
+    )}>
+      {signal}
+    </span>
+  );
+}
 
 export default function SignalTable({ data, onTickerClick, showRank, showSparkline }: SignalTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('dailyScore');
@@ -92,7 +121,7 @@ export default function SignalTable({ data, onTickerClick, showRank, showSparkli
                 </span>
               </th>
             ))}
-            {/* DeMark columns: Setup, Seq CD, Combo CD */}
+            {/* DeMark columns */}
             <th className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-left">
               Setup
             </th>
@@ -101,6 +130,9 @@ export default function SignalTable({ data, onTickerClick, showRank, showSparkli
             </th>
             <th className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-left">
               Combo CD
+            </th>
+            <th className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-center">
+              DM Signal
             </th>
           </tr>
         </thead>
@@ -188,45 +220,22 @@ export default function SignalTable({ data, onTickerClick, showRank, showSparkli
 
                 {/* Setup column */}
                 <td className="px-3 py-2.5 text-xs">
-                  {row.setupLabel ? (
-                    <span className={cn(
-                      'font-bold tabular-nums',
-                      row.tdSetupSide === 'buy' ? 'text-signal-green' : 'text-signal-red'
-                    )}>
-                      {row.setupLabel}
-                    </span>
-                  ) : (
-                    <span className="text-signal-text-muted">—</span>
-                  )}
+                  <DeMarkLabel label={row.setupLabel} color={row.setupLabelColor} />
                 </td>
 
                 {/* Sequential Countdown column */}
                 <td className="px-3 py-2.5 text-xs">
-                  {row.seqCdLabel ? (
-                    <span className={cn(
-                      'font-bold tabular-nums',
-                      row.seqCdSide === 'buy' ? 'text-signal-green' : 'text-signal-red'
-                    )}>
-                      {row.seqCdLabel}
-                    </span>
-                  ) : row.td13Seq ? (
-                    <DeMarkBadge label={row.td13Seq} />
-                  ) : (
-                    <span className="text-signal-text-muted">—</span>
-                  )}
+                  <DeMarkLabel label={row.seqCdLabel} color={row.seqCdLabelColor} />
                 </td>
 
                 {/* Combo Countdown column */}
                 <td className="px-3 py-2.5 text-xs">
-                  {row.comboCdLabel ? (
-                    <span className="font-bold tabular-nums text-[#ff00ff]">
-                      {row.comboCdLabel}
-                    </span>
-                  ) : row.td13Combo ? (
-                    <DeMarkBadge label={row.td13Combo} />
-                  ) : (
-                    <span className="text-signal-text-muted">—</span>
-                  )}
+                  <DeMarkLabel label={row.comboCdLabel} color={row.comboCdLabelColor} />
+                </td>
+
+                {/* DeMark Signal column */}
+                <td className="px-3 py-2.5 text-xs text-center">
+                  <DeMarkSignalBadge signal={row.demarkSignal} />
                 </td>
               </tr>
             );

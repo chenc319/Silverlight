@@ -5,7 +5,10 @@ Generates OHLC bar charts with DeMark annotations per the DeMark Technician spec
 - Setup counts in green (#00ff00)
 - Sequential Countdown in red (#ff0000)
 - Combo Countdown in magenta (#ff00ff)
-- Bollinger Bands in muted grey
+- TDST lines: green (buy resistance), magenta (sell support)
+- Risk Level lines: red (sequential), magenta (combo)
+- Slow Stochastic subplot (optional)
+- Bollinger Bands (optional, off by default)
 """
 
 import io
@@ -32,15 +35,26 @@ COLOR_TEXT = '#94a3b8'
 COLOR_GREEN = '#00d4a0'
 COLOR_RED = '#ff4d6d'
 
+# TDST / Risk Level colors
+COLOR_TDST_BUY = '#00ff00'   # Green dashed — buy TDST resistance
+COLOR_TDST_SELL = '#ff00ff'  # Magenta dashed — sell TDST support
+COLOR_RISK_SEQ = '#ff0000'   # Red dotted — sequential risk
+COLOR_RISK_COMBO = '#ff00ff' # Magenta dotted — combo risk
+
+# Stochastic colors
+COLOR_STOCH_K = '#5599ff'
+COLOR_STOCH_D = '#ff9933'
+
 
 def render_chart_image(
     ohlc_data: list,
     ticker: str,
     timeframe: str = 'daily',
     width: int = 1200,
-    height: int = 600,
-    show_bb: bool = True,
+    height: int = 750,
+    show_bb: bool = False,
     show_demark: bool = True,
+    show_stoch: bool = True,
 ) -> bytes:
     """
     Render an OHLC bar chart with DeMark annotations as a PNG image.
@@ -63,11 +77,22 @@ def render_chart_image(
     lows = df['low'].values.astype(float)
     closes = df['close'].values.astype(float)
 
-    # Figure setup
+    # Figure setup — with or without stochastic subplot
     dpi = 150
     fig_w = width / dpi
     fig_h = height / dpi
-    fig, ax = plt.subplots(1, 1, figsize=(fig_w, fig_h), dpi=dpi)
+
+    if show_stoch:
+        fig, (ax, ax_stoch) = plt.subplots(
+            2, 1, figsize=(fig_w, fig_h), dpi=dpi,
+            gridspec_kw={'height_ratios': [4, 1]},
+            sharex=True,
+        )
+        ax_stoch.set_facecolor(COLOR_BG)
+    else:
+        fig, ax = plt.subplots(1, 1, figsize=(fig_w, fig_h), dpi=dpi)
+        ax_stoch = None
+
     fig.patch.set_facecolor(COLOR_BG)
     ax.set_facecolor(COLOR_BG)
 
@@ -91,7 +116,7 @@ def render_chart_image(
         # Close tick (right)
         ax.plot([i, i + 0.3], [closes[i], closes[i]], color=COLOR_BAR, linewidth=0.8, solid_capstyle='round')
 
-    # Bollinger Bands
+    # Bollinger Bands (off by default)
     if show_bb:
         bb_upper = df.get('bb_upper', pd.Series(dtype=float)).values.astype(float)
         bb_mid = df.get('bb_mid', pd.Series(dtype=float)).values.astype(float)
@@ -104,6 +129,17 @@ def render_chart_image(
             ax.plot(x_bb, bb_mid[valid_bb], color=COLOR_BB_MID, linewidth=0.5, linestyle='--')
             ax.plot(x_bb, bb_lower[valid_bb], color=COLOR_BB, linewidth=0.7)
             ax.fill_between(x_bb, bb_upper[valid_bb], bb_lower[valid_bb], color='#94a3b808')
+
+    # ── TDST lines ──
+    if show_demark:
+        _draw_level_line(ax, df, n, 'tdst_buy_level', COLOR_TDST_BUY, linestyle='--', linewidth=0.9)
+        _draw_level_line(ax, df, n, 'tdst_sell_level', COLOR_TDST_SELL, linestyle='--', linewidth=0.9)
+
+        # ── Risk Level lines ──
+        _draw_level_line(ax, df, n, 'risk_seq_buy_level', COLOR_RISK_SEQ, linestyle=':', linewidth=0.8)
+        _draw_level_line(ax, df, n, 'risk_seq_sell_level', COLOR_RISK_SEQ, linestyle=':', linewidth=0.8)
+        _draw_level_line(ax, df, n, 'risk_combo_buy_level', COLOR_RISK_COMBO, linestyle=':', linewidth=0.8)
+        _draw_level_line(ax, df, n, 'risk_combo_sell_level', COLOR_RISK_COMBO, linestyle=':', linewidth=0.8)
 
     # DeMark annotations
     if show_demark:
@@ -125,10 +161,10 @@ def render_chart_image(
                 ax.text(i, y_pos, str(count), color=COLOR_SETUP,
                         fontsize=fontsize, fontweight=fontweight,
                         ha='center', va='top')
-                # Perfection dot
+                # Perfection dot — bigger, further below
                 if count == 9 and perfected[i]:
-                    ax.text(i, y_pos - offset_small, '●', color=COLOR_SETUP,
-                            fontsize=5, ha='center', va='top')
+                    ax.text(i, y_pos - 2 * offset_small, '●', color=COLOR_SETUP,
+                            fontsize=8, ha='center', va='top')
 
             elif setup_sell[i] > 0:
                 count = setup_sell[i]
@@ -139,8 +175,8 @@ def render_chart_image(
                         fontsize=fontsize, fontweight=fontweight,
                         ha='center', va='bottom')
                 if count == 9 and perfected[i]:
-                    ax.text(i, y_pos + offset_small, '●', color=COLOR_SETUP,
-                            fontsize=5, ha='center', va='bottom')
+                    ax.text(i, y_pos + 2 * offset_small, '●', color=COLOR_SETUP,
+                            fontsize=8, ha='center', va='bottom')
 
             # Sequential Countdown labels (red, further from bars)
             if seq_buy[i] > 0:
@@ -180,6 +216,36 @@ def render_chart_image(
                         fontsize=fontsize, fontweight=fontweight,
                         ha='center', va='bottom')
 
+    # ── Slow Stochastic subplot ──
+    if show_stoch and ax_stoch is not None:
+        stoch_k = df.get('stoch_k', pd.Series(np.full(n, 50.0))).values.astype(float)
+        stoch_d = df.get('stoch_d', pd.Series(np.full(n, 50.0))).values.astype(float)
+        x_arr = np.arange(n)
+
+        ax_stoch.plot(x_arr, stoch_k, color=COLOR_STOCH_K, linewidth=0.9, label='%K')
+        ax_stoch.plot(x_arr, stoch_d, color=COLOR_STOCH_D, linewidth=0.7, linestyle='--', label='%D')
+
+        # Overbought / oversold reference lines
+        ax_stoch.axhline(y=80, color='#ff4d6d44', linewidth=0.5, linestyle='-')
+        ax_stoch.axhline(y=20, color='#00d4a044', linewidth=0.5, linestyle='-')
+
+        ax_stoch.set_ylim(0, 100)
+        ax_stoch.set_ylabel('%K/%D', color=COLOR_TEXT, fontsize=6, labelpad=2)
+        ax_stoch.yaxis.set_label_position('right')
+        ax_stoch.yaxis.tick_right()
+        ax_stoch.set_yticks([20, 50, 80])
+        ax_stoch.tick_params(colors=COLOR_TEXT, labelsize=6)
+        ax_stoch.grid(True, axis='y', color=COLOR_GRID, linewidth=0.3, alpha=0.5)
+        ax_stoch.spines['top'].set_visible(False)
+        ax_stoch.spines['right'].set_color(COLOR_GRID)
+        ax_stoch.spines['bottom'].set_color(COLOR_GRID)
+        ax_stoch.spines['left'].set_color(COLOR_GRID)
+
+        # Compact legend
+        ax_stoch.legend(loc='upper left', fontsize=5,
+                        facecolor=COLOR_SURFACE, edgecolor=COLOR_GRID,
+                        labelcolor=COLOR_TEXT, framealpha=0.8)
+
     # Axis styling
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_color(COLOR_GRID)
@@ -190,12 +256,16 @@ def render_chart_image(
     ax.yaxis.tick_right()
     ax.grid(True, axis='y', color=COLOR_GRID, linewidth=0.3, alpha=0.5)
 
-    # X-axis: show every Nth date label
+    # X-axis: show every Nth date label (on bottom axis only)
+    target_ax = ax_stoch if ax_stoch is not None else ax
     step = max(1, n // 12)
     tick_positions = list(range(0, n, step))
     tick_labels = [dates[i][:10] if i < n else '' for i in tick_positions]
-    ax.set_xticks(tick_positions)
-    ax.set_xticklabels(tick_labels, rotation=0, fontsize=6, color=COLOR_TEXT)
+    target_ax.set_xticks(tick_positions)
+    target_ax.set_xticklabels(tick_labels, rotation=0, fontsize=6, color=COLOR_TEXT)
+
+    if ax_stoch is not None:
+        ax.tick_params(axis='x', labelbottom=False)
 
     # Last price annotation
     last_close = closes[-1]
@@ -215,6 +285,8 @@ def render_chart_image(
             Line2D([0], [0], marker='o', color='none', markerfacecolor=COLOR_SETUP, markersize=5, label='Setup'),
             Line2D([0], [0], marker='o', color='none', markerfacecolor=COLOR_SEQ_CD, markersize=5, label='Seq CD'),
             Line2D([0], [0], marker='o', color='none', markerfacecolor=COLOR_COMBO_CD, markersize=5, label='Combo CD'),
+            Line2D([0], [0], color=COLOR_TDST_BUY, linewidth=0.8, linestyle='--', label='TDST'),
+            Line2D([0], [0], color=COLOR_RISK_SEQ, linewidth=0.8, linestyle=':', label='Risk Lvl'),
         ]
         ax.legend(handles=legend_elements, loc='upper left', fontsize=6,
                   facecolor=COLOR_SURFACE, edgecolor=COLOR_GRID, labelcolor=COLOR_TEXT,
@@ -233,6 +305,31 @@ def render_chart_image(
     plt.close(fig)
     buf.seek(0)
     return buf.read()
+
+
+def _draw_level_line(ax, df, n, col_name, color, linestyle='--', linewidth=0.8):
+    """
+    Draw a horizontal level line for TDST or Risk Level data.
+    Only draws segments where the value is non-zero.
+    Handles staircase-style data (level changes produce separate segments).
+    """
+    vals = df.get(col_name, pd.Series(np.zeros(n))).values.astype(float)
+
+    # Find contiguous segments of the same non-zero level
+    i = 0
+    while i < n:
+        if vals[i] == 0 or np.isnan(vals[i]):
+            i += 1
+            continue
+        # Start of a segment
+        level = vals[i]
+        seg_start = i
+        while i < n and vals[i] == level:
+            i += 1
+        seg_end = i - 1
+        # Draw the horizontal segment
+        ax.plot([seg_start, seg_end], [level, level],
+                color=color, linestyle=linestyle, linewidth=linewidth, alpha=0.7)
 
 
 def _empty_chart_image(ticker: str, width: int, height: int) -> bytes:

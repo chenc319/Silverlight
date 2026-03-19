@@ -407,6 +407,174 @@ def compute_perfection(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # ═══════════════════════════════════════
+# TDST and Risk Levels
+# ═══════════════════════════════════════
+
+def compute_tdst_and_risk_levels(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute TDST support/resistance levels and Risk Levels from completed
+    setups and countdowns.  Must run AFTER setups AND countdowns.
+
+    TDST lines:
+      - Buy Setup TDST Resistance = highest True High across bars 1-9
+      - Sell Setup TDST Support  = lowest True Low across bars 1-9
+      - Starts retroactively at the date of the extreme True High/Low
+      - Persists until replaced by next same-direction setup or countdown-13
+
+    Risk Levels (only for Countdown 13):
+      - Buy CD 13:  find bar with lowest True Low in countdown window →
+                    Risk Level = True Low − True Range of that bar
+      - Sell CD 13: find bar with highest True High in countdown window →
+                    Risk Level = True High + True Range of that bar
+    """
+    n = len(df)
+    close = df['close'].values
+    high  = df['high'].values
+    low   = df['low'].values
+
+    # ── True High / True Low / True Range ──
+    prev_close = np.empty(n)
+    prev_close[0] = close[0]
+    prev_close[1:] = close[:-1]
+
+    true_high = np.maximum(high, prev_close)
+    true_low  = np.minimum(low,  prev_close)
+    true_range = true_high - true_low
+
+    # ── Per-bar level arrays (0 = not active) ──
+    tdst_buy_level  = np.zeros(n)
+    tdst_sell_level = np.zeros(n)
+    risk_seq_buy_level   = np.zeros(n)
+    risk_seq_sell_level  = np.zeros(n)
+    risk_combo_buy_level  = np.zeros(n)
+    risk_combo_sell_level = np.zeros(n)
+
+    completed_setups = df.attrs.get('completed_setups', [])
+
+    # ── TDST levels ──
+    # For each completed setup, find the extreme true high/low across bars 1-9
+    # and record the start position (date of that extreme) and level.
+    # A new same-direction setup replaces the prior TDST.
+    buy_tdst_segments  = []  # (start_pos, level)
+    sell_tdst_segments = []  # (start_pos, level)
+
+    for setup in completed_setups:
+        bars = setup['bars']  # positions of bars 1-9
+        if len(bars) < 9:
+            continue
+
+        if setup['side'] == 'buy':
+            # TDST Resistance = highest True High across bars 1-9
+            best_th = -np.inf
+            best_pos = bars[0]
+            for b in bars:
+                if b < n and true_high[b] > best_th:
+                    best_th = true_high[b]
+                    best_pos = b
+            buy_tdst_segments.append((best_pos, best_th))
+
+        else:  # sell
+            # TDST Support = lowest True Low across bars 1-9
+            best_tl = np.inf
+            best_pos = bars[0]
+            for b in bars:
+                if b < n and true_low[b] < best_tl:
+                    best_tl = true_low[b]
+                    best_pos = b
+            sell_tdst_segments.append((best_pos, best_tl))
+
+    # Forward-fill TDST: each segment starts at start_pos and persists
+    # until the next same-direction segment starts (staircase).
+    def _forward_fill_segments(segments, arr, n):
+        if not segments:
+            return
+        # Sort by start position
+        segments.sort(key=lambda s: s[0])
+        for idx, (start, level) in enumerate(segments):
+            end = segments[idx + 1][0] if idx + 1 < len(segments) else n
+            for j in range(start, end):
+                arr[j] = level
+
+    _forward_fill_segments(buy_tdst_segments, tdst_buy_level, n)
+    _forward_fill_segments(sell_tdst_segments, tdst_sell_level, n)
+
+    # ── Risk Levels (Countdown 13 only) ──
+    # We need to scan the countdown arrays to find completed 13s and their
+    # windows (from the triggering setup bar1 to bar13 position).
+
+    seq_cd_buy  = df['seq_cd_buy'].values.astype(int)
+    seq_cd_sell = df['seq_cd_sell'].values.astype(int)
+    combo_cd_buy  = df['combo_cd_buy'].values.astype(int)
+    combo_cd_sell = df['combo_cd_sell'].values.astype(int)
+
+    def _find_countdown_windows(cd_arr, side_label):
+        """Return list of (window_start, bar13_pos) for completed countdowns."""
+        windows = []
+        # Walk through and find 13-completions, then backtrack to find
+        # the most recent setup-9 (or the 1 of the countdown) as window start.
+        # The countdown window runs from the first qualifying bar (cd==1) to cd==13.
+        i = 0
+        while i < n:
+            if cd_arr[i] == 13:
+                bar13 = i
+                # Walk backward to find the bar with cd == 1
+                bar1 = i
+                for j in range(i - 1, -1, -1):
+                    if cd_arr[j] == 1:
+                        bar1 = j
+                        break
+                windows.append((bar1, bar13))
+            i += 1
+        return windows
+
+    def _compute_risk_segments(cd_arr, side, arr_out):
+        windows = _find_countdown_windows(cd_arr, side)
+        segments = []
+        for (w_start, w_end) in windows:
+            if side == 'buy':
+                # Find bar with lowest True Low in the window
+                best_pos = w_start
+                best_tl = true_low[w_start]
+                for j in range(w_start, min(w_end + 1, n)):
+                    if true_low[j] < best_tl:
+                        best_tl = true_low[j]
+                        best_pos = j
+                risk = best_tl - true_range[best_pos]
+                segments.append((w_end, risk))  # starts at the 13 bar
+            else:  # sell
+                best_pos = w_start
+                best_th = true_high[w_start]
+                for j in range(w_start, min(w_end + 1, n)):
+                    if true_high[j] > best_th:
+                        best_th = true_high[j]
+                        best_pos = j
+                risk = best_th + true_range[best_pos]
+                segments.append((w_end, risk))
+        _forward_fill_segments(segments, arr_out, n)
+
+    _compute_risk_segments(seq_cd_buy,   'buy',  risk_seq_buy_level)
+    _compute_risk_segments(seq_cd_sell,  'sell', risk_seq_sell_level)
+    _compute_risk_segments(combo_cd_buy,  'buy',  risk_combo_buy_level)
+    _compute_risk_segments(combo_cd_sell, 'sell', risk_combo_sell_level)
+
+    # ── Store columns ──
+    df['tdst_buy_level']  = tdst_buy_level
+    df['tdst_sell_level'] = tdst_sell_level
+    df['risk_seq_buy_level']   = risk_seq_buy_level
+    df['risk_seq_sell_level']  = risk_seq_sell_level
+    df['risk_combo_buy_level']  = risk_combo_buy_level
+    df['risk_combo_sell_level'] = risk_combo_sell_level
+
+    # ── Store last active levels in attrs for scoring.py ──
+    last_tdst_buy  = float(tdst_buy_level[-1])  if n > 0 and tdst_buy_level[-1]  != 0 else None
+    last_tdst_sell = float(tdst_sell_level[-1]) if n > 0 and tdst_sell_level[-1] != 0 else None
+    df.attrs['last_tdst_buy_level']  = last_tdst_buy
+    df.attrs['last_tdst_sell_level'] = last_tdst_sell
+
+    return df
+
+
+# ═══════════════════════════════════════
 # RSI (14-period)
 # ═══════════════════════════════════════
 
@@ -493,11 +661,12 @@ def compute_all_indicators(df: pd.DataFrame, spy_close: pd.Series = None) -> pd.
     df = df.copy()
     df.columns = [c.lower() for c in df.columns]
 
-    # DeMark: Setup → Sequential Countdown → Combo Countdown → Perfection
+    # DeMark: Setup → Sequential Countdown → Combo Countdown → Perfection → TDST/Risk
     df = compute_td_setups(df)
     df = compute_td_sequential_countdown(df)
     df = compute_td_combo_countdown(df)
     df = compute_perfection(df)
+    df = compute_tdst_and_risk_levels(df)
 
     # Traditional indicators
     df = compute_rsi(df)

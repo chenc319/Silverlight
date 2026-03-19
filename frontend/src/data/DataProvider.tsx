@@ -43,8 +43,12 @@ function apiToTickerSignal(s: any): TickerSignal {
     td13Combo: s.td13Combo || null,
     // Active DeMark labels
     setupLabel: s.setupLabel || null,
+    setupLabelColor: s.setupLabelColor || null,
     seqCdLabel: s.seqCdLabel || null,
+    seqCdLabelColor: s.seqCdLabelColor || null,
     comboCdLabel: s.comboCdLabel || null,
+    comboCdLabelColor: s.comboCdLabelColor || null,
+    demarkSignal: s.demarkSignal || null,
     // Numeric DeMark state
     tdSetupCount: s.tdSetupCount || 0,
     tdSetupSide: s.tdSetupSide || null,

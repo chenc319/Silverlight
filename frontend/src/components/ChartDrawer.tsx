@@ -2,7 +2,6 @@ import { useEffect, useCallback } from 'react';
 import { X, Maximize2 } from 'lucide-react';
 import { cn, formatPrice, formatPct, formatScore } from '@/lib/utils';
 import SignalBadge from './SignalBadge';
-import DeMarkBadge from './DeMarkBadge';
 import { useSignalData } from '@/data/DataProvider';
 import LightweightChart from './LightweightChart';
 
@@ -119,21 +118,28 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
 
           {/* DeMark Signals — Setup + Sequential CD + Combo CD */}
           <div className="p-3 rounded-lg bg-signal-surface border border-signal-border">
-            <div className="text-[10px] uppercase tracking-wider text-signal-text-muted mb-2">DeMark</div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] uppercase tracking-wider text-signal-text-muted">DeMark</span>
+              {data.demarkSignal && (
+                <span className={cn(
+                  'inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase',
+                  data.demarkSignal === 'BUY' && 'bg-signal-green/20 text-signal-green',
+                  data.demarkSignal === 'SELL' && 'bg-signal-red/20 text-signal-red',
+                  data.demarkSignal === '13+' && 'bg-amber-500/20 text-amber-400',
+                )}>
+                  {data.demarkSignal}
+                </span>
+              )}
+            </div>
             <div className="space-y-2">
-              {/* Completed signals */}
-              <div className="flex flex-wrap gap-2">
-                {data.td9Daily && <DeMarkBadge label={data.td9Daily} />}
-                {data.td13Seq && <DeMarkBadge label={data.td13Seq} />}
-                {data.td13Combo && <DeMarkBadge label={data.td13Combo} />}
-              </div>
               {/* Active state labels */}
               <div className="grid grid-cols-3 gap-2 text-[11px]">
                 <div>
                   <span className="text-signal-text-muted block">Setup</span>
                   <span className={cn(
                     'font-bold',
-                    data.setupLabel ? (data.tdSetupSide === 'buy' ? 'text-signal-green' : 'text-signal-red') : 'text-signal-text-muted'
+                    data.setupLabelColor === 'green' ? 'text-signal-green' :
+                    data.setupLabelColor === 'red' ? 'text-signal-red' : 'text-signal-text-muted'
                   )}>
                     {data.setupLabel || '—'}
                   </span>
@@ -142,7 +148,8 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
                   <span className="text-signal-text-muted block">Seq CD</span>
                   <span className={cn(
                     'font-bold',
-                    data.seqCdLabel ? (data.seqCdSide === 'buy' ? 'text-signal-green' : 'text-signal-red') : 'text-signal-text-muted'
+                    data.seqCdLabelColor === 'green' ? 'text-signal-green' :
+                    data.seqCdLabelColor === 'red' ? 'text-signal-red' : 'text-signal-text-muted'
                   )}>
                     {data.seqCdLabel || '—'}
                   </span>
@@ -151,7 +158,8 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
                   <span className="text-signal-text-muted block">Combo CD</span>
                   <span className={cn(
                     'font-bold',
-                    data.comboCdLabel ? (data.comboCdSide === 'buy' ? 'text-[#ff00ff]' : 'text-[#ff00ff]') : 'text-signal-text-muted'
+                    data.comboCdLabelColor === 'green' ? 'text-signal-green' :
+                    data.comboCdLabelColor === 'red' ? 'text-signal-red' : 'text-signal-text-muted'
                   )}>
                     {data.comboCdLabel || '—'}
                   </span>

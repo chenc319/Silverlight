@@ -223,22 +223,42 @@ def score_ticker(df: pd.DataFrame) -> dict:
     weekly_score = max(-100, min(100, int(daily_score * 0.85)))
     weekly_signal = _score_to_signal(weekly_score)
 
-    # Determine active setup display
+    # ─── Richer DeMark labels ───
+    # Setup label: "Bearish N" (buy setup = bearish), "Bullish N" (sell setup = bullish)
     setup_label = None
+    setup_label_color = None
     if dm['setup_count'] > 0 and dm['setup_count'] <= 9:
-        side_str = dm['setup_side'].upper() if dm['setup_side'] else ""
-        setup_label = f"{dm['setup_count']}/9 {side_str}"
+        if dm['setup_side'] == 'buy':
+            setup_label = f"Bearish {dm['setup_count']}"
+            setup_label_color = "red"
+        elif dm['setup_side'] == 'sell':
+            setup_label = f"Bullish {dm['setup_count']}"
+            setup_label_color = "green"
 
-    # Determine active countdown displays
+    # Countdown labels: buy CD = bullish (green), sell CD = bearish (red)
     seq_cd_label = None
+    seq_cd_label_color = None
     if dm['seq_cd_num'] > 0 and dm['seq_cd_num'] <= 13:
-        side_str = dm['seq_cd_side'].upper() if dm['seq_cd_side'] else ""
-        seq_cd_label = f"{dm['seq_cd_num']}/13 {side_str}"
+        if dm['seq_cd_side'] == 'buy':
+            seq_cd_label = f"Bullish {dm['seq_cd_num']}"
+            seq_cd_label_color = "green"
+        elif dm['seq_cd_side'] == 'sell':
+            seq_cd_label = f"Bearish {dm['seq_cd_num']}"
+            seq_cd_label_color = "red"
 
     combo_cd_label = None
+    combo_cd_label_color = None
     if dm['combo_cd_num'] > 0 and dm['combo_cd_num'] <= 13:
-        side_str = dm['combo_cd_side'].upper() if dm['combo_cd_side'] else ""
-        combo_cd_label = f"{dm['combo_cd_num']}/13 {side_str}"
+        if dm['combo_cd_side'] == 'buy':
+            combo_cd_label = f"Bullish {dm['combo_cd_num']}"
+            combo_cd_label_color = "green"
+        elif dm['combo_cd_side'] == 'sell':
+            combo_cd_label = f"Bearish {dm['combo_cd_num']}"
+            combo_cd_label_color = "red"
+
+    # ─── DeMark action signal (demarkSignal) ───
+    # Priority: 13 completion > perfected 9 + TDST
+    demark_signal = _compute_demark_signal(df, dm, close)
 
     return {
         "symbol": symbol,
@@ -254,9 +274,13 @@ def score_ticker(df: pd.DataFrame) -> dict:
         "td13Seq": td13_seq,
         "td13Combo": td13_combo,
         # Active DeMark state (for dashboard display)
-        "setupLabel": setup_label,        # e.g. "7/9 BUY" or None
-        "seqCdLabel": seq_cd_label,       # e.g. "10/13 BUY" or None
-        "comboCdLabel": combo_cd_label,   # e.g. "8/13 SELL" or None
+        "setupLabel": setup_label,
+        "setupLabelColor": setup_label_color,
+        "seqCdLabel": seq_cd_label,
+        "seqCdLabelColor": seq_cd_label_color,
+        "comboCdLabel": combo_cd_label,
+        "comboCdLabelColor": combo_cd_label_color,
+        "demarkSignal": demark_signal,
         "tdSetupCount": dm['setup_count'],
         "tdSetupSide": dm['setup_side'],
         "seqCdNum": dm['seq_cd_num'],
@@ -276,6 +300,76 @@ def score_ticker(df: pd.DataFrame) -> dict:
         "bbLower": round(bb_lower, 2),
         "relSpy20d": round(rel_spy, 2),
     }
+
+
+def _compute_demark_signal(df: pd.DataFrame, dm: dict, close: float) -> str:
+    """
+    Compute the top-level DeMark action signal: BUY, SELL, 13+, or None.
+
+    Rules (checked in priority order):
+    1. Countdown 13 completion:
+       - Buy 13 printed today or <=12 bars ago AND still active → "BUY"
+       - Sell 13 printed today or <=12 bars ago AND still active → "SELL"
+       - If no active countdown but a 13 printed within 12 bars → "13+"
+    2. Perfected 9 + TDST:
+       - Perfected buy 9 ABOVE active TDST sell support → "BUY" (active 4 bars)
+       - Perfected sell 9 BELOW active TDST buy resistance → "SELL" (active 4 bars)
+    """
+    n = len(df)
+    if n == 0:
+        return None
+
+    lookback_13 = min(12, n - 1)  # 12 bars window
+    lookback_9 = min(4, n - 1)    # 4 bars window
+
+    # --- Check for Countdown 13 completions within last 12 bars ---
+    found_buy_13 = False
+    found_sell_13 = False
+    for i in range(n - 1, max(n - 1 - lookback_13, -1), -1):
+        scb = int(df.iloc[i].get('seq_cd_buy', 0))
+        ccb = int(df.iloc[i].get('combo_cd_buy', 0))
+        scs = int(df.iloc[i].get('seq_cd_sell', 0))
+        ccs = int(df.iloc[i].get('combo_cd_sell', 0))
+        if scb == 13 or ccb == 13:
+            found_buy_13 = True
+        if scs == 13 or ccs == 13:
+            found_sell_13 = True
+
+    # Is there an active countdown still running?
+    active_buy_cd = (dm['seq_cd_side'] == 'buy' and 0 < dm['seq_cd_num'] < 13) or \
+                    (dm['combo_cd_side'] == 'buy' and 0 < dm['combo_cd_num'] < 13)
+    active_sell_cd = (dm['seq_cd_side'] == 'sell' and 0 < dm['seq_cd_num'] < 13) or \
+                     (dm['combo_cd_side'] == 'sell' and 0 < dm['combo_cd_num'] < 13)
+
+    if found_buy_13:
+        # Still active if buy countdown was completed (cd_num might be 13 or reset)
+        return "BUY"
+    if found_sell_13:
+        return "SELL"
+
+    # --- Check for Perfected 9 + TDST within last 4 bars ---
+    for i in range(n - 1, max(n - 1 - lookback_9, -1), -1):
+        sb = int(df.iloc[i].get('td_setup_buy', 0))
+        ss = int(df.iloc[i].get('td_setup_sell', 0))
+        perf = int(df.iloc[i].get('td_perfected', 0))
+        if not perf:
+            continue
+
+        tdst_sell_level = float(df.iloc[i].get('tdst_sell_level', 0))
+        tdst_buy_level = float(df.iloc[i].get('tdst_buy_level', 0))
+        bar_close = float(df.iloc[i].get('close', 0))
+
+        if sb == 9:
+            # Perfected buy 9: if ABOVE active TDST sell support → BUY
+            if tdst_sell_level > 0 and bar_close > tdst_sell_level:
+                return "BUY"
+
+        if ss == 9:
+            # Perfected sell 9: if BELOW active TDST buy resistance → SELL
+            if tdst_buy_level > 0 and bar_close < tdst_buy_level:
+                return "SELL"
+
+    return None
 
 
 def compute_market_regime(signals: dict) -> dict:
@@ -326,7 +420,10 @@ def _empty_signal(symbol: str) -> dict:
         "dailyScore": 0, "dailySignal": "HOLD",
         "weeklyScore": 0, "weeklySignal": "HOLD",
         "td9Daily": None, "td13Seq": None, "td13Combo": None,
-        "setupLabel": None, "seqCdLabel": None, "comboCdLabel": None,
+        "setupLabel": None, "setupLabelColor": None,
+        "seqCdLabel": None, "seqCdLabelColor": None,
+        "comboCdLabel": None, "comboCdLabelColor": None,
+        "demarkSignal": None,
         "tdSetupCount": 0, "tdSetupSide": None,
         "seqCdNum": 0, "seqCdSide": None,
         "comboCdNum": 0, "comboCdSide": None,

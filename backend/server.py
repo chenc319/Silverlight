@@ -19,7 +19,7 @@ from datetime import datetime
 # Add backend dir to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
@@ -158,7 +158,12 @@ def get_ohlc(ticker: str, timeframe: str = "daily"):
 
 
 @app.get("/api/chart/{ticker}/{timeframe}")
-def get_chart_image(ticker: str, timeframe: str = "daily"):
+def get_chart_image(
+    ticker: str,
+    timeframe: str = "daily",
+    show_bb: bool = Query(False),
+    show_stoch: bool = Query(True),
+):
     """Render DeMark OHLC chart as PNG image."""
     ticker = ticker.upper()
     if ticker not in ALL_TICKERS:
@@ -170,7 +175,7 @@ def get_chart_image(ticker: str, timeframe: str = "daily"):
     if not data:
         raise HTTPException(status_code=404, detail=f"No data for {ticker}")
 
-    png_bytes = render_chart_image(data, ticker, timeframe)
+    png_bytes = render_chart_image(data, ticker, timeframe, show_bb=show_bb, show_stoch=show_stoch)
     return Response(content=png_bytes, media_type="image/png",
                     headers={"Cache-Control": "public, max-age=300"})
 

@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import { cn, formatPrice, formatPct, formatScore } from '@/lib/utils';
 import SignalBadge from '@/components/SignalBadge';
-import DeMarkBadge from '@/components/DeMarkBadge';
 import LightweightChart from '@/components/LightweightChart';
 import { useSignalData } from '@/data/DataProvider';
 import { ALL_TICKERS } from '@/data/tickers';
@@ -13,6 +12,7 @@ export default function ChartPage() {
   const [timeframe, setTimeframe] = useState<'daily' | 'weekly'>('daily');
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showBB, setShowBB] = useState(false);
 
   // Listen for external ticker selection
   useEffect(() => {
@@ -90,6 +90,20 @@ export default function ChartPage() {
           ))}
         </div>
 
+        {/* BB toggle */}
+        <button
+          onClick={() => setShowBB(prev => !prev)}
+          data-testid="bb-toggle"
+          className={cn(
+            'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
+            showBB
+              ? 'bg-signal-amber/15 text-signal-amber border-signal-amber/30'
+              : 'bg-signal-surface text-signal-text-muted border-signal-border hover:text-signal-text'
+          )}
+        >
+          BB {showBB ? 'ON' : 'OFF'}
+        </button>
+
         {/* Ticker info */}
         {data && (
           <div className="flex items-center gap-3 ml-auto">
@@ -109,10 +123,11 @@ export default function ChartPage() {
         {/* Main chart */}
         <div className="flex-1 bg-signal-surface rounded-lg border border-signal-border p-3">
           <LightweightChart
-            key={`${selectedTicker}-${timeframe}`}
+            key={`${selectedTicker}-${timeframe}-${showBB}`}
             symbol={selectedTicker}
             height={500}
             timeframe={timeframe}
+            showBB={showBB}
           />
         </div>
 
@@ -154,24 +169,28 @@ export default function ChartPage() {
 
             {/* DeMark — Setup, Sequential CD, Combo CD */}
             <div className="bg-signal-surface rounded-lg border border-signal-border p-3">
-              <div className="text-[10px] uppercase tracking-wider text-signal-text-muted mb-2">DeMark</div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase tracking-wider text-signal-text-muted">DeMark</span>
+                {data.demarkSignal && (
+                  <span className={cn(
+                    'inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase',
+                    data.demarkSignal === 'BUY' && 'bg-signal-green/20 text-signal-green',
+                    data.demarkSignal === 'SELL' && 'bg-signal-red/20 text-signal-red',
+                    data.demarkSignal === '13+' && 'bg-amber-500/20 text-amber-400',
+                  )}>
+                    {data.demarkSignal}
+                  </span>
+                )}
+              </div>
               <div className="space-y-2">
-                {/* Completed signals */}
-                <div className="flex flex-wrap gap-1.5">
-                  {data.td9Daily && <DeMarkBadge label={data.td9Daily} />}
-                  {data.td13Seq && <DeMarkBadge label={data.td13Seq} />}
-                  {data.td13Combo && <DeMarkBadge label={data.td13Combo} />}
-                </div>
-
                 {/* Active DeMark state — 3-row layout */}
-                <div className="space-y-1.5 pt-1 border-t border-signal-border/50">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-signal-text-muted">Setup</span>
                     <span className={cn(
                       'font-bold tabular-nums',
-                      data.setupLabel
-                        ? (data.tdSetupSide === 'buy' ? 'text-signal-green' : 'text-signal-red')
-                        : 'text-signal-text-muted'
+                      data.setupLabelColor === 'green' ? 'text-signal-green' :
+                      data.setupLabelColor === 'red' ? 'text-signal-red' : 'text-signal-text-muted'
                     )}>
                       {data.setupLabel || '—'}
                     </span>
@@ -180,9 +199,8 @@ export default function ChartPage() {
                     <span className="text-signal-text-muted">Sequential CD</span>
                     <span className={cn(
                       'font-bold tabular-nums',
-                      data.seqCdLabel
-                        ? (data.seqCdSide === 'buy' ? 'text-signal-green' : 'text-signal-red')
-                        : 'text-signal-text-muted'
+                      data.seqCdLabelColor === 'green' ? 'text-signal-green' :
+                      data.seqCdLabelColor === 'red' ? 'text-signal-red' : 'text-signal-text-muted'
                     )}>
                       {data.seqCdLabel || '—'}
                     </span>
@@ -191,7 +209,8 @@ export default function ChartPage() {
                     <span className="text-signal-text-muted">Combo CD</span>
                     <span className={cn(
                       'font-bold tabular-nums',
-                      data.comboCdLabel ? 'text-[#ff00ff]' : 'text-signal-text-muted'
+                      data.comboCdLabelColor === 'green' ? 'text-signal-green' :
+                      data.comboCdLabelColor === 'red' ? 'text-signal-red' : 'text-signal-text-muted'
                     )}>
                       {data.comboCdLabel || '—'}
                     </span>

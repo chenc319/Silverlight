@@ -62,8 +62,12 @@ function generateTickerSignal(symbol: string): TickerSignal {
   let td13Seq: string | null = null;
   let td13Combo: string | null = null;
   let setupLabel: string | null = null;
+  let setupLabelColor: string | null = null;
   let seqCdLabel: string | null = null;
+  let seqCdLabelColor: string | null = null;
   let comboCdLabel: string | null = null;
+  let comboCdLabelColor: string | null = null;
+  let demarkSignal: string | null = null;
   let tdSetupCount = 0;
   let tdSetupSide: string | null = null;
   let seqCdNum = 0;
@@ -76,39 +80,48 @@ function generateTickerSignal(symbol: string): TickerSignal {
     dailyScore += 30;
     tdSetupCount = 9;
     tdSetupSide = 'buy';
-    setupLabel = '9/9 BUY';
+    setupLabel = 'Bearish 9';
+    setupLabelColor = 'red';
   } else if (tdRoll < 0.18) {
     td13Seq = 'SEQ 13 BUY';
     dailyScore += 40;
     seqCdNum = 13;
     seqCdSide = 'buy';
-    seqCdLabel = '13/13 BUY';
+    seqCdLabel = 'Bullish 13';
+    seqCdLabelColor = 'green';
+    demarkSignal = 'BUY';
   } else if (tdRoll < 0.30) {
     td9Daily = 'TD9 SELL';
     dailyScore -= 30;
     tdSetupCount = 9;
     tdSetupSide = 'sell';
-    setupLabel = '9/9 SELL';
+    setupLabel = 'Bullish 9';
+    setupLabelColor = 'green';
   } else if (tdRoll < 0.36) {
     td13Combo = 'COMBO 13 SELL';
     dailyScore -= 40;
     comboCdNum = 13;
     comboCdSide = 'sell';
-    comboCdLabel = '13/13 SELL';
+    comboCdLabel = 'Bearish 13';
+    comboCdLabelColor = 'red';
+    demarkSignal = 'SELL';
   } else if (tdRoll < 0.55) {
     tdSetupCount = Math.floor(randRange(1, 8));
     tdSetupSide = rand() > 0.5 ? 'buy' : 'sell';
-    setupLabel = `${tdSetupCount}/9 ${tdSetupSide.toUpperCase()}`;
+    setupLabel = `${tdSetupSide === 'buy' ? 'Bearish' : 'Bullish'} ${tdSetupCount}`;
+    setupLabelColor = tdSetupSide === 'buy' ? 'red' : 'green';
     dailyScore += tdSetupCount > 5 ? (tdSetupSide === 'buy' ? 15 : -15) : 0;
   } else if (tdRoll < 0.65) {
     seqCdNum = Math.floor(randRange(1, 12));
     seqCdSide = rand() > 0.5 ? 'buy' : 'sell';
-    seqCdLabel = `${seqCdNum}/13 ${seqCdSide.toUpperCase()}`;
+    seqCdLabel = `${seqCdSide === 'buy' ? 'Bullish' : 'Bearish'} ${seqCdNum}`;
+    seqCdLabelColor = seqCdSide === 'buy' ? 'green' : 'red';
     dailyScore += seqCdSide === 'buy' ? 15 : -15;
   } else if (tdRoll < 0.75) {
     comboCdNum = Math.floor(randRange(1, 12));
     comboCdSide = rand() > 0.5 ? 'buy' : 'sell';
-    comboCdLabel = `${comboCdNum}/13 ${comboCdSide.toUpperCase()}`;
+    comboCdLabel = `${comboCdSide === 'buy' ? 'Bullish' : 'Bearish'} ${comboCdNum}`;
+    comboCdLabelColor = comboCdSide === 'buy' ? 'green' : 'red';
     dailyScore += comboCdSide === 'buy' ? 10 : -10;
   }
 
@@ -151,8 +164,12 @@ function generateTickerSignal(symbol: string): TickerSignal {
     td13Seq,
     td13Combo,
     setupLabel,
+    setupLabelColor,
     seqCdLabel,
+    seqCdLabelColor,
     comboCdLabel,
+    comboCdLabelColor,
+    demarkSignal,
     tdSetupCount,
     tdSetupSide,
     seqCdNum,

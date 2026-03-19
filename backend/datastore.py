@@ -51,9 +51,33 @@ class MarketDataStore:
                     rsi14 REAL DEFAULT 50, stoch_k REAL DEFAULT 50, stoch_d REAL DEFAULT 50,
                     macd_line REAL DEFAULT 0, macd_signal REAL DEFAULT 0, macd_hist REAL DEFAULT 0,
                     bb_upper REAL DEFAULT 0, bb_mid REAL DEFAULT 0, bb_lower REAL DEFAULT 0,
-                    rel_to_spy REAL DEFAULT 0
+                    rel_to_spy REAL DEFAULT 0,
+                    tdst_buy_level REAL DEFAULT 0,
+                    tdst_sell_level REAL DEFAULT 0,
+                    risk_seq_buy_level REAL DEFAULT 0,
+                    risk_seq_sell_level REAL DEFAULT 0,
+                    risk_combo_buy_level REAL DEFAULT 0,
+                    risk_combo_sell_level REAL DEFAULT 0
                 )
             """)
+
+        # Migration: add new columns to existing tables
+        new_cols = [
+            ('tdst_buy_level', 'REAL DEFAULT 0'),
+            ('tdst_sell_level', 'REAL DEFAULT 0'),
+            ('risk_seq_buy_level', 'REAL DEFAULT 0'),
+            ('risk_seq_sell_level', 'REAL DEFAULT 0'),
+            ('risk_combo_buy_level', 'REAL DEFAULT 0'),
+            ('risk_combo_sell_level', 'REAL DEFAULT 0'),
+        ]
+        for ticker in ALL_TICKERS:
+            table = self._table_name(ticker)
+            for col_name, col_type in new_cols:
+                try:
+                    conn.execute(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}")
+                except Exception:
+                    pass  # column already exists
+
         conn.commit()
         conn.close()
 
@@ -196,7 +220,10 @@ class MarketDataStore:
                     rsi14 = ?, stoch_k = ?, stoch_d = ?,
                     macd_line = ?, macd_signal = ?, macd_hist = ?,
                     bb_upper = ?, bb_mid = ?, bb_lower = ?,
-                    rel_to_spy = ?
+                    rel_to_spy = ?,
+                    tdst_buy_level = ?, tdst_sell_level = ?,
+                    risk_seq_buy_level = ?, risk_seq_sell_level = ?,
+                    risk_combo_buy_level = ?, risk_combo_sell_level = ?
                 WHERE date = ?
             """, (
                 int(row.get('td_setup_buy', 0)),
@@ -219,6 +246,12 @@ class MarketDataStore:
                 float(row.get('bb_mid', 0)),
                 float(row.get('bb_lower', 0)),
                 float(row.get('rel_to_spy', 0)),
+                float(row.get('tdst_buy_level', 0)),
+                float(row.get('tdst_sell_level', 0)),
+                float(row.get('risk_seq_buy_level', 0)),
+                float(row.get('risk_seq_sell_level', 0)),
+                float(row.get('risk_combo_buy_level', 0)),
+                float(row.get('risk_combo_sell_level', 0)),
                 date_str,
             ))
 
