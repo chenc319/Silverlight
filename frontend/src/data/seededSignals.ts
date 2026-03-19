@@ -16,9 +16,13 @@ function randRange(min: number, max: number): number {
 }
 
 function pickSignal(score: number): Signal {
-  if (score >= 40) return 'BUY';
-  if (score <= -40) return 'SELL';
-  return 'HOLD';
+  if (score >= 7) return 'STRONG BUY';
+  if (score >= 4) return 'BUY';
+  if (score > 1) return 'HOLD';
+  if (score >= -1) return 'NEUTRAL';
+  if (score > -4) return 'HOLD';
+  if (score > -7) return 'SELL';
+  return 'STRONG SELL';
 }
 
 // ─── Realistic price data ───
@@ -145,9 +149,9 @@ function generateTickerSignal(symbol: string): TickerSignal {
   if (relSpy20d > 0) dailyScore += 5;
   else dailyScore -= 5;
 
-  dailyScore = Math.max(-100, Math.min(100, dailyScore));
+  dailyScore = Math.max(-10, Math.min(10, dailyScore / 10));
 
-  const weeklyScore = Math.max(-100, Math.min(100,
+  const weeklyScore = Math.max(-10, Math.min(10,
     Math.round(dailyScore * randRange(0.5, 1.2))
   ));
 

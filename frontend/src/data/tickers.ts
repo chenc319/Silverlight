@@ -32,7 +32,7 @@ export const SECTOR_NAMES: Record<string, string> = {
 
 export const BENCHMARK = 'SPY';
 
-export type Signal = 'BUY' | 'HOLD' | 'SELL';
+export type Signal = 'STRONG BUY' | 'BUY' | 'HOLD' | 'NEUTRAL' | 'SELL' | 'STRONG SELL';
 
 export interface TickerSignal {
   symbol: string;

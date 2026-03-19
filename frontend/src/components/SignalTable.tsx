@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { cn, formatPrice, formatPct, formatScore, getPctColor } from '@/lib/utils';
+import { cn, formatPrice, formatPct, formatScore, getPctColor, getScoreColor } from '@/lib/utils';
 import SignalBadge from './SignalBadge';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import type { TickerSignal } from '@/data/tickers';
@@ -176,12 +176,11 @@ export default function SignalTable({ data, onTickerClick, showRank, showSparkli
                           {formatPct(val as number)}
                         </span>
                       ) : col.key === 'dailySignal' || col.key === 'weeklySignal' ? (
-                        <SignalBadge signal={val as 'BUY' | 'HOLD' | 'SELL'} />
+                        <SignalBadge signal={val as any} />
                       ) : col.key === 'dailyScore' || col.key === 'weeklyScore' ? (
                         <span className={cn(
                           'font-bold',
-                          (val as number) >= 40 ? 'text-signal-green' :
-                          (val as number) <= -40 ? 'text-signal-red' : 'text-signal-text-secondary'
+                          getScoreColor(val as number)
                         )}>
                           {formatScore(val as number)}
                         </span>

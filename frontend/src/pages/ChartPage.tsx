@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Search, Maximize2, X } from 'lucide-react';
-import { cn, formatPrice, formatPct, formatScore } from '@/lib/utils';
+import { cn, formatPrice, formatPct, formatScore, getScoreColor } from '@/lib/utils';
 import SignalBadge from '@/components/SignalBadge';
 import InteractiveChart from '@/components/InteractiveChart';
 import { useSignalData } from '@/data/DataProvider';
@@ -164,8 +164,7 @@ export default function ChartPage() {
                     <div className="flex items-center gap-2">
                       <span className={cn(
                         'text-sm font-bold tabular-nums',
-                        data.dailyScore >= 40 ? 'text-signal-green' :
-                        data.dailyScore <= -40 ? 'text-signal-red' : 'text-signal-amber'
+                        getScoreColor(data.dailyScore)
                       )}>
                         {formatScore(data.dailyScore)}
                       </span>
@@ -177,8 +176,7 @@ export default function ChartPage() {
                     <div className="flex items-center gap-2">
                       <span className={cn(
                         'text-sm font-bold tabular-nums',
-                        data.weeklyScore >= 40 ? 'text-signal-green' :
-                        data.weeklyScore <= -40 ? 'text-signal-red' : 'text-signal-amber'
+                        getScoreColor(data.weeklyScore)
                       )}>
                         {formatScore(data.weeklyScore)}
                       </span>
