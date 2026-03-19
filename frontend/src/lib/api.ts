@@ -3,7 +3,9 @@
  * Falls back to seeded data if the backend is unavailable.
  */
 
-const API_BASE = '/api';
+// Works locally (relative /api) AND after deploy (__PORT_8000__ replaced with proxy path)
+export const BACKEND = '__PORT_8000__'.startsWith('__') ? '' : '__PORT_8000__';
+const API_BASE = `${BACKEND}/api`;
 
 export interface APISignalsResponse {
   signals: Record<string, any>;

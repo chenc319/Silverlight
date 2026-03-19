@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BACKEND } from '@/lib/api';
 
 interface DeMarkChartProps {
   symbol: string;
@@ -21,7 +22,7 @@ export default function LightweightChart({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const imgSrc = `/api/chart/${symbol}/${timeframe}?show_bb=${showBB}&t=${Date.now()}`;
+  const imgSrc = `${BACKEND}/api/chart/${symbol}/${timeframe}?show_bb=${showBB}&t=${Date.now()}`;
 
   return (
     <div className="relative w-full" style={{ height }}>
