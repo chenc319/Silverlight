@@ -24,9 +24,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 
+from fastapi.responses import Response
+
 from config import ALL_TICKERS, TICKER_GROUPS
 from datastore import MarketDataStore
 from scoring import compute_market_regime
+from chart_renderer import render_chart_image
 
 app = FastAPI(title="SilverSignal API", version="1.0.0")
 
@@ -152,6 +155,24 @@ def get_ohlc(ticker: str, timeframe: str = "daily"):
         raise HTTPException(status_code=404, detail=f"No data for {ticker}")
 
     return {"ticker": ticker, "timeframe": timeframe, "bars": len(data), "data": data}
+
+
+@app.get("/api/chart/{ticker}/{timeframe}")
+def get_chart_image(ticker: str, timeframe: str = "daily"):
+    """Render DeMark OHLC chart as PNG image."""
+    ticker = ticker.upper()
+    if ticker not in ALL_TICKERS:
+        raise HTTPException(status_code=404, detail=f"Ticker {ticker} not in universe")
+
+    bars = 252 if timeframe == "daily" else 104
+    data = store.get_ohlc(ticker, bars=bars)
+
+    if not data:
+        raise HTTPException(status_code=404, detail=f"No data for {ticker}")
+
+    png_bytes = render_chart_image(data, ticker, timeframe)
+    return Response(content=png_bytes, media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=300"})
 
 
 @app.get("/api/regime")

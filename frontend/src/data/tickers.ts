@@ -43,24 +43,34 @@ export interface TickerSignal {
   dailySignal: Signal;
   weeklyScore: number;
   weeklySignal: Signal;
-  td9Daily: string | null;   // e.g. "TD9 BUY", "TD9 SELL", null
-  td13Daily: string | null;
-  td9Weekly: string | null;
-  td13Weekly: string | null;
-  tdSetupCount: number;      // current active setup count (1-9), 0 if none
-  tdCountdownCount: number;  // current countdown count (1-13), 0 if none
+  // DeMark completed signals
+  td9Daily: string | null;      // e.g. "TD9 BUY", "TD9 SELL ●", null
+  td13Seq: string | null;       // e.g. "SEQ 13 BUY", null
+  td13Combo: string | null;     // e.g. "COMBO 13 SELL", null
+  // Active DeMark state labels for dashboard display
+  setupLabel: string | null;    // e.g. "7/9 BUY" or null
+  seqCdLabel: string | null;    // e.g. "10/13 BUY" or null
+  comboCdLabel: string | null;  // e.g. "8/13 SELL" or null
+  // Numeric DeMark state
+  tdSetupCount: number;         // 0-9
+  tdSetupSide: string | null;   // "buy" | "sell" | null
+  seqCdNum: number;             // 0-13
+  seqCdSide: string | null;
+  comboCdNum: number;           // 0-13
+  comboCdSide: string | null;
+  // Traditional indicators
   rsi14: number;
   stochK: number;
   stochD: number;
   macdHist: number;
   macdLine: number;
   macdSignal: number;
-  bbPct: number;             // (close - lower) / (upper - lower)
+  bbPct: number;
   bbUpper: number;
   bbMid: number;
   bbLower: number;
-  relSpy20d: number;         // relative perf vs SPY, 20d
-  rank?: number;             // rank within group
+  relSpy20d: number;
+  rank?: number;
 }
 
 export type MarketRegime = 'RISK ON' | 'NEUTRAL' | 'RISK OFF';

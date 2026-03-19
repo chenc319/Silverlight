@@ -41,9 +41,7 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
         className={cn(
           'fixed z-50 bg-signal-bg border-l border-signal-border',
           'animate-slide-in-right',
-          // Desktop: right panel
           'md:top-12 md:right-0 md:bottom-0 md:w-[560px]',
-          // Mobile: full screen
           'top-0 right-0 bottom-0 left-0 md:left-auto'
         )}
       >
@@ -119,12 +117,47 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
             </div>
           </div>
 
-          {/* DeMark Signals */}
-          <div className="flex flex-wrap gap-2">
-            {data.td9Daily && <DeMarkBadge label={data.td9Daily} />}
-            {data.td13Daily && <DeMarkBadge label={data.td13Daily} />}
-            {data.td9Weekly && <DeMarkBadge label={data.td9Weekly} />}
-            {data.td13Weekly && <DeMarkBadge label={data.td13Weekly} />}
+          {/* DeMark Signals — Setup + Sequential CD + Combo CD */}
+          <div className="p-3 rounded-lg bg-signal-surface border border-signal-border">
+            <div className="text-[10px] uppercase tracking-wider text-signal-text-muted mb-2">DeMark</div>
+            <div className="space-y-2">
+              {/* Completed signals */}
+              <div className="flex flex-wrap gap-2">
+                {data.td9Daily && <DeMarkBadge label={data.td9Daily} />}
+                {data.td13Seq && <DeMarkBadge label={data.td13Seq} />}
+                {data.td13Combo && <DeMarkBadge label={data.td13Combo} />}
+              </div>
+              {/* Active state labels */}
+              <div className="grid grid-cols-3 gap-2 text-[11px]">
+                <div>
+                  <span className="text-signal-text-muted block">Setup</span>
+                  <span className={cn(
+                    'font-bold',
+                    data.setupLabel ? (data.tdSetupSide === 'buy' ? 'text-signal-green' : 'text-signal-red') : 'text-signal-text-muted'
+                  )}>
+                    {data.setupLabel || '—'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-signal-text-muted block">Seq CD</span>
+                  <span className={cn(
+                    'font-bold',
+                    data.seqCdLabel ? (data.seqCdSide === 'buy' ? 'text-signal-green' : 'text-signal-red') : 'text-signal-text-muted'
+                  )}>
+                    {data.seqCdLabel || '—'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-signal-text-muted block">Combo CD</span>
+                  <span className={cn(
+                    'font-bold',
+                    data.comboCdLabel ? (data.comboCdSide === 'buy' ? 'text-[#ff00ff]' : 'text-[#ff00ff]') : 'text-signal-text-muted'
+                  )}>
+                    {data.comboCdLabel || '—'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Indicators Grid */}

@@ -18,7 +18,7 @@ export default function ChartPage() {
   useEffect(() => {
     const handler = (e: Event) => {
       const ticker = (e as CustomEvent).detail;
-      if (typeof ticker === 'string' && ALL_TICKERS.includes(ticker)) {
+      if (typeof ticker === 'string' && ALL_TICKERS.includes(ticker as any)) {
         setSelectedTicker(ticker);
       }
     };
@@ -112,14 +112,13 @@ export default function ChartPage() {
             key={`${selectedTicker}-${timeframe}`}
             symbol={selectedTicker}
             height={500}
-            showBB
             timeframe={timeframe}
           />
         </div>
 
         {/* Signal sidebar */}
         {data && (
-          <div className="lg:w-64 space-y-3">
+          <div className="lg:w-72 space-y-3">
             {/* Signal summary */}
             <div className="bg-signal-surface rounded-lg border border-signal-border p-3">
               <div className="text-[10px] uppercase tracking-wider text-signal-text-muted mb-2">Signal Summary</div>
@@ -153,27 +152,51 @@ export default function ChartPage() {
               </div>
             </div>
 
-            {/* DeMark */}
+            {/* DeMark — Setup, Sequential CD, Combo CD */}
             <div className="bg-signal-surface rounded-lg border border-signal-border p-3">
               <div className="text-[10px] uppercase tracking-wider text-signal-text-muted mb-2">DeMark</div>
-              <div className="space-y-1.5">
-                {data.td9Daily && <DeMarkBadge label={data.td9Daily} />}
-                {data.td13Daily && <DeMarkBadge label={data.td13Daily} />}
-                {data.td9Weekly && <DeMarkBadge label={data.td9Weekly} />}
-                {data.td13Weekly && <DeMarkBadge label={data.td13Weekly} />}
-                {!data.td9Daily && !data.td13Daily && !data.td9Weekly && !data.td13Weekly && (
-                  <span className="text-xs text-signal-text-muted">No active DeMark signals</span>
-                )}
-                {data.tdSetupCount > 0 && (
-                  <div className="text-[11px] text-signal-text-secondary">
-                    Active setup: count {data.tdSetupCount}/9
+              <div className="space-y-2">
+                {/* Completed signals */}
+                <div className="flex flex-wrap gap-1.5">
+                  {data.td9Daily && <DeMarkBadge label={data.td9Daily} />}
+                  {data.td13Seq && <DeMarkBadge label={data.td13Seq} />}
+                  {data.td13Combo && <DeMarkBadge label={data.td13Combo} />}
+                </div>
+
+                {/* Active DeMark state — 3-row layout */}
+                <div className="space-y-1.5 pt-1 border-t border-signal-border/50">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-signal-text-muted">Setup</span>
+                    <span className={cn(
+                      'font-bold tabular-nums',
+                      data.setupLabel
+                        ? (data.tdSetupSide === 'buy' ? 'text-signal-green' : 'text-signal-red')
+                        : 'text-signal-text-muted'
+                    )}>
+                      {data.setupLabel || '—'}
+                    </span>
                   </div>
-                )}
-                {data.tdCountdownCount > 0 && (
-                  <div className="text-[11px] text-signal-text-secondary">
-                    Active countdown: {data.tdCountdownCount}/13
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-signal-text-muted">Sequential CD</span>
+                    <span className={cn(
+                      'font-bold tabular-nums',
+                      data.seqCdLabel
+                        ? (data.seqCdSide === 'buy' ? 'text-signal-green' : 'text-signal-red')
+                        : 'text-signal-text-muted'
+                    )}>
+                      {data.seqCdLabel || '—'}
+                    </span>
                   </div>
-                )}
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-signal-text-muted">Combo CD</span>
+                    <span className={cn(
+                      'font-bold tabular-nums',
+                      data.comboCdLabel ? 'text-[#ff00ff]' : 'text-signal-text-muted'
+                    )}>
+                      {data.comboCdLabel || '—'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 

@@ -42,8 +42,12 @@ class MarketDataStore:
                     date TEXT PRIMARY KEY,
                     open REAL, high REAL, low REAL, close REAL, volume INTEGER,
                     td_setup_buy INTEGER DEFAULT 0, td_setup_sell INTEGER DEFAULT 0,
-                    td_countdown_buy INTEGER DEFAULT 0, td_countdown_sell INTEGER DEFAULT 0,
-                    td_setup_count INTEGER DEFAULT 0, td_countdown_count INTEGER DEFAULT 0,
+                    td_setup_count INTEGER DEFAULT 0,
+                    seq_cd_buy INTEGER DEFAULT 0, seq_cd_sell INTEGER DEFAULT 0,
+                    seq_countdown_count INTEGER DEFAULT 0,
+                    combo_cd_buy INTEGER DEFAULT 0, combo_cd_sell INTEGER DEFAULT 0,
+                    combo_countdown_count INTEGER DEFAULT 0,
+                    td_perfected INTEGER DEFAULT 0,
                     rsi14 REAL DEFAULT 50, stoch_k REAL DEFAULT 50, stoch_d REAL DEFAULT 50,
                     macd_line REAL DEFAULT 0, macd_signal REAL DEFAULT 0, macd_hist REAL DEFAULT 0,
                     bb_upper REAL DEFAULT 0, bb_mid REAL DEFAULT 0, bb_lower REAL DEFAULT 0,
@@ -57,7 +61,6 @@ class MarketDataStore:
         return f"ohlc_{ticker.replace('-', '_').replace('.', '_')}"
 
     def get_last_date(self, ticker: str) -> Optional[str]:
-        """Get the last stored date for a ticker."""
         conn = self._get_conn()
         table = self._table_name(ticker)
         try:
@@ -83,18 +86,15 @@ class MarketDataStore:
         """
         Delta-fetch: only download new bars from yfinance.
         If DB is empty, seed with 2 years of data.
-        Returns status dict.
         """
         last_date = self.get_last_date(ticker)
 
         try:
             if last_date is None:
-                # Seed with 2 years
                 df_new = yf.download(ticker, period="2y", progress=False, auto_adjust=True)
                 if df_new.empty:
                     return {"ticker": ticker, "status": "error", "message": "No data from yfinance"}
             else:
-                # Delta fetch: start from last_date + 1 day
                 start = (datetime.strptime(last_date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
                 end = datetime.now().strftime("%Y-%m-%d")
                 if start >= end:
@@ -108,7 +108,6 @@ class MarketDataStore:
             if isinstance(df_new.columns, pd.MultiIndex):
                 df_new.columns = [c[0] if isinstance(c, tuple) else c for c in df_new.columns]
 
-            # Normalize
             df_new.columns = [c.lower() for c in df_new.columns]
             df_new.index.name = 'date'
             df_new = df_new.reset_index()
@@ -188,8 +187,12 @@ class MarketDataStore:
             conn.execute(f"""
                 UPDATE {table} SET
                     td_setup_buy = ?, td_setup_sell = ?,
-                    td_countdown_buy = ?, td_countdown_sell = ?,
-                    td_setup_count = ?, td_countdown_count = ?,
+                    td_setup_count = ?,
+                    seq_cd_buy = ?, seq_cd_sell = ?,
+                    seq_countdown_count = ?,
+                    combo_cd_buy = ?, combo_cd_sell = ?,
+                    combo_countdown_count = ?,
+                    td_perfected = ?,
                     rsi14 = ?, stoch_k = ?, stoch_d = ?,
                     macd_line = ?, macd_signal = ?, macd_hist = ?,
                     bb_upper = ?, bb_mid = ?, bb_lower = ?,
@@ -198,10 +201,14 @@ class MarketDataStore:
             """, (
                 int(row.get('td_setup_buy', 0)),
                 int(row.get('td_setup_sell', 0)),
-                int(row.get('td_countdown_buy', 0)),
-                int(row.get('td_countdown_sell', 0)),
                 int(row.get('td_setup_count', 0)),
-                int(row.get('td_countdown_count', 0)),
+                int(row.get('seq_cd_buy', 0)),
+                int(row.get('seq_cd_sell', 0)),
+                int(row.get('seq_countdown_count', 0)),
+                int(row.get('combo_cd_buy', 0)),
+                int(row.get('combo_cd_sell', 0)),
+                int(row.get('combo_countdown_count', 0)),
+                int(row.get('td_perfected', 0)),
                 float(row.get('rsi14', 50)),
                 float(row.get('stoch_k', 50)),
                 float(row.get('stoch_d', 50)),
@@ -253,14 +260,12 @@ class MarketDataStore:
                 return []
 
             df = df.sort_values('date')
-
             return df.to_dict(orient='records')
         except Exception as e:
             conn.close()
             return []
 
     def get_all_signals(self) -> dict:
-        """Get signals for all tickers."""
         signals = {}
         for ticker in ALL_TICKERS:
             try:
@@ -271,7 +276,6 @@ class MarketDataStore:
         return signals
 
     def refresh_all(self, callback=None):
-        """Fetch and recompute for all tickers. callback(ticker, status) for progress."""
         # Fetch SPY first (needed for relative perf)
         status = self.fetch_and_store(BENCHMARK)
         if callback:
@@ -291,6 +295,6 @@ class MarketDataStore:
                 results.append(err)
                 if callback:
                     callback(ticker, err)
-            time.sleep(0.1)  # Rate limiting
+            time.sleep(0.1)
 
         return results

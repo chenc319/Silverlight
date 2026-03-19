@@ -11,7 +11,7 @@ interface Mag7CardProps {
 export default function Mag7Card({ data, onClick }: Mag7CardProps) {
   const isBuy = data.dailySignal === 'BUY';
   const isSell = data.dailySignal === 'SELL';
-  const demarkLabel = data.td9Daily || data.td13Daily || null;
+  const demarkLabel = data.td9Daily || data.td13Seq || data.td13Combo || null;
 
   return (
     <button
@@ -48,27 +48,55 @@ export default function Mag7Card({ data, onClick }: Mag7CardProps) {
         {demarkLabel && <DeMarkBadge label={demarkLabel} />}
       </div>
 
-      {/* Indicators row */}
-      <div className="flex items-center justify-between text-[11px] tabular-nums">
-        <div className="flex items-center gap-0.5">
-          <span className="text-signal-text-muted">RSI</span>
-          <span className={cn(
-            'font-medium',
-            data.rsi14 < 30 ? 'text-signal-green' :
-            data.rsi14 > 70 ? 'text-signal-red' : 'text-signal-text-secondary'
-          )}>
-            {data.rsi14.toFixed(1)}
-          </span>
+      {/* DeMark state + indicators row */}
+      <div className="space-y-1">
+        {/* DeMark active state */}
+        <div className="flex items-center justify-between text-[10px] tabular-nums">
+          {data.setupLabel && (
+            <span className={cn(
+              'font-bold',
+              data.tdSetupSide === 'buy' ? 'text-signal-green' : 'text-signal-red'
+            )}>
+              Setup {data.setupLabel}
+            </span>
+          )}
+          {data.seqCdLabel && (
+            <span className={cn(
+              'font-bold',
+              data.seqCdSide === 'buy' ? 'text-signal-green' : 'text-signal-red'
+            )}>
+              Seq {data.seqCdLabel}
+            </span>
+          )}
+          {data.comboCdLabel && (
+            <span className="font-bold text-[#ff00ff]">
+              Combo {data.comboCdLabel}
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center gap-0.5">
-          <span className="text-signal-text-muted">Rel/SPY</span>
-          <span className={cn(
-            'font-medium',
-            data.relSpy20d > 0 ? 'text-signal-green' : 'text-signal-red'
-          )}>
-            {data.relSpy20d > 0 ? '+' : ''}{data.relSpy20d.toFixed(1)}%
-          </span>
+        {/* Traditional indicators */}
+        <div className="flex items-center justify-between text-[11px] tabular-nums">
+          <div className="flex items-center gap-0.5">
+            <span className="text-signal-text-muted">RSI</span>
+            <span className={cn(
+              'font-medium',
+              data.rsi14 < 30 ? 'text-signal-green' :
+              data.rsi14 > 70 ? 'text-signal-red' : 'text-signal-text-secondary'
+            )}>
+              {data.rsi14.toFixed(1)}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-0.5">
+            <span className="text-signal-text-muted">Rel/SPY</span>
+            <span className={cn(
+              'font-medium',
+              data.relSpy20d > 0 ? 'text-signal-green' : 'text-signal-red'
+            )}>
+              {data.relSpy20d > 0 ? '+' : ''}{data.relSpy20d.toFixed(1)}%
+            </span>
+          </div>
         </div>
       </div>
     </button>

@@ -1,6 +1,7 @@
 """
 Scoring engine: score each ticker -100 to +100, map to BUY/HOLD/SELL.
 Market Regime computation.
+Now includes TD Combo setup count and both Sequential + Combo countdown numbers.
 """
 
 import pandas as pd
@@ -8,10 +9,84 @@ import numpy as np
 from config import TICKER_GROUPS
 
 
+def _find_active_demark_state(df: pd.DataFrame) -> dict:
+    """
+    Walk backward from the last bar to find the currently active DeMark state:
+    - Active setup count and side (from the most recent incomplete or just-completed setup)
+    - Active Sequential countdown number (from most recent in-progress seq countdown)
+    - Active Combo countdown number (from most recent in-progress combo countdown)
+    """
+    n = len(df)
+    if n == 0:
+        return {
+            'setup_count': 0, 'setup_side': None,
+            'seq_cd_num': 0, 'seq_cd_side': None,
+            'combo_cd_num': 0, 'combo_cd_side': None,
+        }
+
+    # Find the last non-zero setup count (active or completed)
+    setup_count = 0
+    setup_side = None
+    for i in range(n - 1, max(n - 15, -1), -1):
+        sb = int(df.iloc[i].get('td_setup_buy', 0))
+        ss = int(df.iloc[i].get('td_setup_sell', 0))
+        if sb > 0:
+            setup_count = sb
+            setup_side = 'buy'
+            break
+        elif ss > 0:
+            setup_count = ss
+            setup_side = 'sell'
+            break
+
+    # Find the highest recent sequential countdown number
+    seq_cd_num = 0
+    seq_cd_side = None
+    for i in range(n - 1, max(n - 60, -1), -1):
+        scb = int(df.iloc[i].get('seq_cd_buy', 0))
+        scs = int(df.iloc[i].get('seq_cd_sell', 0))
+        if scb > 0:
+            if scb >= seq_cd_num:
+                seq_cd_num = scb
+                seq_cd_side = 'buy'
+            break
+        elif scs > 0:
+            if scs >= seq_cd_num:
+                seq_cd_num = scs
+                seq_cd_side = 'sell'
+            break
+
+    # Find the highest recent combo countdown number
+    combo_cd_num = 0
+    combo_cd_side = None
+    for i in range(n - 1, max(n - 60, -1), -1):
+        ccb = int(df.iloc[i].get('combo_cd_buy', 0))
+        ccs = int(df.iloc[i].get('combo_cd_sell', 0))
+        if ccb > 0:
+            if ccb >= combo_cd_num:
+                combo_cd_num = ccb
+                combo_cd_side = 'buy'
+            break
+        elif ccs > 0:
+            if ccs >= combo_cd_num:
+                combo_cd_num = ccs
+                combo_cd_side = 'sell'
+            break
+
+    return {
+        'setup_count': setup_count,
+        'setup_side': setup_side,
+        'seq_cd_num': seq_cd_num,
+        'seq_cd_side': seq_cd_side,
+        'combo_cd_num': combo_cd_num,
+        'combo_cd_side': combo_cd_side,
+    }
+
+
 def score_ticker(df: pd.DataFrame) -> dict:
     """
     Score a single ticker based on the last bar of indicator data.
-    Returns dict with all signal fields.
+    Returns dict with all signal fields including TD Combo.
     """
     if len(df) == 0:
         return _empty_signal("???")
@@ -20,37 +95,57 @@ def score_ticker(df: pd.DataFrame) -> dict:
     symbol = str(last.get('symbol', '???'))
     close = float(last.get('close', 0))
 
+    # ─── Active DeMark state ───
+    dm = _find_active_demark_state(df)
+
     # ─── Daily Score ───
     score = 0
 
-    # DeMark signals (highest weight)
+    # Setup signals
     td_setup_buy = int(last.get('td_setup_buy', 0))
     td_setup_sell = int(last.get('td_setup_sell', 0))
-    td_cd_buy = int(last.get('td_countdown_buy', 0))
-    td_cd_sell = int(last.get('td_countdown_sell', 0))
 
     td9_daily = None
-    td13_daily = None
-
     if td_setup_buy == 9:
         score += 30
-        td9_daily = "TD9 BUY"
+        perfected = int(last.get('td_perfected', 0))
+        td9_daily = "TD9 BUY" + (" ●" if perfected else "")
     elif td_setup_sell == 9:
         score -= 30
-        td9_daily = "TD9 SELL"
+        perfected = int(last.get('td_perfected', 0))
+        td9_daily = "TD9 SELL" + (" ●" if perfected else "")
 
-    if td_cd_buy == 13:
+    # Sequential countdown signals
+    seq_cd_buy = int(last.get('seq_cd_buy', 0))
+    seq_cd_sell = int(last.get('seq_cd_sell', 0))
+    td13_seq = None
+    if seq_cd_buy == 13:
         score += 40
-        td13_daily = "TD13 BUY"
-    elif td_cd_sell == 13:
+        td13_seq = "SEQ 13 BUY"
+    elif seq_cd_sell == 13:
         score -= 40
-        td13_daily = "TD13 SELL"
+        td13_seq = "SEQ 13 SELL"
+    elif dm['seq_cd_num'] > 0 and dm['seq_cd_num'] < 13:
+        if dm['seq_cd_side'] == 'buy':
+            score += 15
+        else:
+            score -= 15
 
-    # Active countdown in progress
-    if td_cd_buy > 0 and td_cd_buy < 13:
-        score += 20
-    elif td_cd_sell > 0 and td_cd_sell < 13:
-        score -= 20
+    # Combo countdown signals
+    combo_cd_buy = int(last.get('combo_cd_buy', 0))
+    combo_cd_sell = int(last.get('combo_cd_sell', 0))
+    td13_combo = None
+    if combo_cd_buy == 13:
+        score += 40
+        td13_combo = "COMBO 13 BUY"
+    elif combo_cd_sell == 13:
+        score -= 40
+        td13_combo = "COMBO 13 SELL"
+    elif dm['combo_cd_num'] > 0 and dm['combo_cd_num'] < 13:
+        if dm['combo_cd_side'] == 'buy':
+            score += 10
+        else:
+            score -= 10
 
     # RSI
     rsi = float(last.get('rsi14', 50))
@@ -65,7 +160,6 @@ def score_ticker(df: pd.DataFrame) -> dict:
     prev_stoch_k = float(df.iloc[-2].get('stoch_k', 50)) if len(df) > 1 else 50
     prev_stoch_d = float(df.iloc[-2].get('stoch_d', 50)) if len(df) > 1 else 50
 
-    # Crossover detection
     if stoch_k < 20 and stoch_k > stoch_d and prev_stoch_k <= prev_stoch_d:
         score += 10
     elif stoch_k > 80 and stoch_k < stoch_d and prev_stoch_k >= prev_stoch_d:
@@ -78,13 +172,11 @@ def score_ticker(df: pd.DataFrame) -> dict:
     prev_macd_line = float(df.iloc[-2].get('macd_line', 0)) if len(df) > 1 else 0
     prev_macd_signal = float(df.iloc[-2].get('macd_signal', 0)) if len(df) > 1 else 0
 
-    # MACD crossover
     if macd_line > macd_signal and prev_macd_line <= prev_macd_signal:
         score += 10
     elif macd_line < macd_signal and prev_macd_line >= prev_macd_signal:
         score -= 10
 
-    # MACD histogram direction
     prev_hist = float(df.iloc[-2].get('macd_hist', 0)) if len(df) > 1 else 0
     if macd_hist > prev_hist:
         score += 5
@@ -110,12 +202,12 @@ def score_ticker(df: pd.DataFrame) -> dict:
     daily_score = max(-100, min(100, score))
     daily_signal = _score_to_signal(daily_score)
 
-    # ─── BB %B ───
+    # BB %B
     bb_mid = float(last.get('bb_mid', close))
     bb_range = bb_upper - bb_lower
     bb_pct = (close - bb_lower) / bb_range if bb_range > 0 else 0.5
 
-    # ─── % Changes ───
+    # % Changes
     pct_chg_1d = 0.0
     pct_chg_5d = 0.0
     if len(df) > 1:
@@ -127,15 +219,26 @@ def score_ticker(df: pd.DataFrame) -> dict:
         if close_5d > 0:
             pct_chg_5d = ((close - close_5d) / close_5d) * 100
 
-    # ─── Weekly score (simplified: use daily * scaling factor) ───
+    # Weekly score (simplified)
     weekly_score = max(-100, min(100, int(daily_score * 0.85)))
     weekly_signal = _score_to_signal(weekly_score)
 
-    # ─── TD Weekly (from last few bars) ───
-    td9_weekly = None
-    td13_weekly = None
-    setup_count = int(last.get('td_setup_count', 0))
-    cd_count = int(last.get('td_countdown_count', 0))
+    # Determine active setup display
+    setup_label = None
+    if dm['setup_count'] > 0 and dm['setup_count'] <= 9:
+        side_str = dm['setup_side'].upper() if dm['setup_side'] else ""
+        setup_label = f"{dm['setup_count']}/9 {side_str}"
+
+    # Determine active countdown displays
+    seq_cd_label = None
+    if dm['seq_cd_num'] > 0 and dm['seq_cd_num'] <= 13:
+        side_str = dm['seq_cd_side'].upper() if dm['seq_cd_side'] else ""
+        seq_cd_label = f"{dm['seq_cd_num']}/13 {side_str}"
+
+    combo_cd_label = None
+    if dm['combo_cd_num'] > 0 and dm['combo_cd_num'] <= 13:
+        side_str = dm['combo_cd_side'].upper() if dm['combo_cd_side'] else ""
+        combo_cd_label = f"{dm['combo_cd_num']}/13 {side_str}"
 
     return {
         "symbol": symbol,
@@ -146,12 +249,21 @@ def score_ticker(df: pd.DataFrame) -> dict:
         "dailySignal": daily_signal,
         "weeklyScore": weekly_score,
         "weeklySignal": weekly_signal,
+        # DeMark completed signals
         "td9Daily": td9_daily,
-        "td13Daily": td13_daily,
-        "td9Weekly": td9_weekly,
-        "td13Weekly": td13_weekly,
-        "tdSetupCount": abs(setup_count),
-        "tdCountdownCount": abs(cd_count),
+        "td13Seq": td13_seq,
+        "td13Combo": td13_combo,
+        # Active DeMark state (for dashboard display)
+        "setupLabel": setup_label,        # e.g. "7/9 BUY" or None
+        "seqCdLabel": seq_cd_label,       # e.g. "10/13 BUY" or None
+        "comboCdLabel": combo_cd_label,   # e.g. "8/13 SELL" or None
+        "tdSetupCount": dm['setup_count'],
+        "tdSetupSide": dm['setup_side'],
+        "seqCdNum": dm['seq_cd_num'],
+        "seqCdSide": dm['seq_cd_side'],
+        "comboCdNum": dm['combo_cd_num'],
+        "comboCdSide": dm['combo_cd_side'],
+        # Traditional indicators
         "rsi14": round(rsi, 1),
         "stochK": round(stoch_k, 1),
         "stochD": round(stoch_d, 1),
@@ -167,19 +279,13 @@ def score_ticker(df: pd.DataFrame) -> dict:
 
 
 def compute_market_regime(signals: dict) -> dict:
-    """Compute market regime from index signals."""
     index_scores = []
     for ticker in TICKER_GROUPS["INDICES"]:
-        if ticker in signals:
+        if ticker in signals and "error" not in signals[ticker]:
             index_scores.append(signals[ticker]["dailyScore"])
 
     if not index_scores:
-        return {
-            "regime": "NEUTRAL",
-            "avgScore": 0,
-            "volatilityElevated": False,
-            "justification": "No data available",
-        }
+        return {"regime": "NEUTRAL", "avgScore": 0, "volatilityElevated": False, "justification": "No data available"}
 
     avg_score = sum(index_scores) / len(index_scores)
     buy_count = sum(1 for s in index_scores if s >= 40)
@@ -197,13 +303,10 @@ def compute_market_regime(signals: dict) -> dict:
         neutral_count = total - buy_count - sell_count
         justification = f"Mixed signals across indices — {buy_count} bullish, {sell_count} bearish, {neutral_count} neutral"
 
-    # VIX proxy: compute SPY 20-day realized vol
-    vol_elevated = False  # Will be computed with actual data
-
     return {
         "regime": regime,
         "avgScore": round(avg_score, 1),
-        "volatilityElevated": vol_elevated,
+        "volatilityElevated": False,
         "justification": justification,
     }
 
@@ -222,9 +325,11 @@ def _empty_signal(symbol: str) -> dict:
         "lastClose": 0, "pctChg1d": 0, "pctChg5d": 0,
         "dailyScore": 0, "dailySignal": "HOLD",
         "weeklyScore": 0, "weeklySignal": "HOLD",
-        "td9Daily": None, "td13Daily": None,
-        "td9Weekly": None, "td13Weekly": None,
-        "tdSetupCount": 0, "tdCountdownCount": 0,
+        "td9Daily": None, "td13Seq": None, "td13Combo": None,
+        "setupLabel": None, "seqCdLabel": None, "comboCdLabel": None,
+        "tdSetupCount": 0, "tdSetupSide": None,
+        "seqCdNum": 0, "seqCdSide": None,
+        "comboCdNum": 0, "comboCdSide": None,
         "rsi14": 50, "stochK": 50, "stochD": 50,
         "macdHist": 0, "macdLine": 0, "macdSignal": 0,
         "bbPct": 0.5, "bbUpper": 0, "bbMid": 0, "bbLower": 0,

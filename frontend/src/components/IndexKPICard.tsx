@@ -11,6 +11,10 @@ export default function IndexKPICard({ data, onClick }: IndexKPICardProps) {
   const isBuy = data.dailySignal === 'BUY';
   const isSell = data.dailySignal === 'SELL';
 
+  // Show the most notable DeMark state in compact form
+  const demarkCompact = data.td9Daily || data.td13Seq || data.td13Combo ||
+    data.setupLabel || data.seqCdLabel || data.comboCdLabel || null;
+
   return (
     <button
       onClick={() => onClick(data.symbol)}
@@ -39,7 +43,17 @@ export default function IndexKPICard({ data, onClick }: IndexKPICardProps) {
 
       <div className="flex items-center gap-1.5 flex-wrap">
         <SignalBadge signal={data.dailySignal} />
-        <SignalBadge signal={data.weeklySignal} />
+        {demarkCompact && (
+          <span className={cn(
+            'text-[9px] font-bold tabular-nums truncate',
+            data.td9Daily?.includes('BUY') || data.td13Seq?.includes('BUY') || data.td13Combo?.includes('BUY') ||
+            data.tdSetupSide === 'buy' || data.seqCdSide === 'buy' || data.comboCdSide === 'buy'
+              ? 'text-signal-green'
+              : data.comboCdLabel ? 'text-[#ff00ff]' : 'text-signal-red'
+          )}>
+            {data.td9Daily || data.td13Seq || data.td13Combo || data.setupLabel || data.seqCdLabel || data.comboCdLabel}
+          </span>
+        )}
       </div>
     </button>
   );

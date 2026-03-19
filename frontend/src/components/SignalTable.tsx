@@ -71,7 +71,7 @@ export default function SignalTable({ data, onTickerClick, showRank, showSparkli
 
   return (
     <div className="overflow-x-auto custom-scrollbar">
-      <table className="w-full min-w-[900px]">
+      <table className="w-full min-w-[1100px]">
         <thead>
           <tr className="sticky top-0 z-10 bg-signal-surface">
             {columns.map(col => (
@@ -92,12 +92,15 @@ export default function SignalTable({ data, onTickerClick, showRank, showSparkli
                 </span>
               </th>
             ))}
-            {/* TD columns */}
+            {/* DeMark columns: Setup, Seq CD, Combo CD */}
             <th className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-left">
-              TD Daily
+              Setup
             </th>
             <th className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-left">
-              TD Weekly
+              Seq CD
+            </th>
+            <th className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-left">
+              Combo CD
             </th>
           </tr>
         </thead>
@@ -183,14 +186,47 @@ export default function SignalTable({ data, onTickerClick, showRank, showSparkli
                   );
                 })}
 
-                {/* TD Daily */}
+                {/* Setup column */}
                 <td className="px-3 py-2.5 text-xs">
-                  <DeMarkBadge label={row.td9Daily || row.td13Daily} />
+                  {row.setupLabel ? (
+                    <span className={cn(
+                      'font-bold tabular-nums',
+                      row.tdSetupSide === 'buy' ? 'text-signal-green' : 'text-signal-red'
+                    )}>
+                      {row.setupLabel}
+                    </span>
+                  ) : (
+                    <span className="text-signal-text-muted">—</span>
+                  )}
                 </td>
 
-                {/* TD Weekly */}
+                {/* Sequential Countdown column */}
                 <td className="px-3 py-2.5 text-xs">
-                  <DeMarkBadge label={row.td9Weekly || row.td13Weekly} />
+                  {row.seqCdLabel ? (
+                    <span className={cn(
+                      'font-bold tabular-nums',
+                      row.seqCdSide === 'buy' ? 'text-signal-green' : 'text-signal-red'
+                    )}>
+                      {row.seqCdLabel}
+                    </span>
+                  ) : row.td13Seq ? (
+                    <DeMarkBadge label={row.td13Seq} />
+                  ) : (
+                    <span className="text-signal-text-muted">—</span>
+                  )}
+                </td>
+
+                {/* Combo Countdown column */}
+                <td className="px-3 py-2.5 text-xs">
+                  {row.comboCdLabel ? (
+                    <span className="font-bold tabular-nums text-[#ff00ff]">
+                      {row.comboCdLabel}
+                    </span>
+                  ) : row.td13Combo ? (
+                    <DeMarkBadge label={row.td13Combo} />
+                  ) : (
+                    <span className="text-signal-text-muted">—</span>
+                  )}
                 </td>
               </tr>
             );

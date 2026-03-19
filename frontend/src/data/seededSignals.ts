@@ -59,44 +59,57 @@ function generateTickerSignal(symbol: string): TickerSignal {
   // DeMark contribution
   const tdRoll = rand();
   let td9Daily: string | null = null;
-  let td13Daily: string | null = null;
-  let td9Weekly: string | null = null;
-  let td13Weekly: string | null = null;
+  let td13Seq: string | null = null;
+  let td13Combo: string | null = null;
+  let setupLabel: string | null = null;
+  let seqCdLabel: string | null = null;
+  let comboCdLabel: string | null = null;
   let tdSetupCount = 0;
-  let tdCountdownCount = 0;
+  let tdSetupSide: string | null = null;
+  let seqCdNum = 0;
+  let seqCdSide: string | null = null;
+  let comboCdNum = 0;
+  let comboCdSide: string | null = null;
 
   if (tdRoll < 0.12) {
     td9Daily = 'TD9 BUY';
     dailyScore += 30;
     tdSetupCount = 9;
+    tdSetupSide = 'buy';
+    setupLabel = '9/9 BUY';
   } else if (tdRoll < 0.18) {
-    td13Daily = 'TD13 BUY';
+    td13Seq = 'SEQ 13 BUY';
     dailyScore += 40;
-    tdCountdownCount = 13;
+    seqCdNum = 13;
+    seqCdSide = 'buy';
+    seqCdLabel = '13/13 BUY';
   } else if (tdRoll < 0.30) {
     td9Daily = 'TD9 SELL';
     dailyScore -= 30;
     tdSetupCount = 9;
+    tdSetupSide = 'sell';
+    setupLabel = '9/9 SELL';
   } else if (tdRoll < 0.36) {
-    td13Daily = 'TD13 SELL';
+    td13Combo = 'COMBO 13 SELL';
     dailyScore -= 40;
-    tdCountdownCount = 13;
+    comboCdNum = 13;
+    comboCdSide = 'sell';
+    comboCdLabel = '13/13 SELL';
   } else if (tdRoll < 0.55) {
     tdSetupCount = Math.floor(randRange(1, 8));
-    dailyScore += tdSetupCount > 5 ? (rand() > 0.5 ? 15 : -15) : 0;
-  } else if (tdRoll < 0.70) {
-    tdCountdownCount = Math.floor(randRange(1, 12));
-    dailyScore += rand() > 0.5 ? 20 : -20;
-  }
-
-  // Weekly DeMark
-  const wkRoll = rand();
-  if (wkRoll < 0.1) {
-    td9Weekly = 'TD9 BUY';
-  } else if (wkRoll < 0.15) {
-    td9Weekly = 'TD9 SELL';
-  } else if (wkRoll < 0.2) {
-    td13Weekly = 'TD13 BUY';
+    tdSetupSide = rand() > 0.5 ? 'buy' : 'sell';
+    setupLabel = `${tdSetupCount}/9 ${tdSetupSide.toUpperCase()}`;
+    dailyScore += tdSetupCount > 5 ? (tdSetupSide === 'buy' ? 15 : -15) : 0;
+  } else if (tdRoll < 0.65) {
+    seqCdNum = Math.floor(randRange(1, 12));
+    seqCdSide = rand() > 0.5 ? 'buy' : 'sell';
+    seqCdLabel = `${seqCdNum}/13 ${seqCdSide.toUpperCase()}`;
+    dailyScore += seqCdSide === 'buy' ? 15 : -15;
+  } else if (tdRoll < 0.75) {
+    comboCdNum = Math.floor(randRange(1, 12));
+    comboCdSide = rand() > 0.5 ? 'buy' : 'sell';
+    comboCdLabel = `${comboCdNum}/13 ${comboCdSide.toUpperCase()}`;
+    dailyScore += comboCdSide === 'buy' ? 10 : -10;
   }
 
   // RSI
@@ -135,11 +148,17 @@ function generateTickerSignal(symbol: string): TickerSignal {
     weeklyScore,
     weeklySignal: pickSignal(weeklyScore),
     td9Daily,
-    td13Daily,
-    td9Weekly,
-    td13Weekly,
+    td13Seq,
+    td13Combo,
+    setupLabel,
+    seqCdLabel,
+    comboCdLabel,
     tdSetupCount,
-    tdCountdownCount,
+    tdSetupSide,
+    seqCdNum,
+    seqCdSide,
+    comboCdNum,
+    comboCdSide,
     rsi14,
     stochK: Math.max(0, Math.min(100, stochK)),
     stochD: Math.max(0, Math.min(100, stochD)),

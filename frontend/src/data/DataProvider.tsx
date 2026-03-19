@@ -37,12 +37,22 @@ function apiToTickerSignal(s: any): TickerSignal {
     dailySignal: (s.dailySignal || 'HOLD') as Signal,
     weeklyScore: s.weeklyScore || 0,
     weeklySignal: (s.weeklySignal || 'HOLD') as Signal,
+    // DeMark completed signals
     td9Daily: s.td9Daily || null,
-    td13Daily: s.td13Daily || null,
-    td9Weekly: s.td9Weekly || null,
-    td13Weekly: s.td13Weekly || null,
+    td13Seq: s.td13Seq || null,
+    td13Combo: s.td13Combo || null,
+    // Active DeMark labels
+    setupLabel: s.setupLabel || null,
+    seqCdLabel: s.seqCdLabel || null,
+    comboCdLabel: s.comboCdLabel || null,
+    // Numeric DeMark state
     tdSetupCount: s.tdSetupCount || 0,
-    tdCountdownCount: s.tdCountdownCount || 0,
+    tdSetupSide: s.tdSetupSide || null,
+    seqCdNum: s.seqCdNum || 0,
+    seqCdSide: s.seqCdSide || null,
+    comboCdNum: s.comboCdNum || 0,
+    comboCdSide: s.comboCdSide || null,
+    // Traditional indicators
     rsi14: s.rsi14 || 50,
     stochK: s.stochK || 50,
     stochD: s.stochD || 50,
