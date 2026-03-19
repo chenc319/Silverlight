@@ -57,7 +57,13 @@ class MarketDataStore:
                     risk_seq_buy_level REAL DEFAULT 0,
                     risk_seq_sell_level REAL DEFAULT 0,
                     risk_combo_buy_level REAL DEFAULT 0,
-                    risk_combo_sell_level REAL DEFAULT 0
+                    risk_combo_sell_level REAL DEFAULT 0,
+                    tdst_buy_status TEXT DEFAULT '',
+                    tdst_sell_status TEXT DEFAULT '',
+                    risk_seq_buy_status TEXT DEFAULT '',
+                    risk_seq_sell_status TEXT DEFAULT '',
+                    risk_combo_buy_status TEXT DEFAULT '',
+                    risk_combo_sell_status TEXT DEFAULT ''
                 )
             """)
 
@@ -69,6 +75,12 @@ class MarketDataStore:
             ('risk_seq_sell_level', 'REAL DEFAULT 0'),
             ('risk_combo_buy_level', 'REAL DEFAULT 0'),
             ('risk_combo_sell_level', 'REAL DEFAULT 0'),
+            ('tdst_buy_status', "TEXT DEFAULT ''"),
+            ('tdst_sell_status', "TEXT DEFAULT ''"),
+            ('risk_seq_buy_status', "TEXT DEFAULT ''"),
+            ('risk_seq_sell_status', "TEXT DEFAULT ''"),
+            ('risk_combo_buy_status', "TEXT DEFAULT ''"),
+            ('risk_combo_sell_status', "TEXT DEFAULT ''"),
         ]
         for ticker in ALL_TICKERS:
             table = self._table_name(ticker)
@@ -223,7 +235,10 @@ class MarketDataStore:
                     rel_to_spy = ?,
                     tdst_buy_level = ?, tdst_sell_level = ?,
                     risk_seq_buy_level = ?, risk_seq_sell_level = ?,
-                    risk_combo_buy_level = ?, risk_combo_sell_level = ?
+                    risk_combo_buy_level = ?, risk_combo_sell_level = ?,
+                    tdst_buy_status = ?, tdst_sell_status = ?,
+                    risk_seq_buy_status = ?, risk_seq_sell_status = ?,
+                    risk_combo_buy_status = ?, risk_combo_sell_status = ?
                 WHERE date = ?
             """, (
                 int(row.get('td_setup_buy', 0)),
@@ -252,6 +267,12 @@ class MarketDataStore:
                 float(row.get('risk_seq_sell_level', 0)),
                 float(row.get('risk_combo_buy_level', 0)),
                 float(row.get('risk_combo_sell_level', 0)),
+                str(row.get('tdst_buy_status', '')),
+                str(row.get('tdst_sell_status', '')),
+                str(row.get('risk_seq_buy_status', '')),
+                str(row.get('risk_seq_sell_status', '')),
+                str(row.get('risk_combo_buy_status', '')),
+                str(row.get('risk_combo_sell_status', '')),
                 date_str,
             ))
 

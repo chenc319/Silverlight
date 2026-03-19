@@ -61,17 +61,38 @@ export function getPctColor(value: number): string {
   return 'text-signal-text-secondary';
 }
 
-/** Check if a ticker has a Countdown 13 printed today (or very recently) */
-export function hasCountdown13Today(data: TickerSignal): false | 'buy' | 'sell' {
-  // seqCdNum === 13 or comboCdNum === 13 means a 13 just completed
-  if (data.seqCdNum === 13 || data.comboCdNum === 13) {
-    // demarkSignal tells us the direction
-    if (data.demarkSignal === 'BUY') return 'buy';
-    if (data.demarkSignal === 'SELL') return 'sell';
-    // If no demarkSignal, infer from the countdown side
-    if (data.seqCdSide === 'buy' || data.comboCdSide === 'buy') return 'buy';
-    if (data.seqCdSide === 'sell' || data.comboCdSide === 'sell') return 'sell';
-    return 'buy'; // fallback
-  }
-  return false;
+/** 
+ * Check if a ticker has a Countdown 13 printed today (or very recently).
+ * Returns an object with direction and type(s), or false.
+ */
+export type Countdown13Info = {
+  direction: 'buy' | 'sell';
+  types: ('sequential' | 'combo')[];
+};
+
+export function hasCountdown13Today(data: TickerSignal): false | Countdown13Info {
+  const isSeq13 = data.seqCdNum === 13;
+  const isCombo13 = data.comboCdNum === 13;
+
+  if (!isSeq13 && !isCombo13) return false;
+
+  const types: ('sequential' | 'combo')[] = [];
+  if (isSeq13) types.push('sequential');
+  if (isCombo13) types.push('combo');
+
+  // Determine direction
+  let direction: 'buy' | 'sell' = 'buy';
+  if (data.demarkSignal === 'BUY') direction = 'buy';
+  else if (data.demarkSignal === 'SELL') direction = 'sell';
+  else if (isSeq13 && data.seqCdSide) direction = data.seqCdSide as 'buy' | 'sell';
+  else if (isCombo13 && data.comboCdSide) direction = data.comboCdSide as 'buy' | 'sell';
+
+  return { direction, types };
+}
+
+/** Helper: get the display label for a Countdown 13 badge */
+export function getCountdown13Label(info: Countdown13Info): string {
+  if (info.types.length === 2) return '13 Seq + Combo';
+  if (info.types[0] === 'sequential') return '13 Sequential';
+  return '13 Combo';
 }

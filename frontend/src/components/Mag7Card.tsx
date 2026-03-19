@@ -1,4 +1,4 @@
-import { cn, formatPrice, formatPct, hasCountdown13Today } from '@/lib/utils';
+import { cn, formatPrice, formatPct, hasCountdown13Today, getCountdown13Label } from '@/lib/utils';
 import SignalBadge from './SignalBadge';
 import type { TickerSignal } from '@/data/tickers';
 
@@ -40,8 +40,8 @@ export default function Mag7Card({ data, onClick }: Mag7CardProps) {
         'bg-signal-surface border-signal-border',
         isBuy && !cd13 && 'glow-buy',
         isSell && !cd13 && 'muted-sell',
-        cd13 === 'buy' && 'countdown-13-today',
-        cd13 === 'sell' && 'countdown-13-today-sell',
+        cd13 && cd13.direction === 'buy' && 'countdown-13-today',
+        cd13 && cd13.direction === 'sell' && 'countdown-13-today-sell',
       )}
     >
       {/* Header row */}
@@ -50,7 +50,7 @@ export default function Mag7Card({ data, onClick }: Mag7CardProps) {
           <div className={cn(
             'font-bold text-signal-text tracking-tight',
             cd13 ? 'text-xl' : 'text-base'
-          )}>{data.symbol}</div>
+          )} data-testid={`mag7-ticker-${data.symbol}`}>{data.symbol}</div>
           <div className="text-xl font-bold tabular-nums text-signal-text mt-0.5">
             {formatPrice(data.lastClose)}
           </div>
@@ -68,11 +68,11 @@ export default function Mag7Card({ data, onClick }: Mag7CardProps) {
         <div className={cn(
           'flex items-center justify-center py-2 rounded-md',
           'font-extrabold text-2xl tracking-wide',
-          cd13 === 'buy'
+          cd13.direction === 'buy'
             ? 'bg-signal-green/20 text-signal-green'
             : 'bg-signal-red/20 text-signal-red'
         )}>
-          COUNTDOWN 13
+          {getCountdown13Label(cd13)}
         </div>
       )}
 

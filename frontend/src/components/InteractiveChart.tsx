@@ -48,10 +48,16 @@ interface OHLCBar {
   bb_lower: number;
   tdst_buy_level: number;
   tdst_sell_level: number;
+  tdst_buy_status: string;
+  tdst_sell_status: string;
   risk_seq_buy_level: number;
   risk_seq_sell_level: number;
   risk_combo_buy_level: number;
   risk_combo_sell_level: number;
+  risk_seq_buy_status: string;
+  risk_seq_sell_status: string;
+  risk_combo_buy_status: string;
+  risk_combo_sell_status: string;
 }
 
 interface InteractiveChartProps {
@@ -204,15 +210,15 @@ function buildPlotlyChart(
     });
   }
 
-  // ── TDST level lines ──
-  addLevelShapes(shapes, bars, dates, 'tdst_buy_level', COLOR_TDST_BUY, 'dash');
-  addLevelShapes(shapes, bars, dates, 'tdst_sell_level', COLOR_TDST_SELL, 'dash');
+  // ── TDST level lines (solid/dashed based on breakout status) ──
+  addLevelShapesWithStatus(shapes, bars, dates, 'tdst_buy_level', 'tdst_buy_status', COLOR_TDST_BUY, 'dash');
+  addLevelShapesWithStatus(shapes, bars, dates, 'tdst_sell_level', 'tdst_sell_status', COLOR_TDST_SELL, 'dash');
 
-  // ── Risk level lines ──
-  addLevelShapes(shapes, bars, dates, 'risk_seq_buy_level', COLOR_RISK_SEQ, 'dot');
-  addLevelShapes(shapes, bars, dates, 'risk_seq_sell_level', COLOR_RISK_SEQ, 'dot');
-  addLevelShapes(shapes, bars, dates, 'risk_combo_buy_level', COLOR_RISK_COMBO, 'dot');
-  addLevelShapes(shapes, bars, dates, 'risk_combo_sell_level', COLOR_RISK_COMBO, 'dot');
+  // ── Risk level lines (solid/dashed based on breakout status) ──
+  addLevelShapesWithStatus(shapes, bars, dates, 'risk_seq_buy_level', 'risk_seq_buy_status', COLOR_RISK_SEQ, 'dot');
+  addLevelShapesWithStatus(shapes, bars, dates, 'risk_seq_sell_level', 'risk_seq_sell_status', COLOR_RISK_SEQ, 'dot');
+  addLevelShapesWithStatus(shapes, bars, dates, 'risk_combo_buy_level', 'risk_combo_buy_status', COLOR_RISK_COMBO, 'dot');
+  addLevelShapesWithStatus(shapes, bars, dates, 'risk_combo_sell_level', 'risk_combo_sell_status', COLOR_RISK_COMBO, 'dot');
 
   // ── DeMark annotations ──
   for (let i = 0; i < bars.length; i++) {
@@ -439,26 +445,41 @@ function demarkAnnotation(
 
 
 /* ────────────────────────────────────────────────────────
- *  Helper: add horizontal level line shapes (TDST, Risk)
+ *  Helper: add horizontal level line shapes with status-aware dash style
+ *  Renders solid lines when status='solid', default dash when 'dashed' or empty
  * ──────────────────────────────────────────────────────── */
-function addLevelShapes(
+function addLevelShapesWithStatus(
   shapes: any[], bars: OHLCBar[], dates: string[],
-  field: keyof OHLCBar, color: string, dash: string,
+  levelField: keyof OHLCBar, statusField: keyof OHLCBar,
+  color: string, defaultDash: string,
 ) {
   let i = 0;
   while (i < bars.length) {
-    const val = bars[i][field] as number;
+    const val = bars[i][levelField] as number;
     if (!val || val === 0) { i++; continue; }
     const segStart = i;
-    while (i < bars.length && (bars[i][field] as number) === val) { i++; }
+    const segStatus = (bars[i][statusField] as string) || 'dashed';
+    // Group bars with same level AND same status
+    while (
+      i < bars.length &&
+      (bars[i][levelField] as number) === val &&
+      ((bars[i][statusField] as string) || 'dashed') === segStatus
+    ) {
+      i++;
+    }
     const segEnd = i - 1;
+    const isSolid = segStatus === 'solid';
     shapes.push({
       type: 'line',
       x0: dates[segStart], x1: dates[segEnd],
       y0: val, y1: val,
-      line: { color, width: 1, dash },
+      line: {
+        color,
+        width: isSolid ? 1.5 : 1,
+        dash: isSolid ? 'solid' : defaultDash,
+      },
       xref: 'x', yref: 'y',
-      opacity: 0.7,
+      opacity: isSolid ? 0.9 : 0.7,
     });
   }
 }

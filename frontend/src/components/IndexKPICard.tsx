@@ -1,4 +1,4 @@
-import { cn, formatPrice, formatPct, hasCountdown13Today } from '@/lib/utils';
+import { cn, formatPrice, formatPct, hasCountdown13Today, getCountdown13Label } from '@/lib/utils';
 import SignalBadge from './SignalBadge';
 import type { TickerSignal } from '@/data/tickers';
 
@@ -28,15 +28,15 @@ export default function IndexKPICard({ data, onClick }: IndexKPICardProps) {
         'bg-signal-surface border-signal-border',
         isBuy && !cd13 && 'glow-buy',
         isSell && !cd13 && 'muted-sell',
-        cd13 === 'buy' && 'countdown-13-today',
-        cd13 === 'sell' && 'countdown-13-today-sell',
+        cd13 && cd13.direction === 'buy' && 'countdown-13-today',
+        cd13 && cd13.direction === 'sell' && 'countdown-13-today-sell',
       )}
     >
       <div className="flex items-center justify-between gap-2">
         <span className={cn(
           'font-bold text-signal-text tracking-tight',
           cd13 ? 'text-lg' : 'text-base'
-        )}>{data.symbol}</span>
+        )} data-testid={`kpi-ticker-${data.symbol}`}>{data.symbol}</span>
         <span className={cn(
           'text-sm font-semibold tabular-nums',
           data.pctChg1d >= 0 ? 'text-signal-green' : 'text-signal-red'
@@ -78,11 +78,11 @@ export default function IndexKPICard({ data, onClick }: IndexKPICardProps) {
         <div className={cn(
           'flex items-center justify-center py-1.5 -mx-1 rounded-md mt-0.5',
           'font-extrabold text-xl tracking-wide',
-          cd13 === 'buy'
+          cd13.direction === 'buy'
             ? 'bg-signal-green/20 text-signal-green'
             : 'bg-signal-red/20 text-signal-red'
         )}>
-          CD 13
+          {getCountdown13Label(cd13)}
         </div>
       )}
     </button>
