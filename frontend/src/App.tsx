@@ -39,7 +39,7 @@ function AppContent() {
   }, []);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Desktop top nav */}
       <nav className="hidden md:flex items-center h-12 bg-signal-surface border-b border-signal-border px-4 gap-1 shrink-0">
         <div className="flex items-center gap-2 mr-6">

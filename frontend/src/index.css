@@ -15,13 +15,19 @@
     text-rendering: optimizeLegibility;
   }
 
+  html, body, #root {
+    height: 100dvh;
+    height: 100vh; /* fallback for older browsers */
+  }
+
   body {
-    min-height: 100dvh;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: 'cv01', 'cv02', 'cv11';
     background-color: #0a0a0f;
     color: #e2e8f0;
     overflow: hidden;
+    margin: 0;
+    padding: 0;
   }
 
   /* Tabular nums for all numeric data */

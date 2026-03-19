@@ -39,38 +39,40 @@ def _find_active_demark_state(df: pd.DataFrame) -> dict:
             setup_side = 'sell'
             break
 
-    # Find the highest recent sequential countdown number
+    # Find the highest recent sequential countdown number + bars ago
     seq_cd_num = 0
     seq_cd_side = None
+    seq_cd_bars_ago = 0
     for i in range(n - 1, max(n - 60, -1), -1):
         scb = int(df.iloc[i].get('seq_cd_buy', 0))
         scs = int(df.iloc[i].get('seq_cd_sell', 0))
         if scb > 0:
-            if scb >= seq_cd_num:
-                seq_cd_num = scb
-                seq_cd_side = 'buy'
+            seq_cd_num = scb
+            seq_cd_side = 'buy'
+            seq_cd_bars_ago = (n - 1) - i
             break
         elif scs > 0:
-            if scs >= seq_cd_num:
-                seq_cd_num = scs
-                seq_cd_side = 'sell'
+            seq_cd_num = scs
+            seq_cd_side = 'sell'
+            seq_cd_bars_ago = (n - 1) - i
             break
 
-    # Find the highest recent combo countdown number
+    # Find the highest recent combo countdown number + bars ago
     combo_cd_num = 0
     combo_cd_side = None
+    combo_cd_bars_ago = 0
     for i in range(n - 1, max(n - 60, -1), -1):
         ccb = int(df.iloc[i].get('combo_cd_buy', 0))
         ccs = int(df.iloc[i].get('combo_cd_sell', 0))
         if ccb > 0:
-            if ccb >= combo_cd_num:
-                combo_cd_num = ccb
-                combo_cd_side = 'buy'
+            combo_cd_num = ccb
+            combo_cd_side = 'buy'
+            combo_cd_bars_ago = (n - 1) - i
             break
         elif ccs > 0:
-            if ccs >= combo_cd_num:
-                combo_cd_num = ccs
-                combo_cd_side = 'sell'
+            combo_cd_num = ccs
+            combo_cd_side = 'sell'
+            combo_cd_bars_ago = (n - 1) - i
             break
 
     return {
@@ -78,8 +80,10 @@ def _find_active_demark_state(df: pd.DataFrame) -> dict:
         'setup_side': setup_side,
         'seq_cd_num': seq_cd_num,
         'seq_cd_side': seq_cd_side,
+        'seq_cd_bars_ago': seq_cd_bars_ago,
         'combo_cd_num': combo_cd_num,
         'combo_cd_side': combo_cd_side,
+        'combo_cd_bars_ago': combo_cd_bars_ago,
     }
 
 
@@ -154,16 +158,38 @@ def score_ticker(df: pd.DataFrame) -> dict:
     elif rsi > 70:
         score -= int(15 * (rsi - 70) / 30)
 
-    # Slow Stochastic
+    # Slow Stochastic (14,3,3)
+    # Bullish if %K > %D; bearish if %K < %D
+    # Bullish crossover under 20 in last ~2 bars = strong buy signal
+    # Bearish crossover above 80 in last ~2 bars = strong sell signal
     stoch_k = float(last.get('stoch_k', 50))
     stoch_d = float(last.get('stoch_d', 50))
     prev_stoch_k = float(df.iloc[-2].get('stoch_k', 50)) if len(df) > 1 else 50
     prev_stoch_d = float(df.iloc[-2].get('stoch_d', 50)) if len(df) > 1 else 50
+    prev2_stoch_k = float(df.iloc[-3].get('stoch_k', 50)) if len(df) > 2 else 50
+    prev2_stoch_d = float(df.iloc[-3].get('stoch_d', 50)) if len(df) > 2 else 50
 
-    if stoch_k < 20 and stoch_k > stoch_d and prev_stoch_k <= prev_stoch_d:
-        score += 10
-    elif stoch_k > 80 and stoch_k < stoch_d and prev_stoch_k >= prev_stoch_d:
-        score -= 10
+    # Base: bullish if %K > %D, bearish if %K < %D
+    if stoch_k > stoch_d:
+        score += 5
+    elif stoch_k < stoch_d:
+        score -= 5
+
+    # Strong signal: %K crossed above %D under 20 within last 2 bars
+    cross_up_today = (stoch_k > stoch_d and prev_stoch_k <= prev_stoch_d)
+    cross_up_yesterday = (prev_stoch_k > prev_stoch_d and prev2_stoch_k <= prev2_stoch_d)
+    if (cross_up_today or cross_up_yesterday) and stoch_k < 20:
+        score += 15  # Strong oversold bullish crossover
+    elif (cross_up_today or cross_up_yesterday) and stoch_k < 30:
+        score += 10  # Moderate oversold bullish crossover
+
+    # Strong signal: %K crossed below %D above 80 within last 2 bars
+    cross_dn_today = (stoch_k < stoch_d and prev_stoch_k >= prev_stoch_d)
+    cross_dn_yesterday = (prev_stoch_k < prev_stoch_d and prev2_stoch_k >= prev2_stoch_d)
+    if (cross_dn_today or cross_dn_yesterday) and stoch_k > 80:
+        score -= 15  # Strong overbought bearish crossover
+    elif (cross_dn_today or cross_dn_yesterday) and stoch_k > 70:
+        score -= 10  # Moderate overbought bearish crossover
 
     # MACD
     macd_line = float(last.get('macd_line', 0))
@@ -236,9 +262,10 @@ def score_ticker(df: pd.DataFrame) -> dict:
             setup_label_color = "green"
 
     # Countdown labels: buy CD = bullish (green), sell CD = bearish (red)
+    # RULE: If the most recent countdown bar is more than 12 bars ago, show dash (null)
     seq_cd_label = None
     seq_cd_label_color = None
-    if dm['seq_cd_num'] > 0 and dm['seq_cd_num'] <= 13:
+    if dm['seq_cd_num'] > 0 and dm['seq_cd_num'] <= 13 and dm['seq_cd_bars_ago'] <= 12:
         if dm['seq_cd_side'] == 'buy':
             seq_cd_label = f"Bullish {dm['seq_cd_num']}"
             seq_cd_label_color = "green"
@@ -248,7 +275,7 @@ def score_ticker(df: pd.DataFrame) -> dict:
 
     combo_cd_label = None
     combo_cd_label_color = None
-    if dm['combo_cd_num'] > 0 and dm['combo_cd_num'] <= 13:
+    if dm['combo_cd_num'] > 0 and dm['combo_cd_num'] <= 13 and dm['combo_cd_bars_ago'] <= 12:
         if dm['combo_cd_side'] == 'buy':
             combo_cd_label = f"Bullish {dm['combo_cd_num']}"
             combo_cd_label_color = "green"
