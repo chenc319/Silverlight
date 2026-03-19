@@ -108,7 +108,7 @@ export default function SignalTable({ data, onTickerClick, showRank, showSparkli
                 key={col.key}
                 onClick={() => handleSort(col.key)}
                 className={cn(
-                  'px-3 py-2 text-[11px] font-semibold uppercase tracking-wider cursor-pointer',
+                  'px-3 py-2.5 text-xs font-semibold uppercase tracking-wider cursor-pointer',
                   'text-signal-text-muted border-b border-signal-border hover:text-signal-text transition-colors',
                   col.align === 'right' ? 'text-right' : 'text-left'
                 )}
@@ -122,16 +122,16 @@ export default function SignalTable({ data, onTickerClick, showRank, showSparkli
               </th>
             ))}
             {/* DeMark columns */}
-            <th className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-left">
+            <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-left">
               Setup
             </th>
-            <th className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-left">
+            <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-left">
               Seq CD
             </th>
-            <th className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-left">
+            <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-left">
               Combo CD
             </th>
-            <th className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-center">
+            <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-signal-text-muted border-b border-signal-border text-center">
               DM Signal
             </th>
           </tr>
@@ -159,7 +159,7 @@ export default function SignalTable({ data, onTickerClick, showRank, showSparkli
                     <td
                       key={col.key}
                       className={cn(
-                        'px-3 py-2.5 text-xs tabular-nums',
+                        'px-3 py-2.5 text-sm tabular-nums',
                         col.align === 'right' ? 'text-right' : 'text-left'
                       )}
                     >
@@ -218,22 +218,22 @@ export default function SignalTable({ data, onTickerClick, showRank, showSparkli
                 })}
 
                 {/* Setup column */}
-                <td className="px-3 py-2.5 text-xs">
+                <td className="px-3 py-2.5 text-sm">
                   <DeMarkLabel label={row.setupLabel} color={row.setupLabelColor} />
                 </td>
 
                 {/* Sequential Countdown column */}
-                <td className="px-3 py-2.5 text-xs">
+                <td className="px-3 py-2.5 text-sm">
                   <DeMarkLabel label={row.seqCdLabel} color={row.seqCdLabelColor} />
                 </td>
 
                 {/* Combo Countdown column */}
-                <td className="px-3 py-2.5 text-xs">
+                <td className="px-3 py-2.5 text-sm">
                   <DeMarkLabel label={row.comboCdLabel} color={row.comboCdLabelColor} />
                 </td>
 
                 {/* DeMark Signal column */}
-                <td className="px-3 py-2.5 text-xs text-center">
+                <td className="px-3 py-2.5 text-sm text-center">
                   <DeMarkSignalBadge signal={row.demarkSignal} />
                 </td>
               </tr>

@@ -47,12 +47,12 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-signal-border">
           <div className="flex items-center gap-3">
-            <span className="text-base font-bold text-signal-text">{symbol}</span>
-            <span className="text-sm font-semibold tabular-nums text-signal-text">
+            <span className="text-lg font-bold text-signal-text">{symbol}</span>
+            <span className="text-base font-semibold tabular-nums text-signal-text">
               {formatPrice(data.lastClose)}
             </span>
             <span className={cn(
-              'text-xs font-semibold tabular-nums',
+              'text-sm font-semibold tabular-nums',
               data.pctChg1d >= 0 ? 'text-signal-green' : 'text-signal-red'
             )}>
               {formatPct(data.pctChg1d)}
@@ -89,7 +89,7 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
           {/* Scores */}
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 rounded-lg bg-signal-surface border border-signal-border">
-              <div className="text-[10px] uppercase tracking-wider text-signal-text-muted mb-1">Daily Score</div>
+              <div className="text-xs uppercase tracking-wider text-signal-text-muted mb-1">Daily Score</div>
               <div className="flex items-center gap-2">
                 <span className={cn(
                   'text-xl font-bold tabular-nums',
@@ -101,7 +101,7 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
               </div>
             </div>
             <div className="p-3 rounded-lg bg-signal-surface border border-signal-border">
-              <div className="text-[10px] uppercase tracking-wider text-signal-text-muted mb-1">Weekly Score</div>
+              <div className="text-xs uppercase tracking-wider text-signal-text-muted mb-1">Weekly Score</div>
               <div className="flex items-center gap-2">
                 <span className={cn(
                   'text-xl font-bold tabular-nums',
@@ -117,10 +117,10 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
           {/* DeMark Signals */}
           <div className="p-3 rounded-lg bg-signal-surface border border-signal-border">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] uppercase tracking-wider text-signal-text-muted">DeMark</span>
+              <span className="text-xs uppercase tracking-wider text-signal-text-muted">DeMark</span>
               {data.demarkSignal && (
                 <span className={cn(
-                  'inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase',
+                  'inline-block px-1.5 py-0.5 rounded text-xs font-bold uppercase',
                   data.demarkSignal === 'BUY' && 'bg-signal-green/20 text-signal-green',
                   data.demarkSignal === 'SELL' && 'bg-signal-red/20 text-signal-red',
                   data.demarkSignal === '13+' && 'bg-amber-500/20 text-amber-400',
@@ -130,7 +130,7 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
               )}
             </div>
             <div className="space-y-2">
-              <div className="grid grid-cols-3 gap-2 text-[11px]">
+              <div className="grid grid-cols-3 gap-2 text-xs">
                 <div>
                   <span className="text-signal-text-muted block">Setup</span>
                   <span className={cn(
@@ -176,7 +176,7 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
               { label: 'Rel SPY 20D', value: formatPct(data.relSpy20d), color: data.relSpy20d > 0 ? 'text-signal-green' : 'text-signal-red' },
             ].map(ind => (
               <div key={ind.label} className="p-2 rounded bg-signal-surface/50 border border-signal-border/50">
-                <div className="text-[9px] uppercase tracking-wider text-signal-text-muted">{ind.label}</div>
+                <div className="text-[10px] uppercase tracking-wider text-signal-text-muted">{ind.label}</div>
                 <div className={cn('text-sm font-bold tabular-nums mt-0.5', ind.color)}>{ind.value}</div>
               </div>
             ))}

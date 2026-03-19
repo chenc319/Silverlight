@@ -41,10 +41,10 @@ function AppContent() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Desktop top nav */}
-      <nav className="hidden md:flex items-center h-12 bg-signal-surface border-b border-signal-border px-4 gap-1 shrink-0">
-        <div className="flex items-center gap-2 mr-6">
+      <nav className="hidden md:flex items-center h-14 bg-signal-surface border-b border-signal-border px-5 gap-1.5 shrink-0">
+        <div className="flex items-center gap-2.5 mr-8">
           <SilverSignalLogo />
-          <span className="text-sm font-semibold tracking-tight text-signal-text">
+          <span className="text-base font-semibold tracking-tight text-signal-text">
             SilverSignal
           </span>
         </div>
@@ -56,13 +56,13 @@ function AppContent() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               data-testid={`tab-${tab.id}`}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-md text-sm font-medium transition-all ${
                 isActive
                   ? 'bg-signal-green/10 text-signal-green'
                   : 'text-signal-text-secondary hover:text-signal-text hover:bg-white/5'
               }`}
             >
-              <Icon size={14} />
+              <Icon size={16} />
               {tab.label}
             </button>
           );
@@ -79,7 +79,7 @@ function AppContent() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-signal-surface border-t border-signal-border flex items-center justify-around px-2 z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-signal-surface border-t border-signal-border flex items-center justify-around px-2 z-50">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -94,8 +94,8 @@ function AppContent() {
                   : 'text-signal-text-muted'
               }`}
             >
-              <Icon size={18} />
-              <span className="text-[10px] font-medium leading-none">{tab.label.split(' ')[0]}</span>
+              <Icon size={20} />
+              <span className="text-xs font-medium leading-none">{tab.label.split(' ')[0]}</span>
             </button>
           );
         })}
@@ -123,7 +123,7 @@ export default function App() {
 
 function SilverSignalLogo() {
   return (
-    <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-label="SilverSignal logo">
+    <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-label="SilverSignal logo">
       <rect x="3" y="20" width="5" height="9" rx="1" fill="#00d4a0" opacity="0.5" />
       <rect x="10" y="14" width="5" height="15" rx="1" fill="#00d4a0" opacity="0.7" />
       <rect x="17" y="7" width="5" height="22" rx="1" fill="#00d4a0" opacity="0.9" />

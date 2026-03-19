@@ -1,4 +1,4 @@
-import { cn, formatPrice, formatPct } from '@/lib/utils';
+import { cn, formatPrice, formatPct, hasCountdown13Today } from '@/lib/utils';
 import SignalBadge from './SignalBadge';
 import type { TickerSignal } from '@/data/tickers';
 
@@ -7,14 +7,15 @@ interface Mag7CardProps {
   onClick: (symbol: string) => void;
 }
 
-function DeMarkSignalChip({ signal }: { signal: string | null }) {
+function DeMarkSignalChip({ signal, cd13 }: { signal: string | null; cd13: false | 'buy' | 'sell' }) {
   if (!signal) return null;
   const isBuy = signal === 'BUY';
   const isSell = signal === 'SELL';
   const is13Plus = signal === '13+';
   return (
     <span className={cn(
-      'inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase',
+      'inline-block px-2 py-0.5 rounded font-bold uppercase',
+      cd13 ? 'text-sm' : 'text-xs',
       isBuy && 'bg-signal-green/20 text-signal-green',
       isSell && 'bg-signal-red/20 text-signal-red',
       is13Plus && 'bg-amber-500/20 text-amber-400',
@@ -27,6 +28,7 @@ function DeMarkSignalChip({ signal }: { signal: string | null }) {
 export default function Mag7Card({ data, onClick }: Mag7CardProps) {
   const isBuy = data.dailySignal === 'BUY';
   const isSell = data.dailySignal === 'SELL';
+  const cd13 = hasCountdown13Today(data);
 
   return (
     <button
@@ -36,15 +38,20 @@ export default function Mag7Card({ data, onClick }: Mag7CardProps) {
         'flex flex-col gap-2.5 p-4 rounded-lg border transition-all text-left',
         'hover:bg-white/[0.02] cursor-pointer',
         'bg-signal-surface border-signal-border',
-        isBuy && 'glow-buy',
-        isSell && 'muted-sell'
+        isBuy && !cd13 && 'glow-buy',
+        isSell && !cd13 && 'muted-sell',
+        cd13 === 'buy' && 'countdown-13-today',
+        cd13 === 'sell' && 'countdown-13-today-sell',
       )}
     >
       {/* Header row */}
       <div className="flex items-start justify-between">
         <div>
-          <div className="text-sm font-bold text-signal-text tracking-tight">{data.symbol}</div>
-          <div className="text-lg font-bold tabular-nums text-signal-text mt-0.5">
+          <div className={cn(
+            'font-bold text-signal-text tracking-tight',
+            cd13 ? 'text-xl' : 'text-base'
+          )}>{data.symbol}</div>
+          <div className="text-xl font-bold tabular-nums text-signal-text mt-0.5">
             {formatPrice(data.lastClose)}
           </div>
         </div>
@@ -56,17 +63,30 @@ export default function Mag7Card({ data, onClick }: Mag7CardProps) {
         </span>
       </div>
 
+      {/* Countdown 13 hero badge */}
+      {cd13 && (
+        <div className={cn(
+          'flex items-center justify-center py-2 rounded-md',
+          'font-extrabold text-2xl tracking-wide',
+          cd13 === 'buy'
+            ? 'bg-signal-green/20 text-signal-green'
+            : 'bg-signal-red/20 text-signal-red'
+        )}>
+          COUNTDOWN 13
+        </div>
+      )}
+
       {/* Signals row */}
       <div className="flex items-center gap-1.5 flex-wrap">
         <SignalBadge signal={data.dailySignal} />
         <SignalBadge signal={data.weeklySignal} />
-        <DeMarkSignalChip signal={data.demarkSignal} />
+        <DeMarkSignalChip signal={data.demarkSignal} cd13={cd13} />
       </div>
 
       {/* DeMark state + indicators row */}
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {/* DeMark active state */}
-        <div className="flex items-center justify-between text-[10px] tabular-nums flex-wrap gap-x-2">
+        <div className="flex items-center justify-between text-xs tabular-nums flex-wrap gap-x-2">
           {data.setupLabel && (
             <span className={cn(
               'font-bold',
@@ -95,7 +115,7 @@ export default function Mag7Card({ data, onClick }: Mag7CardProps) {
         </div>
 
         {/* Traditional indicators */}
-        <div className="flex items-center justify-between text-[11px] tabular-nums">
+        <div className="flex items-center justify-between text-xs tabular-nums">
           <div className="flex items-center gap-0.5">
             <span className="text-signal-text-muted">RSI</span>
             <span className={cn(

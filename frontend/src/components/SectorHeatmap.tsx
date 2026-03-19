@@ -42,14 +42,14 @@ export default function SectorHeatmap({ onTickerClick }: SectorHeatmapProps) {
             )}
             style={{ backgroundColor: bgColor }}
           >
-            <span className="text-xs font-bold text-signal-text">{ticker}</span>
-            <span className="text-[10px] text-signal-text-muted mt-0.5">
+            <span className="text-sm font-bold text-signal-text">{ticker}</span>
+            <span className="text-xs text-signal-text-muted mt-0.5">
               {SECTOR_NAMES[ticker] || ticker}
             </span>
-            <span className="text-sm font-bold mt-1 tabular-nums" style={{ color: textColor }}>
+            <span className="text-base font-bold mt-1 tabular-nums" style={{ color: textColor }}>
               {score >= 0 ? '+' : ''}{score}
             </span>
-            <span className="text-[10px] font-semibold uppercase mt-0.5" style={{ color: textColor }}>
+            <span className="text-xs font-semibold uppercase mt-0.5" style={{ color: textColor }}>
               {data.dailySignal}
             </span>
           </button>

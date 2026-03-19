@@ -23,6 +23,7 @@
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: 'cv01', 'cv02', 'cv11';
+    font-size: 15px;
     background-color: #0a0a0f;
     color: #e2e8f0;
     overflow: hidden;
@@ -65,6 +66,26 @@
     filter: saturate(0.6);
   }
 
+  /* Countdown 13 today — extra prominent glow */
+  .countdown-13-today {
+    position: relative;
+    box-shadow:
+      0 0 24px rgba(0, 212, 160, 0.35),
+      0 0 48px rgba(0, 212, 160, 0.15),
+      inset 0 0 16px rgba(0, 212, 160, 0.05);
+    border-color: rgba(0, 212, 160, 0.5);
+    animation: countdown13Pulse 2.5s ease-in-out infinite;
+  }
+  .countdown-13-today-sell {
+    position: relative;
+    box-shadow:
+      0 0 24px rgba(255, 77, 109, 0.35),
+      0 0 48px rgba(255, 77, 109, 0.15),
+      inset 0 0 16px rgba(255, 77, 109, 0.05);
+    border-color: rgba(255, 77, 109, 0.5);
+    animation: countdown13PulseSell 2.5s ease-in-out infinite;
+  }
+
   /* Signal badge base */
   .signal-badge {
     @apply inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide;
@@ -105,5 +126,35 @@
   @keyframes pulseSubtle {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
+  }
+
+  @keyframes countdown13Pulse {
+    0%, 100% {
+      box-shadow:
+        0 0 24px rgba(0, 212, 160, 0.35),
+        0 0 48px rgba(0, 212, 160, 0.15),
+        inset 0 0 16px rgba(0, 212, 160, 0.05);
+    }
+    50% {
+      box-shadow:
+        0 0 32px rgba(0, 212, 160, 0.5),
+        0 0 64px rgba(0, 212, 160, 0.2),
+        inset 0 0 24px rgba(0, 212, 160, 0.08);
+    }
+  }
+
+  @keyframes countdown13PulseSell {
+    0%, 100% {
+      box-shadow:
+        0 0 24px rgba(255, 77, 109, 0.35),
+        0 0 48px rgba(255, 77, 109, 0.15),
+        inset 0 0 16px rgba(255, 77, 109, 0.05);
+    }
+    50% {
+      box-shadow:
+        0 0 32px rgba(255, 77, 109, 0.5),
+        0 0 64px rgba(255, 77, 109, 0.2),
+        inset 0 0 24px rgba(255, 77, 109, 0.08);
+    }
   }
 }

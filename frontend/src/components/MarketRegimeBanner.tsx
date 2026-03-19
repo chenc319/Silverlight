@@ -37,16 +37,16 @@ export default function MarketRegimeBanner() {
           <div
             data-testid="regime-pill"
             className={cn(
-              'inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold uppercase tracking-wider',
+              'inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-sm font-bold uppercase tracking-wider',
               regimeColor
             )}
           >
-            <span className={cn('w-2 h-2 rounded-full animate-pulse-subtle', regimeDot)} />
+            <span className={cn('w-2.5 h-2.5 rounded-full animate-pulse-subtle', regimeDot)} />
             {regimeStr}
           </div>
 
           {spy && (
-            <div className="flex items-center gap-4 text-xs tabular-nums">
+            <div className="flex items-center gap-4 text-sm tabular-nums">
               <div className="flex items-center gap-1.5">
                 <span className="text-signal-text-muted">SPY</span>
                 <span className="font-semibold text-signal-text">{formatPrice(spy.lastClose)}</span>
@@ -67,7 +67,7 @@ export default function MarketRegimeBanner() {
             </div>
           )}
 
-          <span className="hidden lg:inline text-[11px] text-signal-text-muted max-w-[360px] truncate">
+          <span className="hidden lg:inline text-xs text-signal-text-muted max-w-[400px] truncate">
             {justification}
           </span>
         </div>
@@ -76,15 +76,15 @@ export default function MarketRegimeBanner() {
         <div className="flex items-center gap-3">
           {/* Live indicator */}
           <div className={cn(
-            'flex items-center gap-1 text-[11px]',
+            'flex items-center gap-1 text-xs',
             isLive ? 'text-signal-green' : 'text-signal-text-muted'
           )}>
-            {isLive ? <Wifi size={11} /> : <WifiOff size={11} />}
+            {isLive ? <Wifi size={13} /> : <WifiOff size={13} />}
             <span>{isLive ? 'Live' : 'Cached'}</span>
           </div>
 
-          <div className="flex items-center gap-1.5 text-[11px] text-signal-text-muted">
-            <Clock size={11} />
+          <div className="flex items-center gap-1.5 text-xs text-signal-text-muted">
+            <Clock size={13} />
             <span>{timeStr}</span>
           </div>
 
@@ -93,7 +93,7 @@ export default function MarketRegimeBanner() {
             data-testid="refresh-button"
             disabled={isRefreshing}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium',
+              'flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium',
               'bg-signal-green/10 text-signal-green border border-signal-green/25',
               'hover:bg-signal-green/20 transition-all',
               'disabled:opacity-50 disabled:cursor-not-allowed'

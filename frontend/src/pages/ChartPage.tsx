@@ -61,7 +61,7 @@ export default function ChartPage() {
                 onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                 data-testid="ticker-search"
                 placeholder="Search ticker..."
-                className="bg-transparent text-sm font-semibold text-signal-text outline-none w-28"
+                className="bg-transparent text-base font-semibold text-signal-text outline-none w-32"
               />
             </div>
 
@@ -119,9 +119,9 @@ export default function ChartPage() {
           {/* Ticker info */}
           {data && (
             <div className="flex items-center gap-3 ml-auto">
-              <span className="text-lg font-bold tabular-nums">{formatPrice(data.lastClose)}</span>
+              <span className="text-xl font-bold tabular-nums">{formatPrice(data.lastClose)}</span>
               <span className={cn(
-                'text-sm font-semibold tabular-nums',
+                'text-base font-semibold tabular-nums',
                 data.pctChg1d >= 0 ? 'text-signal-green' : 'text-signal-red'
               )}>
                 {formatPct(data.pctChg1d)}
@@ -157,13 +157,13 @@ export default function ChartPage() {
             <div className="lg:w-72 space-y-3">
               {/* Signal summary */}
               <div className="bg-signal-surface rounded-lg border border-signal-border p-3">
-                <div className="text-[10px] uppercase tracking-wider text-signal-text-muted mb-2">Signal Summary</div>
+                <div className="text-xs uppercase tracking-wider text-signal-text-muted mb-2">Signal Summary</div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-signal-text-muted">Daily</span>
+                    <span className="text-sm text-signal-text-muted">Daily</span>
                     <div className="flex items-center gap-2">
                       <span className={cn(
-                        'text-sm font-bold tabular-nums',
+                        'text-base font-bold tabular-nums',
                         getScoreColor(data.dailyScore)
                       )}>
                         {formatScore(data.dailyScore)}
@@ -172,10 +172,10 @@ export default function ChartPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-signal-text-muted">Weekly</span>
+                    <span className="text-sm text-signal-text-muted">Weekly</span>
                     <div className="flex items-center gap-2">
                       <span className={cn(
-                        'text-sm font-bold tabular-nums',
+                        'text-base font-bold tabular-nums',
                         getScoreColor(data.weeklyScore)
                       )}>
                         {formatScore(data.weeklyScore)}
@@ -189,10 +189,10 @@ export default function ChartPage() {
               {/* DeMark */}
               <div className="bg-signal-surface rounded-lg border border-signal-border p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] uppercase tracking-wider text-signal-text-muted">DeMark</span>
+                  <span className="text-xs uppercase tracking-wider text-signal-text-muted">DeMark</span>
                   {data.demarkSignal && (
                     <span className={cn(
-                      'inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase',
+                      'inline-block px-1.5 py-0.5 rounded text-xs font-bold uppercase',
                       data.demarkSignal === 'BUY' && 'bg-signal-green/20 text-signal-green',
                       data.demarkSignal === 'SELL' && 'bg-signal-red/20 text-signal-red',
                       data.demarkSignal === '13+' && 'bg-amber-500/20 text-amber-400',
@@ -237,7 +237,7 @@ export default function ChartPage() {
 
               {/* Indicators */}
               <div className="bg-signal-surface rounded-lg border border-signal-border p-3">
-                <div className="text-[10px] uppercase tracking-wider text-signal-text-muted mb-2">Indicators</div>
+                <div className="text-xs uppercase tracking-wider text-signal-text-muted mb-2">Indicators</div>
                 <div className="space-y-1.5">
                   {[
                     { label: 'RSI (14)', value: data.rsi14.toFixed(1), warn: data.rsi14 < 30 || data.rsi14 > 70 },
@@ -264,7 +264,7 @@ export default function ChartPage() {
 
               {/* Performance */}
               <div className="bg-signal-surface rounded-lg border border-signal-border p-3">
-                <div className="text-[10px] uppercase tracking-wider text-signal-text-muted mb-2">Performance</div>
+                <div className="text-xs uppercase tracking-wider text-signal-text-muted mb-2">Performance</div>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-signal-text-muted">1D Change</span>
@@ -294,9 +294,9 @@ export default function ChartPage() {
           {/* Fullscreen header */}
           <div className="flex items-center justify-between px-4 py-2 border-b border-signal-border bg-signal-surface/50 backdrop-blur-sm shrink-0">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-bold text-signal-text">{selectedTicker}</span>
-              <span className="text-xs text-signal-text-secondary capitalize">{timeframe}</span>
-              {showBB && <span className="text-[10px] font-medium text-signal-amber">BB ON</span>}
+              <span className="text-base font-bold text-signal-text">{selectedTicker}</span>
+              <span className="text-sm text-signal-text-secondary capitalize">{timeframe}</span>
+              {showBB && <span className="text-xs font-medium text-signal-amber">BB ON</span>}
               {data && (
                 <>
                   <span className="text-sm font-semibold tabular-nums text-signal-text">{formatPrice(data.lastClose)}</span>

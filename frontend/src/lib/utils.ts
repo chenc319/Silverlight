@@ -1,5 +1,5 @@
 import { clsx, type ClassValue } from 'clsx';
-import type { Signal } from '@/data/tickers';
+import type { Signal, TickerSignal } from '@/data/tickers';
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
@@ -59,4 +59,19 @@ export function getPctColor(value: number): string {
   if (value > 0) return 'text-signal-green';
   if (value < 0) return 'text-signal-red';
   return 'text-signal-text-secondary';
+}
+
+/** Check if a ticker has a Countdown 13 printed today (or very recently) */
+export function hasCountdown13Today(data: TickerSignal): false | 'buy' | 'sell' {
+  // seqCdNum === 13 or comboCdNum === 13 means a 13 just completed
+  if (data.seqCdNum === 13 || data.comboCdNum === 13) {
+    // demarkSignal tells us the direction
+    if (data.demarkSignal === 'BUY') return 'buy';
+    if (data.demarkSignal === 'SELL') return 'sell';
+    // If no demarkSignal, infer from the countdown side
+    if (data.seqCdSide === 'buy' || data.comboCdSide === 'buy') return 'buy';
+    if (data.seqCdSide === 'sell' || data.comboCdSide === 'sell') return 'sell';
+    return 'buy'; // fallback
+  }
+  return false;
 }

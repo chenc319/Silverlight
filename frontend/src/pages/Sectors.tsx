@@ -14,17 +14,17 @@ export default function Sectors({ onTickerClick }: SectorsProps) {
   return (
     <div className="max-w-[1600px] mx-auto px-4 py-4 animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-base font-bold text-signal-text">Sectors</h1>
-        <span className="text-xs text-signal-text-muted">{data.length} sector ETFs</span>
+        <h1 className="text-lg font-bold text-signal-text">Sectors</h1>
+        <span className="text-sm text-signal-text-muted">{data.length} sector ETFs</span>
       </div>
       <section>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-signal-text-muted mb-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-signal-text-muted mb-3">
           Sector Rotation Heatmap
         </h2>
         <SectorHeatmap onTickerClick={onTickerClick} />
       </section>
       <section>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-signal-text-muted mb-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-signal-text-muted mb-3">
           Detailed Signals
         </h2>
         <div className="bg-signal-surface rounded-lg border border-signal-border overflow-hidden">

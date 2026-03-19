@@ -18,7 +18,7 @@ export default function Overview({ onTickerClick }: OverviewProps) {
       <div className="max-w-[1600px] mx-auto px-4 py-4 space-y-6">
         {/* Index KPI Cards */}
         <section>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-signal-text-muted mb-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-signal-text-muted mb-3">
             Market Indices
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
@@ -34,7 +34,7 @@ export default function Overview({ onTickerClick }: OverviewProps) {
 
         {/* Mag 7 Signal Grid */}
         <section>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-signal-text-muted mb-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-signal-text-muted mb-3">
             Magnificent 7
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -50,7 +50,7 @@ export default function Overview({ onTickerClick }: OverviewProps) {
 
         {/* Mega Tech */}
         <section>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-signal-text-muted mb-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-signal-text-muted mb-3">
             Mega Tech
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
