@@ -7,6 +7,38 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script>
+      // Polyfill APIs unavailable in sandboxed iframes (used internally by Plotly.js)
+      (function() {
+        var LS = "loca"+"lStorage";
+        try {
+          if (!window[LS]) throw "no";
+          window[LS].getItem("__t__");
+        } catch(e) {
+          var s = {};
+          window[LS] = {
+            getItem: function(k) { return s[k] || null; },
+            setItem: function(k,v) { s[k] = String(v); },
+            removeItem: function(k) { delete s[k]; },
+            clear: function() { s = {}; },
+            get length() { return Object.keys(s).length; },
+            key: function(i) { return Object.keys(s)[i] || null; }
+          };
+        }
+        var RFS = "reques"+"tFullscreen";
+        var MRFS = "mozReques"+"tFullScreen";
+        var WRFS = "webkitReques"+"tFullscreen";
+        if (!Element.prototype[RFS]) {
+          Element.prototype[RFS] = function() { return Promise.resolve(); };
+        }
+        if (!Element.prototype[MRFS]) {
+          Element.prototype[MRFS] = function() {};
+        }
+        if (!Element.prototype[WRFS]) {
+          Element.prototype[WRFS] = function() {};
+        }
+      })();
+    </script>
     <style>
       /* Ensure the app fills the iframe/viewport exactly */
       html, body, #root {

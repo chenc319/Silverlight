@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Search, Maximize2, X } from 'lucide-react';
 import { cn, formatPrice, formatPct, formatScore } from '@/lib/utils';
 import SignalBadge from '@/components/SignalBadge';
-import LightweightChart from '@/components/LightweightChart';
+import InteractiveChart from '@/components/InteractiveChart';
 import { useSignalData } from '@/data/DataProvider';
 import { ALL_TICKERS } from '@/data/tickers';
 
@@ -133,20 +133,20 @@ export default function ChartPage() {
 
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Main chart */}
-          <div className="flex-1 bg-signal-surface rounded-lg border border-signal-border p-3 relative group">
+          <div className="flex-1 bg-signal-surface rounded-lg border border-signal-border p-2 relative group">
             {/* Fullscreen button */}
             <button
               onClick={() => setIsFullscreen(true)}
               data-testid="chart-fullscreen-btn"
-              className="absolute top-2 right-2 z-10 p-1.5 rounded bg-signal-surface/80 border border-signal-border/50 text-signal-text-muted hover:text-signal-text opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
+              className="absolute top-2 right-2 z-20 p-1.5 rounded bg-signal-surface/80 border border-signal-border/50 text-signal-text-muted hover:text-signal-text opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
               title="Expand chart fullscreen"
             >
               <Maximize2 size={14} />
             </button>
-            <LightweightChart
+            <InteractiveChart
               key={`${selectedTicker}-${timeframe}-${showBB}`}
               symbol={selectedTicker}
-              height={500}
+              height={520}
               timeframe={timeframe}
               showBB={showBB}
             />
@@ -188,7 +188,7 @@ export default function ChartPage() {
                 </div>
               </div>
 
-              {/* DeMark — Setup, Sequential CD, Combo CD */}
+              {/* DeMark */}
               <div className="bg-signal-surface rounded-lg border border-signal-border p-3">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] uppercase tracking-wider text-signal-text-muted">DeMark</span>
@@ -203,39 +203,36 @@ export default function ChartPage() {
                     </span>
                   )}
                 </div>
-                <div className="space-y-2">
-                  {/* Active DeMark state — 3-row layout */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-signal-text-muted">Setup</span>
-                      <span className={cn(
-                        'font-bold tabular-nums',
-                        data.setupLabelColor === 'green' ? 'text-signal-green' :
-                        data.setupLabelColor === 'red' ? 'text-signal-red' : 'text-signal-text-muted'
-                      )}>
-                        {data.setupLabel || '—'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-signal-text-muted">Sequential CD</span>
-                      <span className={cn(
-                        'font-bold tabular-nums',
-                        data.seqCdLabelColor === 'green' ? 'text-signal-green' :
-                        data.seqCdLabelColor === 'red' ? 'text-signal-red' : 'text-signal-text-muted'
-                      )}>
-                        {data.seqCdLabel || '—'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-signal-text-muted">Combo CD</span>
-                      <span className={cn(
-                        'font-bold tabular-nums',
-                        data.comboCdLabelColor === 'green' ? 'text-signal-green' :
-                        data.comboCdLabelColor === 'red' ? 'text-signal-red' : 'text-signal-text-muted'
-                      )}>
-                        {data.comboCdLabel || '—'}
-                      </span>
-                    </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-signal-text-muted">Setup</span>
+                    <span className={cn(
+                      'font-bold tabular-nums',
+                      data.setupLabelColor === 'green' ? 'text-signal-green' :
+                      data.setupLabelColor === 'red' ? 'text-signal-red' : 'text-signal-text-muted'
+                    )}>
+                      {data.setupLabel || '—'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-signal-text-muted">Sequential CD</span>
+                    <span className={cn(
+                      'font-bold tabular-nums',
+                      data.seqCdLabelColor === 'green' ? 'text-signal-green' :
+                      data.seqCdLabelColor === 'red' ? 'text-signal-red' : 'text-signal-text-muted'
+                    )}>
+                      {data.seqCdLabel || '—'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-signal-text-muted">Combo CD</span>
+                    <span className={cn(
+                      'font-bold tabular-nums',
+                      data.comboCdLabelColor === 'green' ? 'text-signal-green' :
+                      data.comboCdLabelColor === 'red' ? 'text-signal-red' : 'text-signal-text-muted'
+                    )}>
+                      {data.comboCdLabel || '—'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -267,7 +264,7 @@ export default function ChartPage() {
                 </div>
               </div>
 
-              {/* Price changes */}
+              {/* Performance */}
               <div className="bg-signal-surface rounded-lg border border-signal-border p-3">
                 <div className="text-[10px] uppercase tracking-wider text-signal-text-muted mb-2">Performance</div>
                 <div className="space-y-1.5">
@@ -354,13 +351,14 @@ export default function ChartPage() {
             </div>
           </div>
 
-          {/* Fullscreen chart body */}
-          <div className="flex-1 min-h-0">
-            <LightweightChart
+          {/* Fullscreen chart body — Plotly handles its own zoom/pan natively */}
+          <div className="flex-1 min-h-0 p-2">
+            <InteractiveChart
               key={`fs-${selectedTicker}-${timeframe}-${showBB}`}
               symbol={selectedTicker}
               timeframe={timeframe}
               showBB={showBB}
+              height="100%"
               fullscreen={true}
             />
           </div>

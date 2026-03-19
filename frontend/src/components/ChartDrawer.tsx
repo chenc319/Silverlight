@@ -3,7 +3,7 @@ import { X, Maximize2 } from 'lucide-react';
 import { cn, formatPrice, formatPct, formatScore } from '@/lib/utils';
 import SignalBadge from './SignalBadge';
 import { useSignalData } from '@/data/DataProvider';
-import LightweightChart from './LightweightChart';
+import InteractiveChart from './InteractiveChart';
 
 interface ChartDrawerProps {
   symbol: string;
@@ -79,7 +79,7 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
 
         {/* Chart */}
         <div className="h-[300px] md:h-[350px] px-2 pt-2">
-          <LightweightChart symbol={symbol} height={290} />
+          <InteractiveChart symbol={symbol} height={290} />
         </div>
 
         {/* Signal Summary */}
@@ -116,7 +116,7 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
             </div>
           </div>
 
-          {/* DeMark Signals — Setup + Sequential CD + Combo CD */}
+          {/* DeMark Signals */}
           <div className="p-3 rounded-lg bg-signal-surface border border-signal-border">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] uppercase tracking-wider text-signal-text-muted">DeMark</span>
@@ -132,7 +132,6 @@ export default function ChartDrawer({ symbol, onClose, onNavigateToChart }: Char
               )}
             </div>
             <div className="space-y-2">
-              {/* Active state labels */}
               <div className="grid grid-cols-3 gap-2 text-[11px]">
                 <div>
                   <span className="text-signal-text-muted block">Setup</span>
